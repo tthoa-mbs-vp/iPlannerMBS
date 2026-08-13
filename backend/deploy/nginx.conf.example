@@ -1,0 +1,102 @@
+# =============================================================================
+# MBS Planner — Nginx reverse proxy cho PocketBase (production)
+# =============================================================================
+#
+# 1. Copy file này thành /etc/nginx/sites-available/mbs-planner
+# 2. Sửa server_name, SSL certificate paths, và root (nếu serve static)
+# 3. ln -s /etc/nginx/sites-available/mbs-planner /etc/nginx/sites-enabled/
+# 4. nginx -t && systemctl reload nginx
+# 5. Trong docker-compose (hoặc khi chạy PocketBase) set:
+#      PB_TRUST_PROXY=true
+#    và xoá dòng "ports: - 8090:8090" khỏi compose (PocketBase chỉ listen
+#    trên localhost, nginx là cổng vào duy nhất).
+# 6. Nếu dùng HTTPS, xoá bỏ block server 80 và dùng certbot --nginx.
+#
+# =============================================================================
+
+upstream pocketbase {
+    # PocketBase chỉ listen trên localhost — không publish port 8090 ra ngoài.
+    # Nếu PB chạy trong Docker, expose nội bộ: ports: - "127.0.0.1:8090:8090"
+    server 127.0.0.1:8090;
+    keepalive 64;
+}
+
+# ---- HTTP → HTTPS redirect (bỏ block này nếu chưa có SSL) ----
+server {
+    listen 80;
+    server_name planner.example.com;
+    return 301 https://$host$request_uri;
+}
+
+# ---- HTTPS server ----
+server {
+    listen 443 ssl http2;
+    server_name planner.example.com;
+
+    # SSL — thay đường dẫn phù hợp
+    ssl_certificate     /etc/letsencrypt/live/planner.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/planner.example.com/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    # Dung lượng upload tối đa (phù hợp với file đính kèm KPI, tasks, …)
+    client_max_body_size 50M;
+
+    # -----------------------------------------------------------------------
+    # Reverse proxy toàn bộ request sang PocketBase
+    # -----------------------------------------------------------------------
+    location / {
+        # Headers bắt buộc để PB_TRUST_PROXY hoạt động:
+        # - X-Forwarded-For: giữ IP gốc của client, nếu có header cũ thì nginx
+        #   tự động append (cơ chế $proxy_add_x_forwarded_for).
+        # - X-Real-IP: IP thật của client (dự phòng).
+        # - X-Forwarded-Proto: http/https để PB sinh đúng đường dẫn.
+        proxy_set_header Host                   $host;
+        proxy_set_header X-Real-IP              $remote_addr;
+        proxy_set_header X-Forwarded-For        $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto      $scheme;
+
+        # KHÔNG set X-Forwarded-For đơn thuần mà dùng $proxy_add_x_forwarded_for
+        # để nginx APPEND IP client vào cuối chuỗi (nếu client gửi header giả,
+        # nó sẽ ở đầu — bị ignore vì useLeftmostIP=false).
+
+        # HTTP/1.1 + keepalive cho upstream
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+
+        # Timeout dài cho realtime SSE (PocketBase dùng Server-Sent Events)
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+
+        # Tắt buffering cho realtime (SSE cần stream thời gian thực)
+        proxy_buffering off;
+        proxy_cache off;
+
+        # Chuyển tiếp đến PocketBase
+        proxy_pass http://pocketbase;
+    }
+
+    # -----------------------------------------------------------------------
+    # Static files (tuỳ chọn — nếu muốn nginx serve thẳng file tĩnh thay vì
+    # qua PocketBase, giảm tải cho PB)
+    # -----------------------------------------------------------------------
+    location /_/ {
+        # Dashboard assets — PB tự serve, pass-through
+        proxy_pass http://pocketbase;
+    }
+
+    # -----------------------------------------------------------------------
+    # Security headers
+    # -----------------------------------------------------------------------
+    add_header X-Content-Type-Options    "nosniff" always;
+    add_header X-Frame-Options           "DENY" always;
+    add_header X-XSS-Protection          "1; mode=block" always;
+    add_header Referrer-Policy           "strict-origin-when-cross-origin" always;
+
+    # -----------------------------------------------------------------------
+    # Logging
+    # -----------------------------------------------------------------------
+    access_log /var/log/nginx/mbs-planner.access.log;
+    error_log  /var/log/nginx/mbs-planner.error.log warn;
+}

@@ -1,0 +1,26 @@
+node_modules/
+dist/
+.env.local
+*.log
+
+# Tool-local state (not project source)
+.freebuff/
+.opencode/
+
+# Backend
+backend/pb_data/
+backend/pocketbase.exe
+# Note: pb_migrations/ is NOT ignored — migrations must be tracked for reproducibility
+
+# Web
+web/dist/
+web/tsconfig.tsbuildinfo
+
+# Mobile
+mobile/.expo/
+mobile/dist/
+mobile/node_modules/
+
+# OS
+.DS_Store
+Thumbs.db

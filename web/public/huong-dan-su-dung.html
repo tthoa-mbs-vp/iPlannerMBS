@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#4f46e5">
+  <title>Hướng dẫn sử dụng - iPlanner</title>
+  <script>
+    (function () {
+      try {
+        var m = localStorage.getItem("theme_mode");
+        var dark = m === "dark" || ((m !== "light") && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        if (dark) document.documentElement.classList.add("dark");
+      } catch (e) {}
+    })();
+  </script>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-strong: #4338ca;
+      --primary-soft: #eef2ff;
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
+      --card: #ffffff;
+      --card-border: #e2e8f0;
+      --body-text: #334155;
+      --shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.07), 0 1px 2px -1px rgba(15, 23, 42, 0.07);
+      --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.09), 0 4px 6px -4px rgba(15, 23, 42, 0.06);
+    }
+    .dark {
+      color-scheme: dark;
+      --primary: #818cf8;
+      --primary-strong: #818cf8;
+      --primary-soft: #223156;
+      --slate-50: #263349;
+      --slate-100: #2c3c56;
+      --slate-200: #354862;
+      --slate-300: #41536f;
+      --slate-400: #94a3b8;
+      --slate-500: #a9b6c8;
+      --slate-600: #cbd5e1;
+      --slate-700: #e2e8f0;
+      --slate-800: #f1f5f9;
+      --slate-900: #f8fafc;
+      --card: #1e293b;
+      --card-border: #334155;
+      --body-text: #cbd5e1;
+      --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: var(--body-text);
+      background: linear-gradient(135deg, rgba(238, 242, 255, 0.65), #f8fafc 45%, rgba(239, 246, 255, 0.65));
+      background-attachment: fixed;
+      line-height: 1.7;
+    }
+    .dark body { background: linear-gradient(135deg, #0f172a, #020617 45%, #0f172a); }
+
+    header {
+      background: linear-gradient(135deg, #1e1b4b, #0f172a 55%, #172554);
+      color: #fff;
+      padding: 3.25rem 1.5rem 2.75rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(40rem 20rem at 18% 0%, rgba(96, 165, 250, 0.28), transparent 60%),
+                  radial-gradient(30rem 18rem at 85% 100%, rgba(167, 139, 250, 0.22), transparent 60%);
+      pointer-events: none;
+    }
+    header .logo {
+      position: relative;
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 1rem;
+      border-radius: 1rem;
+      background: linear-gradient(135deg, #3b82f6, #4f46e5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 24px -8px rgba(59, 130, 246, 0.55);
+    }
+    header .logo svg { width: 32px; height: 32px; stroke: #fff; }
+    header h1 { position: relative; font-size: 2rem; font-weight: 800; letter-spacing: -0.01em; }
+    header p { position: relative; margin-top: .5rem; font-size: .95rem; color: #c7d2fe; }
+    header .back-link {
+      position: absolute;
+      top: 1.25rem;
+      left: 1.5rem;
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      font-size: .85rem;
+      font-weight: 600;
+      color: #c7d2fe;
+      text-decoration: none;
+      padding: .5rem .9rem;
+      border-radius: .625rem;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      transition: all .2s;
+    }
+    header .back-link:hover { background: rgba(255, 255, 255, 0.16); color: #fff; }
+
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--card-border);
+      padding: .65rem 1.25rem;
+      overflow-x: auto;
+      display: flex;
+      gap: .35rem;
+    }
+    .dark nav { background: rgba(15, 23, 42, 0.6); }
+    nav a {
+      white-space: nowrap;
+      padding: .4rem .8rem;
+      border-radius: .625rem;
+      font-size: .84rem;
+      font-weight: 500;
+      color: var(--slate-500);
+      text-decoration: none;
+      transition: all .2s;
+    }
+    nav a:hover { background: var(--primary-soft); color: var(--primary-strong); }
+
+    main { max-width: 880px; margin: 0 auto; padding: 2rem 1.25rem 3.5rem; }
+    section {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 1rem;
+      box-shadow: var(--shadow);
+      padding: 1.75rem 2rem;
+      margin-bottom: 1.5rem;
+      scroll-margin-top: 5rem;
+    }
+    section h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--slate-800);
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      margin-bottom: 1.1rem;
+    }
+    section h2::before {
+      content: "";
+      width: .5rem;
+      height: 1.6rem;
+      border-radius: .25rem;
+      background: linear-gradient(180deg, #6366f1, #3b82f6);
+    }
+    section h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--slate-700);
+      margin: 1.4rem 0 .7rem;
+    }
+    section h4 {
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--slate-600);
+      margin: 1rem 0 .5rem;
+    }
+    p, li { font-size: .92rem; color: var(--body-text); }
+    ul, ol { padding-left: 1.4rem; margin: .5rem 0 1rem; }
+    li { margin-bottom: .35rem; }
+    li::marker { color: var(--primary); }
+    strong { color: var(--slate-800); font-weight: 600; }
+    .dark strong { color: var(--slate-100); }
+    a { color: var(--primary-strong); }
+    code {
+      background: var(--primary-soft);
+      color: var(--primary-strong);
+      padding: .1rem .35rem;
+      border-radius: .375rem;
+      font-size: .85em;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: .88rem;
+    }
+    th, td {
+      border: 1px solid var(--card-border);
+      padding: .6rem .8rem;
+      text-align: left;
+    }
+    th {
+      background: var(--primary-soft);
+      font-weight: 600;
+      color: var(--slate-800);
+    }
+    .dark th { color: var(--slate-100); }
+    td { color: var(--body-text); }
+    tr:nth-child(even) td { background: var(--slate-50); }
+
+    .tag {
+      display: inline-block;
+      padding: .15rem .55rem;
+      border-radius: 999px;
+      font-size: .78rem;
+      font-weight: 600;
+    }
+    .tag-green { background: #d1fae5; color: #065f46; }
+    .tag-blue { background: #dbeafe; color: #1e40af; }
+    .tag-amber { background: #fef3c7; color: #92400e; }
+    .tag-rose { background: #ffe4e6; color: #9f1239; }
+    .tag-slate { background: var(--slate-100); color: var(--slate-600); }
+    .tag-purple { background: #f3e8ff; color: #6b21a8; }
+    .dark .tag-green { background: #064e3b; color: #6ee7b7; }
+    .dark .tag-blue { background: #1e3a5f; color: #93c5fd; }
+    .dark .tag-amber { background: #3b2f0f; color: #fcd34d; }
+    .dark .tag-rose { background: #4c1d24; color: #fda4af; }
+    .dark .tag-slate { background: #334155; color: #cbd5e1; }
+    .dark .tag-purple { background: #3b2c56; color: #d8b4fe; }
+
+    .note {
+      background: var(--primary-soft);
+      border-left: 4px solid var(--primary);
+      padding: .8rem 1rem;
+      border-radius: .75rem;
+      margin: 1rem 0;
+      font-size: .88rem;
+      color: var(--body-text);
+    }
+    .note strong { color: var(--primary-strong); }
+    .dark .note strong { color: #a5b4fc; }
+
+    footer {
+      text-align: center;
+      padding: 1.75rem 1.25rem 2.5rem;
+      color: var(--slate-400);
+      font-size: .82rem;
+      border-top: 1px solid var(--card-border);
+      max-width: 880px;
+      margin: 0 auto;
+    }
+    @media (max-width: 640px) {
+      header h1 { font-size: 1.45rem; }
+      header .back-link { top: .9rem; left: .9rem; padding: .4rem .6rem; font-size: .78rem; }
+      nav { gap: .25rem; padding: .5rem .75rem; }
+      nav a { font-size: .78rem; padding: .25rem .55rem; }
+      main { padding: 1.25rem .75rem 2.5rem; }
+      section { padding: 1.25rem 1rem; border-radius: .9rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="back-link" href="/">← Quay lại ứng dụng</a>
+  <div class="logo" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect>
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+      <path d="M12 11h4"></path><path d="M12 16h4"></path>
+      <path d="M8 11h.01"></path><path d="M8 16h.01"></path>
+    </svg>
+  </div>
+  <h1>iPlanner</h1>
+  <p>Hướng dẫn sử dụng hệ thống quản lý kế hoạch &amp; nhiệm vụ</p>
+</header>
+
+<nav>
+  <a href="#gioi-thieu">Giới thiệu</a>
+  <a href="#dang-nhap">Đăng nhập</a>
+  <a href="#dashboard">Dashboard</a>
+  <a href="#ke-hoach">Kế hoạch</a>
+  <a href="#nhiem-vu">Nhiệm vụ</a>
+  <a href="#chi-tiet-ke-hoach">Chi tiết KH</a>
+  <a href="#chi-tiet-nhiem-vu">Chi tiết NV</a>
+  <a href="#cham-cong">Chấm công</a>
+  <a href="#nghi-phep">Nghỉ phép</a>
+  <a href="#nhan-su">Nhân sự</a>
+  <a href="#bao-cao">Báo cáo</a>
+  <a href="#kpi">KPI</a>
+  <a href="#thong-bao">Thông báo</a>
+  <a href="#thong-tin-ca-nhan">Cá nhân</a>
+  <a href="#thung-rac">Thùng rác</a>
+  <a href="#quan-tri">Quản trị</a>
+  <a href="#phan-quyen">Phân quyền</a>
+  <a href="#mobile">Mobile</a>
+</nav>
+
+<main>
+
+<!-- 1. GIỚI THIỆU -->
+<section id="gioi-thieu">
+  <h2>1. Giới thiệu</h2>
+  <p>iPlanner là hệ thống quản lý kế hoạch và nhiệm vụ nội bộ, cho phép:</p>
+  <ul>
+    <li>Tạo và theo dõi kế hoạch, nhiệm vụ theo phòng ban</li>
+    <li>Phân công người thực hiện, giám sát, phối hợp</li>
+    <li>Quy trình làm việc: Nhận nhiệm vụ → Hoàn thành → Phê duyệt</li>
+    <li>Đề xuất gia hạn / hủy bỏ nhiệm vụ</li>
+    <li>Trao đổi, thảo luận kèm file đính kèm</li>
+    <li>Tính điểm KPI tự động cho nhiệm vụ đã hoàn thành</li>
+    <li>Đánh giá sao (1–5) khi phê duyệt nhiệm vụ</li>
+    <li>Chấm công WiFi và quản lý nghỉ phép</li>
+    <li>Quản lý hồ sơ nhân sự</li>
+    <li>Biểu đồ nhiệt tải công việc</li>
+    <li>Báo cáo thống kê theo trạng thái và phòng ban</li>
+    <li>Biểu đồ Gantt, Kanban, Calendar trực quan</li>
+    <li>Phân quyền chi tiết theo chức vụ</li>
+    <li>Phiên bản Mobile (PWA) cho thiết bị di động</li>
+  </ul>
+</section>
+
+<!-- 2. ĐĂNG NHẬP -->
+<section id="dang-nhap">
+  <h2>2. Đăng nhập</h2>
+  <p>Truy cập ứng dụng và đăng nhập bằng email và mật khẩu được cấp bởi quản trị viên.</p>
+  <h3>Màn hình đăng nhập</h3>
+  <ul>
+    <li>Nhập <strong>Email</strong> tài khoản</li>
+    <li>Nhập <strong>Mật khẩu</strong></li>
+    <li>Tích chọn <strong>Ghi nhớ đăng nhập</strong> để duy trì phiên làm việc</li>
+    <li>Nhấn <strong>Đăng nhập</strong></li>
+  </ul>
+  <div class="note">
+    <strong>Lưu ý:</strong> Nếu quên mật khẩu, liên hệ quản trị viên để được cấp lại.
+  </div>
+</section>
+
+<!-- 3. DASHBOARD -->
+<section id="dashboard">
+  <h2>3. Dashboard (Tổng quan)</h2>
+  <p>Trang tổng quan hiển thị các thông tin nổi bật:</p>
+  <h3>Thẻ trạng thái</h3>
+  <p>4 thẻ hiển thị số lượng nhiệm vụ: Chưa làm, Đang làm, Hoàn thành, Trễ hạn.</p>
+
+  <h3>Cảnh báo</h3>
+  <ul>
+    <li><strong>Chờ duyệt:</strong> Nhiệm vụ đang chờ bạn phê duyệt</li>
+    <li><strong>Sắp đến hạn:</strong> Nhiệm vụ còn &le; 3 ngày đến hạn</li>
+    <li><strong>Quá hạn:</strong> Nhiệm vụ đã quá hạn nhưng chưa hoàn thành</li>
+  </ul>
+
+  <h3>Biểu đồ nhiệt tải công việc</h3>
+  <p>Hiển thị mức độ tập trung nhiệm vụ theo ngày dưới dạng lưới màu (xanh &rarr; đỏ), giúp nhận biết nhanh thời điểm khối lượng công việc cao. Ô màu càng đậm càng nhiều nhiệm vụ đến hạn trong ngày đó. Có thể chọn nhân viên cụ thể (nếu có quyền) để xem tải của người đó.</p>
+
+  <h3>Kế hoạch gần đây</h3>
+  <p>Danh sách 5 kế hoạch mới nhất với tiến độ và trạng thái.</p>
+
+  <h3>Thống kê phòng ban</h3>
+  <p>Chọn tab "Kế hoạch" hoặc "Nhiệm vụ" để xem biểu đồ tròn phân bố theo phòng ban. Dữ liệu được lọc theo phạm vi xem của chức vụ (xem mục <a href="#phan-quyen">Phân quyền</a>).</p>
+
+  <h3>Tổng quan KPI</h3>
+  <p>Hiển thị số điểm KPI, điểm trung bình, số lượng xếp loại Xuất sắc và Tốt.</p>
+</section>
+
+<!-- 4. KẾ HOẠCH -->
+<section id="ke-hoach">
+  <h2>4. Kế hoạch &amp; Nhiệm vụ</h2>
+  <p>Trang quản lý kế hoạch và nhiệm vụ với nhiều chế độ xem khác nhau.</p>
+
+  <h3>4.1. Chế độ xem</h3>
+  <p>Có 3 chế độ xem, chuyển đổi qua các tab phía trên:</p>
+  <ul>
+    <li><strong>Danh sách:</strong> Bố cục hai cột: danh sách kế hoạch (trái) và danh sách nhiệm vụ (phải). Mặc định.</li>
+    <li><strong>Kanban:</strong> Hiển thị nhiệm vụ dưới dạng thẻ trên các cột trạng thái (Chưa làm / Đang làm / Chờ duyệt / Hoàn thành). Kéo-thả để thay đổi trạng thái (đối với thiết bị hỗ trợ).</li>
+    <li><strong>Calendar:</strong> Hiển thị kế hoạch trên lịch tháng, dễ dàng theo dõi thời gian bắt đầu / kết thúc.</li>
+  </ul>
+
+  <h3>4.2. Danh sách kế hoạch</h3>
+  <ul>
+    <li><strong>Tìm kiếm:</strong> Gõ từ khóa vào ô tìm kiếm để lọc kế hoạch theo tên</li>
+    <li><strong>Thêm kế hoạch:</strong> Nhấn nút <span class="tag tag-green">+</span> để mở form tạo kế hoạch mới</li>
+    <li><strong>Xuất dữ liệu:</strong> Nhấn nút <span class="tag tag-blue">Tải</span> để xuất danh sách ra Excel (.xlsx), CSV, hoặc JSON</li>
+    <li><strong>Nhập dữ liệu:</strong> Nhấn nút <span class="tag tag-amber">Tải lên</span> để nhập kế hoạch từ file</li>
+    <li><strong>Xóa hàng loạt:</strong> Tích chọn nhiều kế hoạch và nhấn "Xóa đã chọn"</li>
+    <li>Mỗi kế hoạch hiển thị: tên, trạng thái, phòng chủ trì, phòng phối hợp, thời gian, tiến độ, người phụ trách</li>
+    <li>Nhấn vào kế hoạch để xem danh sách nhiệm vụ bên phải</li>
+    <li>Nhấn biểu tượng <strong>chevron</strong> để xem chi tiết kế hoạch</li>
+    <li>Nhấn biểu tượng <strong>bút chì</strong> để sửa, <strong>thùng rác</strong> để xóa</li>
+  </ul>
+
+  <h3>4.3. Form tạo / sửa kế hoạch</h3>
+  <ul>
+    <li><strong>Tên:</strong> Bắt buộc</li>
+    <li><strong>Mô tả:</strong> Không bắt buộc</li>
+    <li><strong>Phòng chủ trì:</strong> Chọn phòng ban chịu trách nhiệm chính</li>
+    <li><strong>Phòng phối hợp:</strong> Chọn các phòng ban phối hợp (tối đa 10)</li>
+    <li><strong>Người phụ trách:</strong> Chọn người chịu trách nhiệm</li>
+    <li><strong>Ngày bắt đầu / Kết thúc:</strong> Bắt buộc, ngày kết thúc phải &ge; ngày bắt đầu</li>
+    <li><strong>Trạng thái:</strong> Chưa làm / Đang làm / Hoàn thành / Tạm dừng / Đã hủy</li>
+    <li><strong>Đột xuất / Trọng điểm:</strong> Đánh dấu nếu có</li>
+    <li><strong>Tiến độ:</strong> 0&ndash;100%</li>
+  </ul>
+
+  <h3>4.4. Danh sách nhiệm vụ</h3>
+  <p>Hiển thị khi chọn một kế hoạch bên trái hoặc chọn "Nhiệm vụ khác" của một phòng ban.</p>
+  <ul>
+    <li><strong>Xuất / Nhập / Thêm:</strong> Tương tự kế hoạch</li>
+    <li><strong>Xóa hàng loạt:</strong> Tích chọn nhiều nhiệm vụ và nhấn "Xóa đã chọn"</li>
+    <li>Bảng hiển thị: tên nhiệm vụ, người thực hiện, người giám sát, hạn chót, trọng số</li>
+    <li>Nhấn vào một nhiệm vụ để xem chi tiết</li>
+  </ul>
+
+  <h3>4.5. Nhiệm vụ không thuộc kế hoạch</h3>
+  <p>Ở cuối danh sách kế hoạch, mục "Nhiệm vụ khác" hiển thị các nhiệm vụ chưa được gán vào kế hoạch nào, được nhóm theo phòng ban.</p>
+
+  <div class="note">
+    <strong>Mẹo:</strong> Sử dụng ô tìm kiếm để nhanh chóng tìm kế hoạch theo tên. Kết quả được debounce 300ms để tránh gọi API quá nhiều. Chế độ Kanban phù hợp để theo dõi tiến độ công việc trực quan.
+  </div>
+</section>
+
+<!-- 5. CHI TIẾT KẾ HOẠCH -->
+<section id="chi-tiet-ke-hoach">
+  <h2>5. Chi tiết kế hoạch</h2>
+  <p>Trang chi tiết của một kế hoạch, gồm hai tab:</p>
+
+  <h3>5.1. Tab "Thông tin &amp; Nhiệm vụ"</h3>
+  <ul>
+    <li><strong>Thông tin kế hoạch:</strong> Hiển thị đầy đủ thông tin + biểu đồ tròn tiến độ</li>
+    <li><strong>Danh sách nhiệm vụ:</strong> Cột trái, chọn một nhiệm vụ để xem thông tin bên phải</li>
+    <li><strong>Chi tiết nhiệm vụ (cột phải):</strong> Tab "Thông tin" và "Trao đổi" (CommentSection)</li>
+    <li>Nhấn "Xem chi tiết" để mở trang chi tiết nhiệm vụ</li>
+    <li>Nhấn nút <strong>Sửa</strong> / <strong>Xóa</strong> ở header để thao tác trên kế hoạch</li>
+  </ul>
+
+  <h3>5.2. Tab "Biểu đồ Gantt"</h3>
+  <p>Hiển thị các nhiệm vụ dưới dạng thanh ngang trên dòng thời gian, màu sắc tương ứng trạng thái:</p>
+  <ul>
+    <li><span class="tag tag-green">Xanh lá</span> &mdash; Hoàn thành</li>
+    <li><span class="tag tag-blue">Xanh dương</span> &mdash; Đang làm</li>
+    <li><span class="tag tag-amber">Vàng</span> &mdash; Chờ duyệt</li>
+    <li><span class="tag tag-purple">Tím</span> &mdash; Đề xuất gia hạn</li>
+    <li><span class="tag tag-rose">Hồng</span> &mdash; Đề xuất hủy</li>
+    <li><span class="tag tag-slate">Xám</span> &mdash; Đã hủy</li>
+  </ul>
+</section>
+
+<!-- 6. CHI TIẾT NHIỆM VỤ -->
+<section id="chi-tiet-nhiem-vu">
+  <h2>6. Chi tiết nhiệm vụ</h2>
+  <p>Trang chi tiết của một nhiệm vụ với các thao tác và thông tin đầy đủ.</p>
+
+  <h3>6.1. Thông tin nhiệm vụ</h3>
+  <ul>
+    <li>Tên, mô tả, người thực hiện, người giám sát, người phối hợp</li>
+    <li>Ngày bắt đầu, hạn chót (hiển thị "Quá hạn" nếu trễ)</li>
+    <li>Trọng số (%), phân loại (Thường / Đột xuất / Quan trọng)</li>
+  </ul>
+
+  <h3>6.2. Quy trình làm việc (Workflow)</h3>
+  <table>
+    <tr><th>Trạng thái</th><th>Người thao tác</th><th>Hành động</th><th>Kết quả</th></tr>
+    <tr><td>Chưa thực hiện</td><td>Người thực hiện</td><td>Nhấn "Nhận nhiệm vụ"</td><td>&rarr; Đang làm</td></tr>
+    <tr><td>Đang làm</td><td>Người thực hiện</td><td>Nhấn "Hoàn thành"</td><td>&rarr; Chờ duyệt</td></tr>
+    <tr><td>Chờ duyệt</td><td>Người giám sát / Phụ trách KH</td><td>Nhấn "Phê duyệt"</td><td>&rarr; Hoàn thành (mở modal đánh giá)</td></tr>
+    <tr><td>Chờ duyệt</td><td>Người giám sát / Phụ trách KH</td><td>Nhấn "Từ chối"</td><td>&rarr; Đang làm</td></tr>
+  </table>
+
+  <h3>6.3. Đánh giá sao (Rating)</h3>
+  <p>Khi phê duyệt nhiệm vụ, hệ thống hiển thị modal đánh giá với các tiêu chí (2&ndash;5 sao):</p>
+  <ul>
+    <li><strong>Chất lượng:</strong> Mức độ đáp ứng yêu cầu</li>
+    <li><strong>Tiến độ:</strong> Đúng hạn hay trễ</li>
+    <li><strong>Mức độ khó:</strong> Độ phức tạp của nhiệm vụ</li>
+    <li>Nhấn "Xác nhận" để hoàn tất phê duyệt hoặc "Bỏ qua đánh giá" nếu không muốn đánh giá</li>
+  </ul>
+
+  <h3>6.4. Điểm KPI</h3>
+  <p>Khi nhiệm vụ được hoàn thành, hệ thống tự động tính điểm KPI bao gồm: điểm cơ bản, hệ số khó, điểm tiến độ, xếp loại (1&ndash;5), điểm cuối.</p>
+
+  <h3>6.5. Đề xuất (Proposal)</h3>
+  <p>Người thực hiện có thể gửi đề xuất:</p>
+  <ul>
+    <li><strong>Gia hạn:</strong> Chọn ngày hạn mới + lý do</li>
+    <li><strong>Hủy bỏ:</strong> Nhập lý do</li>
+    <li>Người giám sát / phụ trách kế hoạch sẽ nhận được thông báo và có thể Duyệt / Từ chối</li>
+  </ul>
+
+  <h3>6.6. Trao đổi (Comments)</h3>
+  <ul>
+    <li>Thảo luận theo nhiệm vụ, có đề cập (@tên) và đính kèm file</li>
+    <li>File ảnh (PNG, JPG, GIF) hiển thị trực tiếp; file khác (PDF, DOC, XLSX, CSV) cho tải xuống</li>
+    <li>Sửa / xóa bình luận trong vòng 1 giờ</li>
+    <li>Người được đề cập và người tham gia nhiệm vụ nhận thông báo</li>
+  </ul>
+</section>
+
+<!-- 7. CHẤM CÔNG -->
+<section id="cham-cong">
+  <h2>7. Chấm công WiFi</h2>
+  <p>Trang chấm công cho phép người dùng check-in / check-out hàng ngày dựa trên mạng WiFi nội bộ.</p>
+
+  <h3>7.1. Check-in / Check-out</h3>
+  <ul>
+    <li>Nhấn nút <strong>Check-in</strong> để bắt đầu ca làm việc (tạo bản ghi chấm công trong ngày)</li>
+    <li>Nhấn nút <strong>Check-out</strong> để kết thúc ca làm việc</li>
+    <li>Hệ thống tự động ghi nhận thời gian, và kiểm tra tên WiFi hiện tại có khớp với cấu hình không</li>
+  </ul>
+
+  <h3>7.2. Lịch sử chấm công</h3>
+  <ul>
+    <li>Bảng hiển thị danh sách bản ghi chấm công theo tháng</li>
+    <li>Có thể lọc theo tháng và năm</li>
+    <li>Hiển thị: ngày, giờ check-in, giờ check-out, tổng giờ, trạng thái (đúng giờ / đi muộn / về sớm)</li>
+  </ul>
+
+  <div class="note">
+    <strong>Lưu ý:</strong> Trên trình duyệt web, không thể đọc tên WiFi thực tế. Hệ thống sử dụng cơ chế tin cậy (trust-based): người dùng check-in, hệ thống ghi nhận nhưng không xác thực SSID. Trên phiên bản mobile (Android), ứng dụng có thể đọc SSID thực qua <code>react-native-wifi-reborn</code> để xác thực.
+  </div>
+</section>
+
+<!-- 8. NGHỈ PHÉP -->
+<section id="nghi-phep">
+  <h2>8. Nghỉ phép</h2>
+  <p>Trang quản lý đơn nghỉ phép và số dư ngày phép của người dùng.</p>
+
+  <h3>8.1. Danh sách đơn nghỉ phép</h3>
+  <ul>
+    <li>Hiển thị các đơn nghỉ phép của người dùng (và của cấp dưới nếu có quyền)</li>
+    <li>Trạng thái: Chờ duyệt / Đã duyệt / Từ chối / Đã hủy</li>
+    <li>Nhấn vào đơn để xem chi tiết</li>
+  </ul>
+
+  <h3>8.2. Tạo đơn nghỉ phép</h3>
+  <ul>
+    <li>Chọn <strong>Loại nghỉ:</strong> Nghỉ phép năm, Nghỉ ốm, Nghỉ việc riêng, Nghỉ không lương</li>
+    <li>Chọn <strong>Ngày bắt đầu</strong> và <strong>Ngày kết thúc</strong></li>
+    <li>Nhập <strong>Lý do</strong> và <strong>Ghi chú</strong> (không bắt buộc)</li>
+    <li>Hệ thống tự động kiểm tra số dư ngày phép còn lại</li>
+    <li>Người quản lý / phụ trách nhận thông báo khi có đơn mới</li>
+  </ul>
+
+  <h3>8.3. Số dư ngày phép</h3>
+  <p>Hiển thị số ngày phép đã dùng và còn lại trong năm. Được thiết lập bởi quản trị viên.</p>
+</section>
+
+<!-- 9. NHÂN SỰ -->
+<section id="nhan-su">
+  <h2>9. Nhân sự (HR)</h2>
+  <p>Trang quản lý hồ sơ nhân sự, chỉ dành cho quản trị viên (<strong>can_manage = true</strong>).</p>
+
+  <h3>9.1. Danh sách nhân sự</h3>
+  <ul>
+    <li>Hiển thị danh sách nhân viên kèm: họ tên, email, phòng ban, chức vụ, số điện thoại, trạng thái</li>
+    <li>Tìm kiếm theo tên hoặc email</li>
+    <li>Lọc theo phòng ban</li>
+    <li>Nhấn vào một nhân sự để xem chi tiết</li>
+  </ul>
+
+  <h3>9.2. Hồ sơ nhân sự</h3>
+  <ul>
+    <li><strong>Thông tin cơ bản:</strong> Họ tên, ngày sinh, giới tính, số CMND/CCCD, địa chỉ</li>
+    <li><strong>Thông tin công việc:</strong> Mã nhân viên, phòng ban, chức vụ, ngày vào làm, loại hợp đồng</li>
+    <li><strong>Trình độ &amp; Bằng cấp:</strong> Học vấn, chuyên ngành, trường, năm tốt nghiệp</li>
+    <li><strong>Bảo hiểm &amp; Thuế:</strong> Số BHXH, mã số thuế</li>
+    <li><strong>Thông tin khẩn cấp:</strong> Người liên hệ, số điện thoại, quan hệ</li>
+  </ul>
+</section>
+
+<!-- 10. BÁO CÁO -->
+<section id="bao-cao">
+  <h2>10. Báo cáo &amp; Thống kê</h2>
+  <ul>
+    <li><strong>Bộ lọc:</strong> Lọc theo phòng ban (chỉ phòng có <em>is_counted</em>) và trạng thái nhiệm vụ</li>
+    <li><strong>Thống kê trạng thái:</strong> Biểu đồ thanh ngang hiển thị phân bố nhiệm vụ theo trạng thái (Đang làm / Chờ duyệt / Hoàn thành / Đề xuất gia hạn / Đề xuất hủy / Đã hủy)</li>
+    <li><strong>Thống kê phòng ban:</strong> Biểu đồ thanh ngang hiển thị phân bố nhiệm vụ theo phòng ban</li>
+    <li><strong>Chi tiết phòng ban:</strong> Biểu đồ thanh chồng chi tiết cho từng phòng (kế hoạch + nhiệm vụ)</li>
+    <li><strong>Xuất Excel:</strong> Nhấn nút "Xuất Excel" để tải báo cáo dạng file .xlsx</li>
+  </ul>
+</section>
+
+<!-- 11. KPI -->
+<section id="kpi">
+  <h2>11. Điểm KPI &amp; Đánh giá</h2>
+  <ul>
+    <li><strong>Thẻ thống kê:</strong> Số nhiệm vụ hoàn thành, tổng nhiệm vụ, số điểm KPI, số người dùng</li>
+    <li><strong>Tính KPI:</strong> Nhấn nút "Tính KPI (N)" để tự động tính điểm cho các nhiệm vụ đã hoàn thành nhưng chưa có điểm</li>
+    <li><strong>Biểu đồ cột:</strong> Điểm KPI trung bình theo người dùng</li>
+    <li><strong>Biểu đồ tròn:</strong> Phân bố xếp loại (Xuất sắc / Tốt / Khá / Trung bình / Cần cải thiện)</li>
+    <li><strong>Bảng KPI người dùng:</strong> Danh sách người dùng kèm số NV hoàn thành, tổng trọng số, điểm TB, xếp loại</li>
+    <li><strong>Bảng chi tiết KPI:</strong> Điểm chi tiết từng nhiệm vụ (cơ bản, hệ số khó, tiến độ, kết quả, tổng)</li>
+  </ul>
+
+  <h3>Thang xếp loại</h3>
+  <table>
+    <tr><th>Điểm</th><th>Xếp loại</th></tr>
+    <tr><td>&ge; 90</td><td><span class="tag tag-green">Xuất sắc</span></td></tr>
+    <tr><td>70 &ndash; &lt;90</td><td><span class="tag tag-blue">Tốt</span></td></tr>
+    <tr><td>50 &ndash; &lt;70</td><td><span class="tag tag-amber">Khá</span></td></tr>
+    <tr><td>30 &ndash; &lt;50</td><td><span class="tag tag-rose">Trung bình</span></td></tr>
+    <tr><td>&lt; 30</td><td>Cần cải thiện</td></tr>
+  </table>
+</section>
+
+<!-- 12. THÔNG BÁO -->
+<section id="thong-bao">
+  <h2>12. Thông báo</h2>
+  <p>Trang hiển thị tất cả thông báo của người dùng, phân trang và có bộ lọc.</p>
+  <ul>
+    <li><strong>Danh sách thông báo:</strong> Hiển thị tất cả thông báo theo thời gian (mới nhất trước)</li>
+    <li><strong>Phân trang:</strong> Mỗi trang 20 thông báo, có thể chuyển trang</li>
+    <li><strong>Lọc:</strong> Lọc theo loại thông báo (nhiệm vụ, bình luận, đề xuất, phê duyệt, hệ thống)</li>
+    <li><strong>Đã đọc / Chưa đọc:</strong> In đậm thông báo chưa đọc. Nhấn vào để đánh dấu đã đọc và điều hướng</li>
+    <li>Người dùng không thể tự xóa thông báo</li>
+  </ul>
+  <div class="note">
+    <strong>Mẹo:</strong> Nhấn vào biểu tượng chuông ở header để xem nhanh thông báo gần đây, hoặc nhấn "Xem tất cả" để mở trang đầy đủ.
+  </div>
+</section>
+
+<!-- 13. THÔNG TIN CÁ NHÂN -->
+<section id="thong-tin-ca-nhan">
+  <h2>13. Thông tin cá nhân</h2>
+  <ul>
+    <li><strong>Họ tên:</strong> Cập nhật tên hiển thị</li>
+    <li><strong>Nhắc hạn trước (ngày):</strong> Số ngày trước hạn để nhận thông báo (mặc định 2 ngày)</li>
+    <li><strong>Đổi mật khẩu:</strong> Nhập mật khẩu hiện tại, mật khẩu mới (tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường và số)</li>
+  </ul>
+</section>
+
+<!-- 14. THÙNG RÁC -->
+<section id="thung-rac">
+  <h2>14. Thùng rác</h2>
+  <p>Chỉ quản trị viên (<strong>can_manage = true</strong>) mới có quyền truy cập.</p>
+  <ul>
+    <li>Chọn tab "Kế hoạch" hoặc "Nhiệm vụ"</li>
+    <li>Danh sách các mục đã xóa mềm (soft-deleted)</li>
+    <li><strong>Khôi phục:</strong> Nhấn nút "Khôi phục" để đưa mục trở lại</li>
+    <li><strong>Xóa vĩnh viễn:</strong> Nhấn "Xóa hẳn", sau đó xác nhận. <strong>Không thể hoàn tác!</strong></li>
+  </ul>
+</section>
+
+<!-- 15. QUẢN TRỊ -->
+<section id="quan-tri">
+  <h2>15. Quản trị hệ thống</h2>
+  <p>Chỉ quản trị viên (<strong>can_manage = true</strong>) mới có quyền truy cập. Gồm 3 tab trong trang Quản trị:</p>
+
+  <h3>15.1. Phòng ban</h3>
+  <ul>
+    <li>Thêm / Sửa / Xóa phòng ban</li>
+    <li>Mỗi phòng ban có: mã, tên, trưởng phòng, đánh dấu tính báo cáo</li>
+    <li>Chỉ phòng có <strong>Tính báo cáo</strong> mới xuất hiện trong thống kê</li>
+  </ul>
+
+  <h3>15.2. Chức vụ</h3>
+  <ul>
+    <li>Thêm / Sửa / Xóa chức vụ</li>
+    <li>Mỗi chức vụ có: mã, tên, mô tả, cấp bậc, phạm vi xem, các quyền CRUD</li>
+    <li>Xem chi tiết quyền ở mục <a href="#phan-quyen">Phân quyền</a></li>
+  </ul>
+
+  <h3>15.3. Người dùng</h3>
+  <ul>
+    <li>Thêm / Sửa người dùng</li>
+    <li>Gán phòng ban, chức vụ, số ngày nhắc hạn</li>
+    <li>Kích hoạt / Vô hiệu hóa tài khoản (verified)</li>
+    <li>Đặt lại mật khẩu</li>
+  </ul>
+
+  <h3>15.4. Nhật ký</h3>
+  <p>Trang riêng tại <code>/admin/logs</code>. Xem nhật ký hoạt động: thời gian, người dùng, hành động, mục tiêu, IP. Phân trang. Các hành động được ghi lại: đăng nhập, đăng xuất, tạo/sửa/xóa người dùng.</p>
+
+  <h3>15.5. Dữ liệu</h3>
+  <p>Trang riêng tại <code>/admin/data</code>.</p>
+  <ul>
+    <li><strong>Xuất:</strong> Chọn collection (kế hoạch, nhiệm vụ, người dùng, chức vụ, phòng ban) và định dạng (xlsx/csv/json)</li>
+    <li><strong>Nhập:</strong> Dán JSON hoặc tải file lên; tải file mẫu trước khi nhập</li>
+    <li><strong>Sao lưu:</strong> Tạo bản sao lưu toàn bộ dữ liệu (tải file .zip)</li>
+    <li><strong>Khôi phục:</strong> Tải file sao lưu lên để khôi phục. <strong>Cần xác nhận trước khi thực hiện.</strong></li>
+  </ul>
+</section>
+
+<!-- 16. PHÂN QUYỀN -->
+<section id="phan-quyen">
+  <h2>16. Phân quyền</h2>
+  <p>Hệ thống phân quyền dựa trên chức vụ (Role), mỗi chức vụ có các quyền sau:</p>
+
+  <h3>16.1. Cấp bậc (Level)</h3>
+  <ul>
+    <li><strong>Leadership:</strong> Lãnh đạo</li>
+    <li><strong>Management:</strong> Quản lý</li>
+    <li><strong>Employee:</strong> Nhân viên</li>
+  </ul>
+
+  <h3>16.2. Phạm vi xem (View Scope)</h3>
+  <table>
+    <tr><th>Phạm vi</th><th>Dữ liệu hiển thị trên Dashboard</th></tr>
+    <tr><td><strong>all</strong></td><td>Tất cả kế hoạch / nhiệm vụ trong hệ thống</td></tr>
+    <tr><td><strong>department</strong></td><td>Chỉ kế hoạch / nhiệm vụ thuộc phòng ban của người dùng</td></tr>
+    <tr><td><strong>personal</strong></td><td>Chỉ nhiệm vụ cá nhân (người thực hiện / giám sát / phối hợp)</td></tr>
+  </table>
+
+  <h3>16.3. Quyền CRUD</h3>
+  <table>
+    <tr><th>Quyền</th><th>Mô tả</th></tr>
+    <tr><td>can_add_plans</td><td>Thêm kế hoạch mới</td></tr>
+    <tr><td>can_edit_plans</td><td>Sửa kế hoạch</td></tr>
+    <tr><td>can_delete_plans</td><td>Xóa kế hoạch</td></tr>
+    <tr><td>can_add_tasks</td><td>Thêm nhiệm vụ mới</td></tr>
+    <tr><td>can_edit_tasks</td><td>Sửa nhiệm vụ</td></tr>
+    <tr><td>can_delete_tasks</td><td>Xóa nhiệm vụ</td></tr>
+    <tr><td><strong>can_manage</strong></td><td>Quản trị toàn hệ thống (Admin &amp; Thùng rác)</td></tr>
+  </table>
+
+  <div class="note">
+    <strong>Lưu ý:</strong> Quyền <strong>can_manage</strong> là quyền cao nhất, cho phép truy cập trang Quản trị, Nhân sự, Thùng rác. Chỉ nên cấp cho những người dùng tin cậy.
+  </div>
+</section>
+
+<!-- 17. MOBILE -->
+<section id="mobile">
+  <h2>17. Phiên bản Mobile</h2>
+  <p>iPlanner có phiên bản dành cho thiết bị di động, tối ưu giao diện cảm ứng. Truy cập qua đường dẫn <code>/m/*</code> hoặc sử dụng ứng dụng di động (React Native).</p>
+
+  <h3>17.1. Các chức năng Mobile</h3>
+  <ul>
+    <li><strong>Dashboard:</strong> <code>/m</code> &mdash; Tổng quan nhiệm vụ, thẻ trạng thái, cảnh báo</li>
+    <li><strong>Nhiệm vụ:</strong> <code>/m/tasks</code> &mdash; Danh sách nhiệm vụ, xem chi tiết, cập nhật trạng thái</li>
+    <li><strong>Chấm công:</strong> <code>/m/attendance</code> &mdash; Check-in / Check-out với xác thực WiFi</li>
+    <li><strong>Cá nhân:</strong> <code>/m/profile</code> &mdash; Thông tin cá nhân, đổi mật khẩu</li>
+  </ul>
+
+  <h3>17.2. Chấm công trên Mobile</h3>
+  <p>Trên thiết bị Android, ứng dụng có thể đọc tên WiFi thực tế thông qua <code>react-native-wifi-reborn</code>, cho phép xác thực chấm công tự động dựa trên mạng WiFi nội bộ. iOS không hỗ trợ đọc SSID kể từ iOS 13+.</p>
+
+  <h3>17.3. PWA (Progressive Web App)</h3>
+  <p>Phiên bản web trên trình duyệt di động có thể được cài đặt như một ứng dụng (Add to Home Screen) để trải nghiệm gần giống app native.</p>
+</section>
+
+</main>
+
+<footer>
+  iPlanner &copy; 2026 &mdash; Hướng dẫn sử dụng &middot; <a href="/">Quay lại ứng dụng</a>
+</footer>
+
+</body>
+</html>

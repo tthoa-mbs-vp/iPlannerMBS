@@ -1,0 +1,13 @@
+version: "3.8"
+services:
+  pocketbase:
+    image: pocketbase/pocketbase:latest
+    container_name: mbs-planner-pb
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./pb_data:/pb/pb_data
+      - ./pb_hooks:/pb/pb_hooks
+      - ./pb_migrations:/pb/pb_migrations
+    command: ["serve", "--http=0.0.0.0:8090"]
+    restart: unless-stopped

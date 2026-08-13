@@ -1,0 +1,247 @@
+@import "tailwindcss";
+
+/* HMR test */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+.dark {
+  color-scheme: dark;
+
+  /* Low shades (50/100/200/300) are used as surfaces, tints, borders and
+     gradient stops. Remap them to dark values so EVERY usage — including
+     hover/focus/odd-even (zebra)/opacity (bg-slate-50/50)/gradient variants —
+     follows the theme automatically. Higher shades (400+) are left untouched
+     because they double as text-on-colored and solid button colors. */
+  --color-slate-50: #263349;
+  --color-slate-100: #2c3c56;
+  --color-slate-200: #354862;
+  --color-slate-300: #41536f;
+
+  --color-indigo-50: #263661;
+  --color-indigo-100: #3a4f8e;
+  --color-indigo-200: #334a80;
+  --color-indigo-300: #3f5a99;
+  --color-blue-50: #203a66;
+  --color-blue-100: #335086;
+  --color-blue-200: #2f5189;
+  --color-blue-300: #3c64a8;
+  --color-purple-50: #322a63;
+  --color-purple-100: #4a3a8a;
+  --color-purple-200: #483a94;
+  --color-purple-300: #5b48b5;
+  --color-violet-50: #322a63;
+  --color-violet-100: #4a3a8a;
+  --color-violet-200: #483a94;
+  --color-violet-300: #5b48b5;
+  --color-emerald-50: #103a2c;
+  --color-emerald-100: #17533b;
+  --color-emerald-200: #1d5a41;
+  --color-emerald-300: #27755b;
+  --color-teal-50: #103a35;
+  --color-teal-100: #17534a;
+  --color-teal-200: #1d5a52;
+  --color-teal-300: #27756b;
+  --color-green-50: #103a2c;
+  --color-green-100: #17533b;
+  --color-green-200: #1d5a41;
+  --color-green-300: #27755b;
+  --color-amber-50: #3c3212;
+  --color-amber-100: #5a4a16;
+  --color-amber-200: #6e581e;
+  --color-amber-300: #8a7026;
+  --color-yellow-50: #3c3710;
+  --color-yellow-100: #5a5015;
+  --color-yellow-200: #6e631f;
+  --color-yellow-300: #8a7d26;
+  --color-orange-50: #412b12;
+  --color-orange-100: #603f18;
+  --color-orange-200: #7a4e1d;
+  --color-orange-300: #996026;
+  --color-red-50: #472626;
+  --color-red-100: #663434;
+  --color-red-200: #823838;
+  --color-red-300: #a14646;
+  --color-rose-50: #47262e;
+  --color-rose-100: #663443;
+  --color-rose-200: #823847;
+  --color-rose-300: #a14659;
+  --color-pink-50: #47262e;
+  --color-pink-100: #663443;
+  --color-pink-200: #823847;
+  --color-pink-300: #a14659;
+  --color-cyan-50: #103840;
+  --color-cyan-100: #17525e;
+  --color-cyan-200: #1d5663;
+  --color-cyan-300: #277078;
+  --color-fuchsia-50: #472640;
+  --color-fuchsia-100: #66345a;
+  --color-fuchsia-200: #82385e;
+  --color-fuchsia-300: #a14675;
+}
+
+.dark body {
+  background-color: #0f172a;
+}
+
+/* ---- Surfaces ---- */
+/* --color-white is kept untouched (still used by text-white/borders), so
+   bg-white is remapped with a rule. Low shades (slate-50..300, tinted
+   50/100/200/300) are driven by the variables above. */
+.dark .bg-white {
+  background-color: #1e293b;
+}
+.dark .bg-slate-400 {
+  background-color: #64748b;
+}
+.dark .bg-slate-500 {
+  background-color: #94a3b8;
+}
+.dark .bg-slate-700 {
+  background-color: #334155;
+}
+.dark .bg-slate-800 {
+  background-color: #1e293b;
+}
+
+/* ---- Borders ---- */
+.dark .border-slate-400 {
+  border-color: #64748b;
+}
+
+/* ---- Text ---- */
+.dark .text-slate-400 { color: #94a3b8; }
+.dark .text-slate-500 { color: #a9b6c8; }
+.dark .text-slate-600 { color: #cbd5e1; }
+.dark .text-slate-700 { color: #e2e8f0; }
+.dark .text-slate-800 { color: #f1f5f9; }
+.dark .text-slate-900 { color: #f8fafc; }
+
+.dark .text-indigo-500 { color: #818cf8; }
+.dark .text-indigo-600 { color: #818cf8; }
+.dark .text-indigo-700 { color: #a5b4fc; }
+.dark .text-indigo-800 { color: #c7d2fe; }
+.dark .text-indigo-900 { color: #e0e7ff; }
+.dark .text-blue-500 { color: #60a5fa; }
+.dark .text-blue-600 { color: #60a5fa; }
+.dark .text-blue-700 { color: #93c5fd; }
+.dark .text-blue-800 { color: #bfdbfe; }
+.dark .text-purple-500 { color: #a78bfa; }
+.dark .text-purple-600 { color: #a78bfa; }
+.dark .text-purple-700 { color: #c4b5fd; }
+.dark .text-violet-500 { color: #a78bfa; }
+.dark .text-violet-600 { color: #a78bfa; }
+.dark .text-emerald-500 { color: #34d399; }
+.dark .text-emerald-600 { color: #34d399; }
+.dark .text-emerald-700 { color: #6ee7b7; }
+.dark .text-teal-500 { color: #2dd4bf; }
+.dark .text-teal-600 { color: #2dd4bf; }
+.dark .text-amber-500 { color: #fbbf24; }
+.dark .text-amber-600 { color: #fbbf24; }
+.dark .text-amber-700 { color: #fcd34d; }
+.dark .text-yellow-500 { color: #facc15; }
+.dark .text-yellow-600 { color: #facc15; }
+.dark .text-orange-500 { color: #fb923c; }
+.dark .text-orange-600 { color: #fb923c; }
+.dark .text-red-500 { color: #f87171; }
+.dark .text-red-600 { color: #f87171; }
+.dark .text-red-700 { color: #fca5a5; }
+.dark .text-rose-500 { color: #fb7185; }
+.dark .text-rose-600 { color: #fb7185; }
+.dark .text-green-500 { color: #34d399; }
+.dark .text-green-600 { color: #34d399; }
+.dark .text-cyan-500 { color: #22d3ee; }
+.dark .text-cyan-600 { color: #22d3ee; }
+.dark .text-pink-500 { color: #f472b6; }
+.dark .text-pink-600 { color: #f472b6; }
+
+/* Additional deep shades used by badges / table headers */
+.dark .text-amber-800 { color: #fde68a; }
+.dark .text-blue-900 { color: #dbeafe; }
+.dark .text-cyan-700 { color: #67e8f9; }
+.dark .text-emerald-800 { color: #a7f3d0; }
+.dark .text-orange-700 { color: #fdba74; }
+.dark .text-rose-700 { color: #fda4af; }
+.dark .text-rose-800 { color: #fecdd3; }
+.dark .text-teal-700 { color: #5eead4; }
+.dark .text-violet-700 { color: #c4b5fd; }
+.dark .text-gray-600 { color: #cbd5e1; }
+
+/* ---- Text on colored backgrounds ---- */
+/* Low shades are dark now; restore light text that sits on colored (500+)
+   or unremapped backgrounds so it stays readable (e.g. chat bubbles,
+   badges on solid buttons). */
+.dark .text-slate-50 { color: #f8fafc; }
+.dark .text-slate-200 { color: #e2e8f0; }
+.dark .text-slate-300 { color: #cbd5e1; }
+.dark .text-amber-50 { color: #fffbeb; }
+.dark .text-amber-300 { color: #fcd34d; }
+.dark .text-blue-50 { color: #eff6ff; }
+.dark .text-blue-200 { color: #bfdbfe; }
+.dark .text-emerald-50 { color: #ecfdf5; }
+.dark .text-emerald-300 { color: #6ee7b7; }
+.dark .text-indigo-50 { color: #eef2ff; }
+.dark .text-indigo-100 { color: #e0e7ff; }
+.dark .text-indigo-200 { color: #c7d2fe; }
+.dark .text-indigo-300 { color: #a5b4fc; }
+.dark .text-purple-50 { color: #faf5ff; }
+.dark .text-red-50 { color: #fef2f2; }
+.dark .text-red-200 { color: #fecaca; }
+.dark .text-rose-50 { color: #fff1f2; }
+.dark .text-teal-50 { color: #f0fdfa; }
+.dark .text-yellow-50 { color: #fefce8; }
+
+/* ---- Hover / group-hover text variants ---- */
+/* These target 400+ shades whose variables are not remapped, so hover text
+   must be brightened explicitly. Kept after the base text rules so they win
+   the cascade for elements that combine base + hover text classes. */
+.dark .hover\:text-slate-200:hover { color: #e2e8f0; }
+.dark .hover\:text-slate-600:hover { color: #cbd5e1; }
+.dark .hover\:text-slate-700:hover { color: #e2e8f0; }
+.dark .hover\:text-indigo-50:hover { color: #eef2ff; }
+.dark .hover\:text-indigo-500:hover { color: #818cf8; }
+.dark .hover\:text-indigo-600:hover { color: #818cf8; }
+.dark .hover\:text-indigo-700:hover { color: #a5b4fc; }
+.dark .hover\:text-indigo-800:hover { color: #c7d2fe; }
+.dark .hover\:text-blue-50:hover { color: #eff6ff; }
+.dark .hover\:text-blue-500:hover { color: #60a5fa; }
+.dark .hover\:text-blue-600:hover { color: #60a5fa; }
+.dark .hover\:text-emerald-600:hover { color: #34d399; }
+.dark .hover\:text-emerald-700:hover { color: #6ee7b7; }
+.dark .hover\:text-red-50:hover { color: #fef2f2; }
+.dark .hover\:text-red-500:hover { color: #f87171; }
+.dark .hover\:text-red-600:hover { color: #f87171; }
+.dark .hover\:text-red-700:hover { color: #fca5a5; }
+.dark .hover\:text-amber-700:hover { color: #fcd34d; }
+.dark .hover\:text-rose-600:hover { color: #fb7185; }
+.dark .group-hover\:text-indigo-50:is(:where(.group):hover *) { color: #eef2ff; }
+.dark .group-hover\:text-indigo-500:is(:where(.group):hover *) { color: #818cf8; }
+.dark .group-hover\:text-indigo-600:is(:where(.group):hover *) { color: #818cf8; }
+.dark .group-hover\:text-indigo-700:is(:where(.group):hover *) { color: #a5b4fc; }
+
+/* ---- Shadows ---- */
+.dark .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.35); }
+.dark .shadow { box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.35), 0 1px 2px -1px rgba(0, 0, 0, 0.35); }
+.dark .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.45), 0 2px 4px -2px rgba(0, 0, 0, 0.45); }
+.dark .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5); }
+.dark .shadow-xl { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.55), 0 8px 10px -6px rgba(0, 0, 0, 0.55); }
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.dark .scrollbar-thin {
+  scrollbar-color: #475569 transparent;
+}
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 9999px;
+}
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #475569;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}

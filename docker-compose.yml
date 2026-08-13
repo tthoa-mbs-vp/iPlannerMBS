@@ -1,0 +1,64 @@
+services:
+  pocketbase:
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:8090/api/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mbs-planner-pb
+    ports:
+      # Bind 8090 chỉ trên localhost — cổng vào duy nhất từ bên ngoài là nginx
+      # (xem backend/deploy/nginx.conf.example). Khi PB nằm sau reverse proxy,
+      # xoá luôn dòng này để PocketBase không thể bị truy cập trực tiếp.
+      - "127.0.0.1:8090:8090"
+    environment:
+      # When PocketBase runs behind a reverse proxy (nginx/caddy), set PB_TRUST_PROXY=true
+      # (e.g. in a .env file) so requestInfo().remoteIP() returns the real client IP instead
+      # of the proxy's — required for the attendance check-in IP verification to work.
+      # SECURITY: only enable when the proxy overwrites X-Forwarded-For AND the PocketBase
+      # port (8090) is NOT reachable directly by clients — otherwise anyone can spoof their
+      # IP via the X-Forwarded-For header.
+      - PB_TRUST_PROXY=${PB_TRUST_PROXY:-false}
+      # Company timezone: since M1, check-in/check-out are stamped server-side and the
+      # on_time/late status in backend/pb_hooks/guards.pb.js is derived with server-local
+      # Date methods (new Date().getHours()). The container must run in company time or
+      # late detection is off by the UTC offset. Adjust for your locale if not VN.
+      - TZ=Asia/Ho_Chi_Minh
+    volumes:
+      - ./backend/pb_data:/pb/pb_data
+      - ./backend/pb_hooks:/pb/pb_hooks
+      - ./backend/pb_migrations:/pb/pb_migrations
+      - ./backend/pb_public:/pb/pb_public
+    restart: unless-stopped
+    networks:
+      - mbs-network
+
+  web:
+    image: node:24-alpine
+    container_name: mbs-planner-web
+    ports:
+      - "5173:5173"
+    working_dir: /app
+    volumes:
+      - ./web:/app
+      - ./shared:/shared
+      - /app/node_modules
+    environment:
+      - VITE_PB_UPSTREAM=http://pocketbase:8090
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    restart: unless-stopped
+    depends_on:
+      pocketbase:
+        condition: service_healthy
+    networks:
+      - mbs-network
+
+networks:
+  mbs-network:
+    driver: bridge
