@@ -2,38 +2,30 @@
 
 > Tài liệu mô tả kiến trúc hiện tại của monorepo: backend (PocketBase), web (React SPA), shared types.
 > Cập nhật theo mã nguồn thực tế (xem thêm `PLAN.md` — kế hoạch gốc, đã lệch một phần).
+> Các sơ đồ Mermaid dưới đây GitHub render trực tiếp (xem dạng raw nếu cần giữ bản text).
+> Chi tiết từng collection, field và API rules xem **`DATA_DICTIONARY.md`**.
 
 ---
 
 ## 1. Sơ đồ tổng quan
 
-```
-                        ┌────────────────────────────────────────────┐
-                        │                 NGƯỜI DÙNG                  │
-                        │  Desktop (Sidebar) │  Mobile (tab bar /m)  │
-                        └───────────────┬────────────────────────────┘
-                                        │ HTTPS (nginx reverse proxy)
-                                        ▼
-                     ┌──────────────────────────────────────────────────┐
-                     │                   WEB (React SPA)                 │
-                     │  Vite dev proxy /api → PocketBase (8090)          │
-                     │                                                    │
-                     │  pages/  components/  hooks/  stores/  services/  │
-                     │  ──────────────────────────────────────────────   │
-                     │  TanStack Query (server state) + Zustand (UI)     │
-                     │  PocketBase JS SDK  +  Realtime (WebSocket)       │
-                     └───────────────────────┬──────────────────────────┘
-                                             │ HTTP /api/* + WS realtime
-                                             ▼
-                     ┌──────────────────────────────────────────────────┐
-                     │              POCKETBASE 0.39 (port 8090)          │
-                     │  SQLite (pb_data) │ File storage │ Auth (JWT)     │
-                     │  Realtime API │ Cron jobs                         │
-                     │  ┌────────────────────────────────────────────┐   ││  │  pb_hooks/ (12 file) — business logic +     │   │
-│  │  security guards + audit + 16 custom ep     │   │
-                     │  └────────────────────────────────────────────┘   │
-                     │  pb_migrations/ (~70 file) — schema + API rules   │
-                     └──────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    U[("👤 Người dùng<br/>Desktop (Sidebar) · Mobile (/m)")]
+    U -->|"HTTPS · nginx reverse proxy"| WEB["WEB — React SPA<br/>pages · components · hooks · stores · services<br/>TanStack Query (server state) + Zustand (UI)<br/>PocketBase JS SDK + Realtime (WebSocket)"]
+
+    subgraph PB["PocketBase 0.39 — bind 127.0.0.1:8090"]
+        direction TB
+        API["REST /api/* + Realtime"]
+        API --> AUTH["Auth JWT"]
+        API --> DB[("SQLite — pb_data")]
+        API --> FILES["File storage"]
+        API --> HOOKS["pb_hooks/ (12 file)<br/>business logic · guards · scope · audit<br/>KPI · archive · presence"]
+        API --> MIG["pb_migrations/ (~70 file)<br/>schema + API rules"]
+        API --> CRON["Cron — archive_old_tasks_cron<br/>mùng 1 hằng tháng, 02:00"]
+    end
+
+    WEB -->|"HTTP /api/* + WS realtime"| API
 ```
 
 - **Frontend và backend cùng origin** trong production: web được serve qua nginx, proxy `/api` → PocketBase chỉ bind `127.0.0.1:8090` (xem `docker-compose.yml`, `backend/deploy/nginx.conf.example`).
@@ -252,6 +244,26 @@ checkAuth(): token hợp lệ → getOne(user) → kiểm tra disabled → set u
 401 bất kỳ query → pb.authStore.clear() → ProtectedRoute → /login
 ```
 
+```mermaid
+sequenceDiagram
+    participant L as LoginPage
+    participant S as authStore (Zustand)
+    participant P as PocketBase
+    participant Q as TanStack Query
+    L->>S: authWithPassword(email, password)
+    S->>P: POST /api/collections/users/auth-with-password
+    P-->>S: JWT token + user (expand dept/role/groups)
+    S->>S: remember=true → localStorage pb_remember=1
+    S->>S: remember=false → sessionStorage pb_session_only=1
+    S-->>L: đăng nhập thành công
+    Q->>P: GET user — checkAuth (kiểm tra disabled)
+    P-->>Q: user hợp lệ
+    alt token hết hạn / 401
+        Q->>S: pb.authStore.clear()
+        S-->>L: redirect → /login
+    end
+```
+
 ### 5.2 Vòng đời Kế hoạch → Nhiệm vụ → KPI
 
 ```
@@ -268,6 +280,17 @@ Task chuyển trạng thái (guard chặn field ngoài phạm vi)
 plan.progress = Σ(weight × progress%) / Σweight      (completed=100, pending=75, in_progress=50)
 plan.status: tất cả completed → "completed"; có task chạy → "in_progress"
 KPI: base(10/12 đột xuất) × (0.3×schedule + 0.7×rating) × hệ số khó (1.0/1.1/1.2)
+```
+
+```mermaid
+flowchart LR
+    NS["not_started"] -->|"executor nhận việc"| IP["in_progress"]
+    IP -->|"executor gửi duyệt"| PA["pending_approval"]
+    PA -->|"supervisor approve + rating"| CO["completed<br/>completed_at = now — server stamp (M8)"]
+    PA -->|"supervisor reject"| IP
+    CO -->|"hook afterUpdate → upsertKpi"| KPI[("kpi_scores — server-computed")]
+    CO -.->|"hủy / đóng"| CA["cancelled"]
+    IP -.->|"hủy"| CA
 ```
 
 ### 5.3 Đề xuất (proposal)
@@ -322,6 +345,22 @@ Check-out: owner chỉ set check_out 1 lần, không sửa được gì khác
 Admin: attendance_configs (office, wifi, allowed_ips, giờ làm việc, tolerance)
 ```
 
+```mermaid
+sequenceDiagram
+    participant C as Client (web / mobile)
+    participant G as guards.pb.js — onRecordCreateRequest
+    participant D as attendance_logs
+    C->>G: POST attendance_logs (check_in, status, user_id, ip)
+    G->>G: user_id = actor — bỏ giá trị client gửi
+    G->>G: check_in = giờ server — bỏ giá trị client gửi (M1)
+    G->>G: chặn check-in trùng ngày (user_id + ngày UTC)
+    G->>G: status = on_time / late từ check_in + config (work_start_time, tolerance)
+    G->>G: kiểm tra IP — allowed_ips (exact / * / CIDR) hoặc private range
+    G->>G: ip_address = e.realIP() (PB_TRUST_PROXY khi sau proxy)
+    G-->>D: save record
+    D-->>C: check_in / status / ip do server đặt
+```
+
 ### 5.7 Điểm danh hiện diện (presence)
 
 ```
@@ -342,6 +381,15 @@ Live (is_deleted=false) ──soft-delete──► Thùng rác (/trash) ──re
                                               │ snapshot → archived_tasks/comments/plans
                                               ▼
                                     Restore (/api/custom/restore-archive, manager)
+```
+
+```mermaid
+flowchart LR
+    LIVE["Live<br/>is_deleted = false"] -->|"soft-delete"| TRASH["🗑 Thùng rác — /trash"]
+    TRASH -->|"restore"| LIVE
+    TRASH -->|"xóa vĩnh viễn (cascade)"| GONE["Đã xóa"]
+    TRASH -->|"cron tháng · archive > 6 tháng"| ARCH["archived_tasks · archived_comments · archived_plans"]
+    ARCH -->|"restore-archive (manager)"| LIVE
 ```
 
 ### 5.9 Import / Export (admin)
@@ -377,6 +425,18 @@ Lớp 3 — Scope hooks (scope.pb.js + hr.pb.js)
    Fail-closed khi hook lỗi; lọc in-memory (totalItems giữ nguyên — tradeoff đã ghi chú)
 
 Custom endpoints: tự kiểm tra isManager / can_approve_leave / ownership
+```
+
+```mermaid
+flowchart TB
+    REQ["HTTP request (JWT token)"] --> R1["Lớp 1 — Collection API Rules<br/>pb_migrations · create / update / delete / list / view"]
+    R1 -->|"❌ deny"| R1X["403 · 404 · danh sách rỗng"]
+    R1 -->|"✅ pass"| R2["Lớp 2 — Guards (guards.pb.js)<br/>field-level — ai được sửa field nào"]
+    R2 -->|"❌ ForbiddenError"| R2X["403"]
+    R2 -->|"✅ pass"| R3["Lớp 3 — Scope hooks<br/>scope.pb.js + hr.pb.js · view_scope<br/>all / department / group / personal"]
+    R3 -->|"lọc in-memory · fail-closed"| RESP["Response — chỉ dữ liệu trong phạm vi"]
+    R2 -->|"request hợp lệ"| AUDIT["system_logs — audit server-side<br/>chỉ request qua rules + guards mới được ghi"]
+    R3 --> AUDIT
 ```
 
 ---

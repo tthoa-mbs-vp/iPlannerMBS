@@ -53,13 +53,31 @@ onRecordUpdateRequest(function(e) {
   // is_deleted=true bypassing can_delete_tasks.
   if (name === "tasks") {
     var ri = H.roleInfo(actor)
-    if (ri.isSuper || ri.canManage) return e.next()
     if (!actor) return e.next()
     var actorId = actor.id
 
     var original = null
     try { original = $app.findRecordById("tasks", e.record.id) } catch (ex) { throw new ForbiddenError("Không thể xác minh dữ liệu hiện tại") }
     if (!original) throw new ForbiddenError("Không thể xác minh dữ liệu hiện tại")
+
+    // M8: server-authoritative completion stamp — runs BEFORE the can_manage/superuser bypass
+    // so the bypass cannot become a backdating loophole. The client's completed_at is never
+    // trusted, from any role: a supervisor/editor/manager could backdate completion to dodge
+    // the KPI lateness penalty, or rewrite the stamp of an already-completed task. Stamped on
+    // the transition INTO completed, immutable while completed, cleared when leaving it.
+    var newStatus = e.record.getString("status")
+    var oldStatus = original.getString("status")
+    if (newStatus === "completed") {
+      if (oldStatus !== "completed") {
+        e.record.set("completed_at", new Date().toISOString())
+      } else if (!H.eq(original.get("completed_at"), e.record.get("completed_at"))) {
+        e.record.set("completed_at", original.get("completed_at"))
+      }
+    } else if (oldStatus === "completed") {
+      e.record.set("completed_at", "")
+    }
+
+    if (ri.isSuper || ri.canManage) return e.next()
 
     var isExecutor = original.getString("executor_id") === actorId
     var isSupervisor = original.getString("supervisor_id") === actorId
@@ -72,22 +90,6 @@ onRecordUpdateRequest(function(e) {
     // soft-delete (is_deleted=true) still requires can_delete_tasks for everyone
     if (e.record.getBool("is_deleted") !== original.getBool("is_deleted") && !ri.canDeleteTasks) {
       throw new ForbiddenError("Bạn không có quyền xóa nhiệm vụ")
-    }
-
-    // M8: server-authoritative completion stamp. The client's completed_at is never trusted —
-    // a supervisor/editor could backdate completion to dodge the KPI lateness penalty, or
-    // rewrite the stamp of an already-completed task. Stamped on the transition INTO
-    // completed, immutable while completed (for non-managers), cleared when leaving it.
-    var newStatus = e.record.getString("status")
-    var oldStatus = original.getString("status")
-    if (newStatus === "completed") {
-      if (oldStatus !== "completed") {
-        e.record.set("completed_at", new Date().toISOString())
-      } else if (!H.eq(original.get("completed_at"), e.record.get("completed_at"))) {
-        e.record.set("completed_at", original.get("completed_at"))
-      }
-    } else if (oldStatus === "completed") {
-      e.record.set("completed_at", "")
     }
 
     // can_edit_tasks users may edit fields freely, but an executor can never rate themselves
@@ -397,7 +399,14 @@ onRecordCreateRequest(function(e) {
   if (name === "tasks") {
     var tActor = info ? info.auth : null
     var tRi = H.roleInfo(tActor)
-    if (tRi.isSuper || tRi.canManage) return e.next()
+    if (tRi.isSuper || tRi.canManage) {
+      // M8: entering the completed state via create is still a server-stamped event — a
+      // manager cannot backdate completed_at on create either (all other fields stay theirs).
+      if (e.record.getString("status") === "completed") {
+        e.record.set("completed_at", new Date().toISOString())
+      }
+      return e.next()
+    }
     e.record.set("status", "not_started")
     e.record.set("is_deleted", false)
     e.record.set("rating", null)      // number field has min=1, so unset via null
@@ -483,12 +492,10 @@ onRecordCreateRequest(function(e) {
       var attV4 = attRemote.match(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/)
       if (attV4) attRemote = attV4[1]
 
-      var attAllowedRaw = attCfg ? attCfg.get("allowed_ips") : null
-      var attAllowed = attAllowedRaw
-      if (typeof attAllowedRaw === "string") {
-        try { attAllowed = JSON.parse(attAllowedRaw) } catch (ex) { attAllowed = [] }
-      }
-      if (!Array.isArray(attAllowed)) attAllowed = attAllowed ? [attAllowed] : []
+      // jsonArr: PB 0.39 returns json-type fields as raw []byte (see helpers.js) —
+      // decode to a real string array so an EMPTY list falls through to the
+      // private-range fallback instead of silently blocking every check-in.
+      var attAllowed = H.jsonArr(attCfg ? attCfg.get("allowed_ips") : null)
 
       if (attAllowed.length > 0) {
         if (!H.ipInList(attRemote, attAllowed)) {

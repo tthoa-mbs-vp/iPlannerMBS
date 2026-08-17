@@ -288,10 +288,12 @@
   <a href="#gioi-thieu">Giới thiệu</a>
   <a href="#dang-nhap">Đăng nhập</a>
   <a href="#dashboard">Dashboard</a>
+  <a href="#my-day">Việc của tôi</a>
   <a href="#ke-hoach">Kế hoạch</a>
-  <a href="#nhiem-vu">Nhiệm vụ</a>
   <a href="#chi-tiet-ke-hoach">Chi tiết KH</a>
   <a href="#chi-tiet-nhiem-vu">Chi tiết NV</a>
+  <a href="#bang-tin">Bảng tin</a>
+  <a href="#trao-doi">Trao đổi</a>
   <a href="#cham-cong">Chấm công</a>
   <a href="#nghi-phep">Nghỉ phép</a>
   <a href="#nhan-su">Nhân sự</a>
@@ -310,21 +312,22 @@
 <!-- 1. GIỚI THIỆU -->
 <section id="gioi-thieu">
   <h2>1. Giới thiệu</h2>
-  <p>iPlanner là hệ thống quản lý kế hoạch và nhiệm vụ nội bộ, cho phép:</p>
+  <p>iPlanner là hệ thống quản lý kế hoạch, nhiệm vụ và nhân sự nội bộ, cho phép:</p>
   <ul>
-    <li>Tạo và theo dõi kế hoạch, nhiệm vụ theo phòng ban</li>
-    <li>Phân công người thực hiện, giám sát, phối hợp</li>
-    <li>Quy trình làm việc: Nhận nhiệm vụ → Hoàn thành → Phê duyệt</li>
-    <li>Đề xuất gia hạn / hủy bỏ nhiệm vụ</li>
-    <li>Trao đổi, thảo luận kèm file đính kèm</li>
-    <li>Tính điểm KPI tự động cho nhiệm vụ đã hoàn thành</li>
-    <li>Đánh giá sao (1–5) khi phê duyệt nhiệm vụ</li>
-    <li>Chấm công WiFi và quản lý nghỉ phép</li>
-    <li>Quản lý hồ sơ nhân sự</li>
-    <li>Biểu đồ nhiệt tải công việc</li>
-    <li>Báo cáo thống kê theo trạng thái và phòng ban</li>
+    <li>Tạo và theo dõi kế hoạch, nhiệm vụ theo phòng ban / tổ chuyên môn</li>
+    <li>Phân công người thực hiện, giám sát, phối hợp; kèm trọng số và phân loại (Thường / Đột xuất / Quan trọng)</li>
+    <li>Quy trình làm việc: Nhận nhiệm vụ &rarr; Hoàn thành &rarr; Phê duyệt (kèm đánh giá sao)</li>
+    <li>Đề xuất gia hạn / hủy bỏ nhiệm vụ, do giám sát hoặc quản lý phê duyệt</li>
+    <li>Trao đổi theo nhiệm vụ và nhóm trao đổi (Cơ quan / Phòng ban / Tổ chuyên môn) theo thời gian thực</li>
+    <li>Bảng tin thông báo nội bộ (ghi chú ghim, ẩn/hiện)</li>
+    <li>Tính điểm KPI tự động cho nhiệm vụ đã hoàn thành, xếp loại theo thang điểm</li>
+    <li>Chấm công WiFi với giờ vào / ra ca do <strong>máy chủ ghi nhận</strong> (không thể tự khai báo), kiểm tra IP nội bộ</li>
+    <li>Quản lý nghỉ phép: quỹ phép năm, đăng ký, duyệt / từ chối theo phân quyền</li>
+    <li>Quản lý hồ sơ nhân sự: thông tin chung, chuyên môn nghiệp vụ, quá trình công tác, quá trình lương</li>
+    <li>Báo cáo thống kê theo trạng thái và phòng ban, xuất Excel / PDF</li>
     <li>Biểu đồ Gantt, Kanban, Calendar trực quan</li>
-    <li>Phân quyền chi tiết theo chức vụ</li>
+    <li>Kiểm tra hiện diện (presence) qua heartbeat, theo dõi ai đang có mặt</li>
+    <li>Phân quyền chi tiết theo chức vụ (CRUD + phạm vi xem + duyệt nghỉ phép + xem lương)</li>
     <li>Phiên bản Mobile (PWA) cho thiết bị di động</li>
   </ul>
 </section>
@@ -337,11 +340,14 @@
   <ul>
     <li>Nhập <strong>Email</strong> tài khoản</li>
     <li>Nhập <strong>Mật khẩu</strong></li>
-    <li>Tích chọn <strong>Ghi nhớ đăng nhập</strong> để duy trì phiên làm việc</li>
+    <li>Tích chọn <strong>Ghi nhớ đăng nhập</strong> để duy trì phiên làm việc lâu dài (bỏ tích: phiên hết hạn khi đóng trình duyệt)</li>
     <li>Nhấn <strong>Đăng nhập</strong></li>
   </ul>
   <div class="note">
-    <strong>Lưu ý:</strong> Nếu quên mật khẩu, liên hệ quản trị viên để được cấp lại.
+    <strong>Lưu ý:</strong> Nếu quên mật khẩu, liên hệ quản trị viên để được cấp lại. Tài khoản bị <strong>vô hiệu hóa</strong> (disabled) vẫn đăng nhập được nhưng <strong>mọi thao tác sẽ bị từ chối (403)</strong> — điều này được kiểm soát ở phía máy chủ, không phải ở giao diện.
+  </div>
+  <div class="note">
+    <strong>Quyền xem dữ liệu:</strong> Phạm vi hiển thị được tính từ <strong>chức vụ hiện tại</strong> của bạn. Nếu chức vụ bị gỡ / xóa, bạn ngay lập tức chỉ còn thấy dữ liệu <strong>cá nhân</strong> (fail-closed), không bao giờ mặc định xem toàn bộ.
   </div>
 </section>
 
@@ -350,7 +356,7 @@
   <h2>3. Dashboard (Tổng quan)</h2>
   <p>Trang tổng quan hiển thị các thông tin nổi bật:</p>
   <h3>Thẻ trạng thái</h3>
-  <p>4 thẻ hiển thị số lượng nhiệm vụ: Chưa làm, Đang làm, Hoàn thành, Trễ hạn.</p>
+  <p>4 thẻ hiển thị số lượng nhiệm vụ: Chưa làm, Đang làm, Hoàn thành, Trễ hạn. Kèm bộ lọc thời gian (Tất cả / Tháng / Quý / Năm).</p>
 
   <h3>Cảnh báo</h3>
   <ul>
@@ -372,12 +378,37 @@
   <p>Hiển thị số điểm KPI, điểm trung bình, số lượng xếp loại Xuất sắc và Tốt.</p>
 </section>
 
-<!-- 4. KẾ HOẠCH -->
+<!-- 4. VIỆC CỦA TÔI HÔM NAY -->
+<section id="my-day">
+  <h2>4. Việc của tôi hôm nay</h2>
+  <p>Trang làm việc cá nhân hóa (<code>/my-day</code>), tập trung mọi thứ liên quan đến riêng bạn trong một màn hình:</p>
+
+  <h3>4.1. Chấm công nhanh</h3>
+  <ul>
+    <li>Nút <strong>Chấm công vào ca</strong> ở góc phải hero: bấm một lần là check-in ngay trong ngày (tự động gắn cấu hình văn phòng đang hoạt động)</li>
+    <li>Đã vào ca: nút chuyển thành <strong>Ra ca</strong>; xong ca hiển thị "Đã hoàn thành công hôm nay"</li>
+    <li>Kèm thẻ <strong>Chấm công hôm nay</strong>: giờ vào / giờ ra và trạng thái (Đúng giờ / Đi muộn)</li>
+  </ul>
+
+  <h3>4.2. Thẻ thống kê cá nhân</h3>
+  <p>6 thẻ: Chưa làm, Hôm nay, Đang làm, Chờ duyệt, Trễ hạn, Hoàn thành — bấm vào thẻ để qua trang Kế hoạch &amp; Nhiệm vụ.</p>
+
+  <h3>4.3. Nhiệm vụ hôm nay</h3>
+  <p>Danh sách nhiệm vụ của bạn (người thực hiện / giám sát / phối hợp) đến hạn <strong>hôm nay hoặc đã quá hạn</strong>, ưu tiên quá hạn trước. Bấm vào nhiệm vụ để mở chi tiết và xử lý ngay.</p>
+
+  <h3>4.4. Sắp đến hạn</h3>
+  <p>Toàn bộ nhiệm vụ chưa hoàn thành của bạn, sắp theo hạn chót. Có bộ lọc (tìm kiếm, trạng thái, nhân sự) và phân trang.</p>
+
+  <h3>4.5. KPI của tôi</h3>
+  <p>Điểm KPI trung bình của các nhiệm vụ đã được chấm, kèm số lượng nhiệm vụ đã chấm và link sang trang KPI chi tiết.</p>
+</section>
+
+<!-- 5. KẾ HOẠCH -->
 <section id="ke-hoach">
-  <h2>4. Kế hoạch &amp; Nhiệm vụ</h2>
+  <h2>5. Kế hoạch &amp; Nhiệm vụ</h2>
   <p>Trang quản lý kế hoạch và nhiệm vụ với nhiều chế độ xem khác nhau.</p>
 
-  <h3>4.1. Chế độ xem</h3>
+  <h3>5.1. Chế độ xem</h3>
   <p>Có 3 chế độ xem, chuyển đổi qua các tab phía trên:</p>
   <ul>
     <li><strong>Danh sách:</strong> Bố cục hai cột: danh sách kế hoạch (trái) và danh sách nhiệm vụ (phải). Mặc định.</li>
@@ -385,20 +416,19 @@
     <li><strong>Calendar:</strong> Hiển thị kế hoạch trên lịch tháng, dễ dàng theo dõi thời gian bắt đầu / kết thúc.</li>
   </ul>
 
-  <h3>4.2. Danh sách kế hoạch</h3>
+  <h3>5.2. Danh sách kế hoạch</h3>
   <ul>
-    <li><strong>Tìm kiếm:</strong> Gõ từ khóa vào ô tìm kiếm để lọc kế hoạch theo tên</li>
-    <li><strong>Thêm kế hoạch:</strong> Nhấn nút <span class="tag tag-green">+</span> để mở form tạo kế hoạch mới</li>
+    <li><strong>Tìm kiếm:</strong> Gõ từ khóa vào ô tìm kiếm để lọc kế hoạch theo tên (debounce 300ms)</li>
+    <li><strong>Thêm kế hoạch:</strong> Nhấn nút <span class="tag tag-green">+</span> để mở form tạo kế hoạch mới (cần quyền <code>can_add_plans</code>)</li>
     <li><strong>Xuất dữ liệu:</strong> Nhấn nút <span class="tag tag-blue">Tải</span> để xuất danh sách ra Excel (.xlsx), CSV, hoặc JSON</li>
     <li><strong>Nhập dữ liệu:</strong> Nhấn nút <span class="tag tag-amber">Tải lên</span> để nhập kế hoạch từ file</li>
     <li><strong>Xóa hàng loạt:</strong> Tích chọn nhiều kế hoạch và nhấn "Xóa đã chọn"</li>
     <li>Mỗi kế hoạch hiển thị: tên, trạng thái, phòng chủ trì, phòng phối hợp, thời gian, tiến độ, người phụ trách</li>
-    <li>Nhấn vào kế hoạch để xem danh sách nhiệm vụ bên phải</li>
-    <li>Nhấn biểu tượng <strong>chevron</strong> để xem chi tiết kế hoạch</li>
-    <li>Nhấn biểu tượng <strong>bút chì</strong> để sửa, <strong>thùng rác</strong> để xóa</li>
+    <li>Nhấn vào kế hoạch để xem danh sách nhiệm vụ bên phải; nhấn <strong>chevron</strong> để mở trang chi tiết</li>
+    <li>Nhấn biểu tượng <strong>bút chì</strong> để sửa, <strong>thùng rác</strong> để xóa (theo quyền tương ứng)</li>
   </ul>
 
-  <h3>4.3. Form tạo / sửa kế hoạch</h3>
+  <h3>5.3. Form tạo / sửa kế hoạch</h3>
   <ul>
     <li><strong>Tên:</strong> Bắt buộc</li>
     <li><strong>Mô tả:</strong> Không bắt buộc</li>
@@ -411,38 +441,38 @@
     <li><strong>Tiến độ:</strong> 0&ndash;100%</li>
   </ul>
 
-  <h3>4.4. Danh sách nhiệm vụ</h3>
+  <h3>5.4. Danh sách nhiệm vụ</h3>
   <p>Hiển thị khi chọn một kế hoạch bên trái hoặc chọn "Nhiệm vụ khác" của một phòng ban.</p>
   <ul>
-    <li><strong>Xuất / Nhập / Thêm:</strong> Tương tự kế hoạch</li>
+    <li><strong>Xuất / Nhập / Thêm:</strong> Tương tự kế hoạch (thêm cần quyền <code>can_add_tasks</code>)</li>
     <li><strong>Xóa hàng loạt:</strong> Tích chọn nhiều nhiệm vụ và nhấn "Xóa đã chọn"</li>
     <li>Bảng hiển thị: tên nhiệm vụ, người thực hiện, người giám sát, hạn chót, trọng số</li>
     <li>Nhấn vào một nhiệm vụ để xem chi tiết</li>
   </ul>
 
-  <h3>4.5. Nhiệm vụ không thuộc kế hoạch</h3>
+  <h3>5.5. Nhiệm vụ không thuộc kế hoạch</h3>
   <p>Ở cuối danh sách kế hoạch, mục "Nhiệm vụ khác" hiển thị các nhiệm vụ chưa được gán vào kế hoạch nào, được nhóm theo phòng ban.</p>
 
   <div class="note">
-    <strong>Mẹo:</strong> Sử dụng ô tìm kiếm để nhanh chóng tìm kế hoạch theo tên. Kết quả được debounce 300ms để tránh gọi API quá nhiều. Chế độ Kanban phù hợp để theo dõi tiến độ công việc trực quan.
+    <strong>Mẹo:</strong> Chế độ Kanban phù hợp để theo dõi tiến độ trực quan; Calendar phù hợp khi lên lịch theo thời gian; bộ lọc (phòng ban, tổ chuyên môn, trạng thái, người thực hiện) giúp thu hẹp nhanh danh sách.
   </div>
 </section>
 
-<!-- 5. CHI TIẾT KẾ HOẠCH -->
+<!-- 6. CHI TIẾT KẾ HOẠCH -->
 <section id="chi-tiet-ke-hoach">
-  <h2>5. Chi tiết kế hoạch</h2>
+  <h2>6. Chi tiết kế hoạch</h2>
   <p>Trang chi tiết của một kế hoạch, gồm hai tab:</p>
 
-  <h3>5.1. Tab "Thông tin &amp; Nhiệm vụ"</h3>
+  <h3>6.1. Tab "Thông tin &amp; Nhiệm vụ"</h3>
   <ul>
     <li><strong>Thông tin kế hoạch:</strong> Hiển thị đầy đủ thông tin + biểu đồ tròn tiến độ</li>
     <li><strong>Danh sách nhiệm vụ:</strong> Cột trái, chọn một nhiệm vụ để xem thông tin bên phải</li>
-    <li><strong>Chi tiết nhiệm vụ (cột phải):</strong> Tab "Thông tin" và "Trao đổi" (CommentSection)</li>
+    <li><strong>Chi tiết nhiệm vụ (cột phải):</strong> Tab "Thông tin" và "Trao đổi" (bình luận theo nhiệm vụ)</li>
     <li>Nhấn "Xem chi tiết" để mở trang chi tiết nhiệm vụ</li>
     <li>Nhấn nút <strong>Sửa</strong> / <strong>Xóa</strong> ở header để thao tác trên kế hoạch</li>
   </ul>
 
-  <h3>5.2. Tab "Biểu đồ Gantt"</h3>
+  <h3>6.2. Tab "Biểu đồ Gantt"</h3>
   <p>Hiển thị các nhiệm vụ dưới dạng thanh ngang trên dòng thời gian, màu sắc tương ứng trạng thái:</p>
   <ul>
     <li><span class="tag tag-green">Xanh lá</span> &mdash; Hoàn thành</li>
@@ -452,21 +482,22 @@
     <li><span class="tag tag-rose">Hồng</span> &mdash; Đề xuất hủy</li>
     <li><span class="tag tag-slate">Xám</span> &mdash; Đã hủy</li>
   </ul>
+  <p>Có thể phóng to / thu nhỏ theo thang: Tự động / Ngày / 5 ngày / Tuần / Tháng.</p>
 </section>
 
-<!-- 6. CHI TIẾT NHIỆM VỤ -->
+<!-- 7. CHI TIẾT NHIỆM VỤ -->
 <section id="chi-tiet-nhiem-vu">
-  <h2>6. Chi tiết nhiệm vụ</h2>
+  <h2>7. Chi tiết nhiệm vụ</h2>
   <p>Trang chi tiết của một nhiệm vụ với các thao tác và thông tin đầy đủ.</p>
 
-  <h3>6.1. Thông tin nhiệm vụ</h3>
+  <h3>7.1. Thông tin nhiệm vụ</h3>
   <ul>
     <li>Tên, mô tả, người thực hiện, người giám sát, người phối hợp</li>
     <li>Ngày bắt đầu, hạn chót (hiển thị "Quá hạn" nếu trễ)</li>
-    <li>Trọng số (%), phân loại (Thường / Đột xuất / Quan trọng)</li>
+    <li>Trọng số (%), phân loại (Thường / Đột xuất / Quan trọng), cờ Lặp lại / Đột xuất / Trọng điểm</li>
   </ul>
 
-  <h3>6.2. Quy trình làm việc (Workflow)</h3>
+  <h3>7.2. Quy trình làm việc (Workflow)</h3>
   <table>
     <tr><th>Trạng thái</th><th>Người thao tác</th><th>Hành động</th><th>Kết quả</th></tr>
     <tr><td>Chưa thực hiện</td><td>Người thực hiện</td><td>Nhấn "Nhận nhiệm vụ"</td><td>&rarr; Đang làm</td></tr>
@@ -474,8 +505,11 @@
     <tr><td>Chờ duyệt</td><td>Người giám sát / Phụ trách KH</td><td>Nhấn "Phê duyệt"</td><td>&rarr; Hoàn thành (mở modal đánh giá)</td></tr>
     <tr><td>Chờ duyệt</td><td>Người giám sát / Phụ trách KH</td><td>Nhấn "Từ chối"</td><td>&rarr; Đang làm</td></tr>
   </table>
+  <div class="note">
+    <strong>Quan trọng:</strong> Thời điểm <strong>hoàn thành (completed_at)</strong> do <strong>máy chủ tự ghi</strong> đúng lúc nhiệm vụ chuyển sang trạng thái Hoàn thành — mọi dữ liệu backdate do người dùng gửi lên đều bị bỏ qua (áp dụng cho mọi vai trò, kể cả quản trị). Khi nhiệm vụ rời khỏi trạng thái Hoàn thành, mốc này bị xóa.
+  </div>
 
-  <h3>6.3. Đánh giá sao (Rating)</h3>
+  <h3>7.3. Đánh giá sao (Rating)</h3>
   <p>Khi phê duyệt nhiệm vụ, hệ thống hiển thị modal đánh giá với các tiêu chí (2&ndash;5 sao):</p>
   <ul>
     <li><strong>Chất lượng:</strong> Mức độ đáp ứng yêu cầu</li>
@@ -484,39 +518,95 @@
     <li>Nhấn "Xác nhận" để hoàn tất phê duyệt hoặc "Bỏ qua đánh giá" nếu không muốn đánh giá</li>
   </ul>
 
-  <h3>6.4. Điểm KPI</h3>
-  <p>Khi nhiệm vụ được hoàn thành, hệ thống tự động tính điểm KPI bao gồm: điểm cơ bản, hệ số khó, điểm tiến độ, xếp loại (1&ndash;5), điểm cuối.</p>
+  <h3>7.4. Điểm KPI</h3>
+  <p>Khi nhiệm vụ được hoàn thành, hệ thống tự động tính điểm KPI bao gồm: điểm cơ bản, hệ số khó, điểm tiến độ, xếp loại (1&ndash;5), điểm cuối. Chi tiết công thức xem mục <a href="#kpi">KPI</a>.</p>
 
-  <h3>6.5. Đề xuất (Proposal)</h3>
+  <h3>7.5. Đề xuất (Proposal)</h3>
   <p>Người thực hiện có thể gửi đề xuất:</p>
   <ul>
-    <li><strong>Gia hạn:</strong> Chọn ngày hạn mới + lý do</li>
-    <li><strong>Hủy bỏ:</strong> Nhập lý do</li>
-    <li>Người giám sát / phụ trách kế hoạch sẽ nhận được thông báo và có thể Duyệt / Từ chối</li>
+    <li><strong>Gia hạn:</strong> Chọn ngày hạn mới + lý do &rarr; nhiệm vụ chuyển sang trạng thái <span class="tag tag-purple">Đề xuất gia hạn</span></li>
+    <li><strong>Hủy bỏ:</strong> Nhập lý do &rarr; nhiệm vụ chuyển sang trạng thái <span class="tag tag-rose">Đề xuất hủy</span></li>
+    <li>Người giám sát / phụ trách kế hoạch nhận được thông báo và có thể <strong>Duyệt</strong> (cập nhật hạn / hủy nhiệm vụ) hoặc <strong>Từ chối</strong> (nhiệm vụ trở về Đang làm)</li>
   </ul>
 
-  <h3>6.6. Trao đổi (Comments)</h3>
+  <h3>7.6. Trao đổi (Comments)</h3>
   <ul>
-    <li>Thảo luận theo nhiệm vụ, có đề cập (@tên) và đính kèm file</li>
+    <li>Thảo luận theo nhiệm vụ, có đề cập (@tên), trích dẫn và đính kèm file</li>
     <li>File ảnh (PNG, JPG, GIF) hiển thị trực tiếp; file khác (PDF, DOC, XLSX, CSV) cho tải xuống</li>
     <li>Sửa / xóa bình luận trong vòng 1 giờ</li>
     <li>Người được đề cập và người tham gia nhiệm vụ nhận thông báo</li>
+    <li>Khi nhiệm vụ ở trạng thái kết thúc (hoàn thành / hủy), phần bình luận bị khóa (chỉ đọc)</li>
+  </ul>
+
+  <h3>7.7. Các tab phụ</h3>
+  <p>Bên trái trang chi tiết có các tab: <strong>Thông tin</strong>, <strong>File</strong> (danh sách file đính kèm của nhiệm vụ), <strong>Nhật ký</strong> (lịch sử thay đổi trạng thái), <strong>KPI</strong> (điểm chi tiết nếu đã chấm).</p>
+</section>
+
+<!-- 8. BẢNG TIN -->
+<section id="bang-tin">
+  <h2>8. Bảng tin (Announcements)</h2>
+  <p>Trang thông báo nội bộ (<code>/announcements</code>) với bố cục hai cột: danh sách thông báo (trái) và nội dung chi tiết (phải).</p>
+
+  <h3>8.1. Xem thông báo</h3>
+  <ul>
+    <li>Thông báo <strong>ghi chú</strong> có biểu tượng ghim <span class="tag tag-rose">Ghim</span> và luôn hiển thị đầu danh sách</li>
+    <li>Thông báo bị ẩn (<code>is_active = false</code>) chỉ quản trị viên nhìn thấy</li>
+    <li>Nội dung hỗ trợ HTML cơ bản (đậm, danh sách, liên kết, hình ảnh) và được làm sạch trước khi hiển thị</li>
+  </ul>
+
+  <h3>8.2. Đăng / sửa / xóa (chỉ quản trị viên <code>can_manage</code>)</h3>
+  <ul>
+    <li>Nhấn nút <span class="tag tag-green">+ Đăng</span> để tạo thông báo mới: tiêu đề (bắt buộc), nội dung, tùy chọn <strong>Ghim lên đầu</strong> và <strong>Hiển thị cho mọi người</strong></li>
+    <li>Nhấn <strong>Sửa</strong> / <strong>Xóa</strong> ở khung chi tiết</li>
+    <li>Người đăng / người được đề cập nhận thông báo loại "Thông báo" trong trang Thông báo</li>
   </ul>
 </section>
 
-<!-- 7. CHẤM CÔNG -->
-<section id="cham-cong">
-  <h2>7. Chấm công WiFi</h2>
-  <p>Trang chấm công cho phép người dùng check-in / check-out hàng ngày dựa trên mạng WiFi nội bộ.</p>
+<!-- 9. TRAO ĐỔI & THẢO LUẬN -->
+<section id="trao-doi">
+  <h2>9. Trao đổi &amp; Thảo luận</h2>
+  <p>Trang hội thoại tập trung (<code>/discussion</code>), cập nhật theo thời gian thực, gồm hai tab:</p>
 
-  <h3>7.1. Check-in / Check-out</h3>
+  <h3>9.1. Trao đổi nhiệm vụ</h3>
+  <ul>
+    <li>Cột trái: danh sách <strong>cuộc trao đổi</strong> — các nhiệm vụ trong phạm vi của bạn (theo view_scope), sắp theo bình luận mới nhất, kèm số bình luận chưa đọc</li>
+    <li>Cột phải: chuỗi bình luận của nhiệm vụ đang chọn (cùng CommentSection với trang chi tiết nhiệm vụ)</li>
+    <li>Tìm kiếm theo tên nhiệm vụ, tên kế hoạch, người thực hiện</li>
+    <li>Nhấn tên nhiệm vụ / kế hoạch để mở trang chi tiết tương ứng</li>
+  </ul>
+
+  <h3>9.2. Nhóm trao đổi</h3>
+  <ul>
+    <li>Kênh <strong>Nhóm Cơ quan</strong> — toàn bộ phòng ban &amp; tổ chuyên môn</li>
+    <li>Kênh <strong>Phòng ban</strong> — chỉ phòng ban của bạn</li>
+    <li>Kênh <strong>Tổ chuyên môn</strong> — mỗi tổ chuyên môn bạn là thành viên</li>
+    <li>Chat theo kênh (ChannelChat) với tin nhắn, file đính kèm, cập nhật realtime; danh sách kênh giới hạn đúng theo quyền của bạn</li>
+  </ul>
+</section>
+
+<!-- 10. CHẤM CÔNG -->
+<section id="cham-cong">
+  <h2>10. Chấm công</h2>
+  <p>Trang chấm công (<code>/attendance</code>) cho phép check-in / check-out hàng ngày theo văn phòng, kèm quản lý cấu hình văn phòng.</p>
+
+  <h3>10.1. Check-in / Check-out</h3>
   <ul>
     <li>Nhấn nút <strong>Check-in</strong> để bắt đầu ca làm việc (tạo bản ghi chấm công trong ngày)</li>
     <li>Nhấn nút <strong>Check-out</strong> để kết thúc ca làm việc</li>
-    <li>Hệ thống tự động ghi nhận thời gian, và kiểm tra tên WiFi hiện tại có khớp với cấu hình không</li>
+    <li><strong>Giờ vào / giờ ra do máy chủ ghi nhận</strong> — mọi giá trị thời gian gửi từ máy khách đều bị bỏ qua (chống giả mạo check-in sớm / muộn)</li>
+    <li>Trạng thái (Đúng giờ / Đi muộn / Về sớm) được máy chủ tự tính theo cấu hình giờ làm việc</li>
+    <li>Mỗi người chỉ có một bản ghi chấm công mỗi ngày</li>
   </ul>
 
-  <h3>7.2. Lịch sử chấm công</h3>
+  <h3>10.2. Cấu hình văn phòng (quản trị)</h3>
+  <ul>
+    <li>Trên trang Chấm công, mở modal cấu hình để <strong>Thêm / Sửa / Xóa</strong> văn phòng</li>
+    <li>Mỗi cấu hình gồm: tên văn phòng, tên WiFi (SSID/BSSID), giờ bắt đầu / kết thúc làm việc, số phút cho phép đi muộn (tolerance), danh sách IP/CIDR được phép</li>
+    <li>Chỉ cấu hình <strong>is_active</strong> được dùng cho chấm công hiện tại</li>
+    <li>Kiểm tra IP nội bộ: mặc định chỉ nhận địa chỉ IP riêng (private); có thể mở rộng bằng danh sách IP/CIDR cho phép</li>
+  </ul>
+
+  <h3>10.3. Lịch sử chấm công</h3>
   <ul>
     <li>Bảng hiển thị danh sách bản ghi chấm công theo tháng</li>
     <li>Có thể lọc theo tháng và năm</li>
@@ -524,192 +614,220 @@
   </ul>
 
   <div class="note">
-    <strong>Lưu ý:</strong> Trên trình duyệt web, không thể đọc tên WiFi thực tế. Hệ thống sử dụng cơ chế tin cậy (trust-based): người dùng check-in, hệ thống ghi nhận nhưng không xác thực SSID. Trên phiên bản mobile (Android), ứng dụng có thể đọc SSID thực qua <code>react-native-wifi-reborn</code> để xác thực.
+    <strong>Lưu ý:</strong> Trên trình duyệt web không thể đọc tên WiFi thực tế; hệ thống kiểm tra dựa trên IP mạng. Trên phiên bản mobile (Android), ứng dụng có thể đọc SSID thực qua <code>react-native-wifi-reborn</code> để xác thực.
   </div>
 </section>
 
-<!-- 8. NGHỈ PHÉP -->
+<!-- 11. NGHỈ PHÉP -->
 <section id="nghi-phep">
-  <h2>8. Nghỉ phép</h2>
-  <p>Trang quản lý đơn nghỉ phép và số dư ngày phép của người dùng.</p>
+  <h2>11. Nghỉ phép</h2>
+  <p>Trang quản lý đơn nghỉ phép và số dư ngày phép (<code>/leave</code>), gồm hai tab:</p>
 
-  <h3>8.1. Danh sách đơn nghỉ phép</h3>
+  <h3>11.1. Tab "Cá nhân"</h3>
   <ul>
-    <li>Hiển thị các đơn nghỉ phép của người dùng (và của cấp dưới nếu có quyền)</li>
-    <li>Trạng thái: Chờ duyệt / Đã duyệt / Từ chối / Đã hủy</li>
-    <li>Nhấn vào đơn để xem chi tiết</li>
+    <li><strong>Quỹ phép năm:</strong> thẻ hiển thị Tổng quỹ phép / Đã sử dụng / Còn lại (ngày)</li>
+    <li><strong>Đăng ký nghỉ:</strong> nhấn <span class="tag tag-blue">+ Đăng ký</span></li>
+    <li>Chọn <strong>Loại nghỉ:</strong> Nghỉ phép năm, Nghỉ ốm / BHXH, Nghỉ không lương, Nghỉ thai sản, Nghỉ việc riêng</li>
+    <li>Chọn <strong>Thời gian:</strong> Cả ngày / Sáng / Chiều, ngày bắt đầu &ndash; kết thúc</li>
+    <li>Nhập <strong>Lý do</strong>; hệ thống tự kiểm tra số dư ngày phép</li>
+    <li>Đơn <strong>Chờ duyệt</strong> có thể Sửa / Xóa trước khi được duyệt</li>
   </ul>
 
-  <h3>8.2. Tạo đơn nghỉ phép</h3>
+  <h3>11.2. Tab "Chung"</h3>
   <ul>
-    <li>Chọn <strong>Loại nghỉ:</strong> Nghỉ phép năm, Nghỉ ốm, Nghỉ việc riêng, Nghỉ không lương</li>
-    <li>Chọn <strong>Ngày bắt đầu</strong> và <strong>Ngày kết thúc</strong></li>
-    <li>Nhập <strong>Lý do</strong> và <strong>Ghi chú</strong> (không bắt buộc)</li>
-    <li>Hệ thống tự động kiểm tra số dư ngày phép còn lại</li>
-    <li>Người quản lý / phụ trách nhận thông báo khi có đơn mới</li>
+    <li>Thẻ <strong>Đang nghỉ phép hiện tại</strong>: ai đang nghỉ trong ngày hôm nay (đơn đã duyệt)</li>
+    <li>Danh sách đơn nghỉ của mọi người trong phạm vi quyền của bạn</li>
+    <li>Nếu bạn có quyền <code>can_approve_leave</code>: nút <strong>Duyệt</strong> / <strong>Từ chối</strong> hiện trên các đơn <em>chưa duyệt</em> thuộc phạm vi duyệt của bạn (<a href="#phan-quyen">xem Phân quyền</a>)</li>
+    <li>Trạng thái: <span class="tag tag-amber">Chờ duyệt</span> <span class="tag tag-green">Đã duyệt</span> <span class="tag tag-rose">Từ chối</span></li>
   </ul>
-
-  <h3>8.3. Số dư ngày phép</h3>
-  <p>Hiển thị số ngày phép đã dùng và còn lại trong năm. Được thiết lập bởi quản trị viên.</p>
 </section>
 
-<!-- 9. NHÂN SỰ -->
+<!-- 12. NHÂN SỰ -->
 <section id="nhan-su">
-  <h2>9. Nhân sự (HR)</h2>
-  <p>Trang quản lý hồ sơ nhân sự, chỉ dành cho quản trị viên (<strong>can_manage = true</strong>).</p>
+  <h2>12. Nhân sự (HR)</h2>
+  <p>Trang quản lý hồ sơ nhân sự (<code>/hr</code>), chỉ dành cho người có quyền <strong>can_view_salary</strong> hoặc <strong>can_manage</strong>.</p>
 
-  <h3>9.1. Danh sách nhân sự</h3>
+  <h3>12.1. Danh sách nhân sự</h3>
   <ul>
     <li>Hiển thị danh sách nhân viên kèm: họ tên, email, phòng ban, chức vụ, số điện thoại, trạng thái</li>
-    <li>Tìm kiếm theo tên hoặc email</li>
-    <li>Lọc theo phòng ban</li>
-    <li>Nhấn vào một nhân sự để xem chi tiết</li>
+    <li>Tìm kiếm theo tên hoặc email; lọc theo phòng ban</li>
+    <li>Nhấn vào một nhân sự để mở hồ sơ chi tiết (<code>/hr/:id</code>)</li>
   </ul>
 
-  <h3>9.2. Hồ sơ nhân sự</h3>
+  <h3>12.2. Hồ sơ nhân sự (4 tab)</h3>
   <ul>
-    <li><strong>Thông tin cơ bản:</strong> Họ tên, ngày sinh, giới tính, số CMND/CCCD, địa chỉ</li>
-    <li><strong>Thông tin công việc:</strong> Mã nhân viên, phòng ban, chức vụ, ngày vào làm, loại hợp đồng</li>
-    <li><strong>Trình độ &amp; Bằng cấp:</strong> Học vấn, chuyên ngành, trường, năm tốt nghiệp</li>
-    <li><strong>Bảo hiểm &amp; Thuế:</strong> Số BHXH, mã số thuế</li>
-    <li><strong>Thông tin khẩn cấp:</strong> Người liên hệ, số điện thoại, quan hệ</li>
+    <li><strong>Thông tin chung:</strong> Họ tên, ngày sinh, giới tính, CMND/CCCD, địa chỉ; thông tin công việc (mã nhân viên, phòng ban, chức vụ, ngày vào làm, loại hợp đồng: Toàn thời gian / Bán thời gian / Thử việc / Thực tập / Hợp đồng dịch vụ); bảo hiểm &amp; thuế; thông tin khẩn cấp</li>
+    <li><strong>Chuyên môn nghiệp vụ:</strong> Trình độ học vấn, chuyên ngành, bằng cấp, chứng chỉ</li>
+    <li><strong>Quá trình công tác:</strong> Lịch sử các vị trí / phòng ban / thời gian công tác</li>
+    <li><strong>Quá trình lương:</strong> Các bậc lương theo thời gian (hệ số lương, hệ số phụ cấp, quyết định, ngày hiệu lực)</li>
   </ul>
+
+  <div class="note">
+    <strong>Bảo mật:</strong> Dữ liệu lương / hồ sơ được lọc theo phạm vi xem của chức vụ: <code>view_scope = department</code> chỉ thấy nhân sự cùng phòng ban, <code>view_scope = all</code> thấy toàn bộ. Người không có quyền nhận danh sách trống.
+  </div>
 </section>
 
-<!-- 10. BÁO CÁO -->
+<!-- 13. BÁO CÁO -->
 <section id="bao-cao">
-  <h2>10. Báo cáo &amp; Thống kê</h2>
+  <h2>13. Báo cáo &amp; Thống kê</h2>
+  <p>Trang báo cáo (<code>/reports</code>) gồm hai tab <strong>Kế hoạch</strong> và <strong>Nhiệm vụ</strong>:</p>
   <ul>
     <li><strong>Bộ lọc:</strong> Lọc theo phòng ban (chỉ phòng có <em>is_counted</em>) và trạng thái nhiệm vụ</li>
-    <li><strong>Thống kê trạng thái:</strong> Biểu đồ thanh ngang hiển thị phân bố nhiệm vụ theo trạng thái (Đang làm / Chờ duyệt / Hoàn thành / Đề xuất gia hạn / Đề xuất hủy / Đã hủy)</li>
-    <li><strong>Thống kê phòng ban:</strong> Biểu đồ thanh ngang hiển thị phân bố nhiệm vụ theo phòng ban</li>
-    <li><strong>Chi tiết phòng ban:</strong> Biểu đồ thanh chồng chi tiết cho từng phòng (kế hoạch + nhiệm vụ)</li>
-    <li><strong>Xuất Excel:</strong> Nhấn nút "Xuất Excel" để tải báo cáo dạng file .xlsx</li>
+    <li><strong>Thống kê trạng thái:</strong> Biểu đồ thanh ngang phân bố theo trạng thái (Đang làm / Chờ duyệt / Hoàn thành / Đề xuất gia hạn / Đề xuất hủy / Đã hủy)</li>
+    <li><strong>Thống kê phòng ban:</strong> Biểu đồ thanh ngang phân bố theo phòng ban</li>
+    <li><strong>Chi tiết phòng ban:</strong> Biểu đồ thanh chồng cho từng phòng</li>
+    <li><strong>Xuất Excel:</strong> Tải báo cáo dạng file .xlsx</li>
+    <li><strong>Xuất PDF:</strong> In báo cáo ra PDF (có thể in biên bản nhiệm vụ kèm chữ ký người thực hiện / giám sát từ trang chi tiết nhiệm vụ)</li>
   </ul>
 </section>
 
-<!-- 11. KPI -->
+<!-- 14. KPI -->
 <section id="kpi">
-  <h2>11. Điểm KPI &amp; Đánh giá</h2>
+  <h2>14. Điểm KPI &amp; Đánh giá</h2>
+  <p>Trang KPI (<code>/kpi</code>) gồm hai tab <strong>Chung</strong> và <strong>Của tôi</strong>, bộ lọc thời gian (Tất cả / Tháng / Quý / Năm):</p>
   <ul>
     <li><strong>Thẻ thống kê:</strong> Số nhiệm vụ hoàn thành, tổng nhiệm vụ, số điểm KPI, số người dùng</li>
-    <li><strong>Tính KPI:</strong> Nhấn nút "Tính KPI (N)" để tự động tính điểm cho các nhiệm vụ đã hoàn thành nhưng chưa có điểm</li>
+    <li><strong>Tính KPI:</strong> Nhấn nút "Tính KPI (N)" để tự động tính điểm cho các nhiệm vụ đã hoàn thành nhưng chưa có điểm (quản lý)</li>
     <li><strong>Biểu đồ cột:</strong> Điểm KPI trung bình theo người dùng</li>
     <li><strong>Biểu đồ tròn:</strong> Phân bố xếp loại (Xuất sắc / Tốt / Khá / Trung bình / Cần cải thiện)</li>
-    <li><strong>Bảng KPI người dùng:</strong> Danh sách người dùng kèm số NV hoàn thành, tổng trọng số, điểm TB, xếp loại</li>
-    <li><strong>Bảng chi tiết KPI:</strong> Điểm chi tiết từng nhiệm vụ (cơ bản, hệ số khó, tiến độ, kết quả, tổng)</li>
+    <li><strong>Bảng KPI người dùng:</strong> Số NV hoàn thành, tổng trọng số, điểm TB, xếp loại</li>
+    <li><strong>Bảng chi tiết KPI:</strong> Điểm từng nhiệm vụ: điểm cơ bản, hệ số khó, điểm tối đa, mức tiến độ, mức kết quả, điểm thực tế</li>
+    <li><strong>Xuất Excel:</strong> Tải bảng KPI dạng .xlsx</li>
+    <li><strong>Tab "Của tôi":</strong> Chỉ xem điểm KPI của riêng bạn</li>
   </ul>
 
   <h3>Thang xếp loại</h3>
+  <p>Xếp loại dựa trên <strong>điểm trung bình final_score</strong> của người dùng (thang điểm thực tế ~ 10&ndash;14.4, không phải thang 100):</p>
   <table>
-    <tr><th>Điểm</th><th>Xếp loại</th></tr>
-    <tr><td>&ge; 90</td><td><span class="tag tag-green">Xuất sắc</span></td></tr>
-    <tr><td>70 &ndash; &lt;90</td><td><span class="tag tag-blue">Tốt</span></td></tr>
-    <tr><td>50 &ndash; &lt;70</td><td><span class="tag tag-amber">Khá</span></td></tr>
-    <tr><td>30 &ndash; &lt;50</td><td><span class="tag tag-rose">Trung bình</span></td></tr>
-    <tr><td>&lt; 30</td><td>Cần cải thiện</td></tr>
+    <tr><th>Điểm TB (final_score)</th><th>Sao</th><th>Xếp loại</th></tr>
+    <tr><td>&ge; 10</td><td>5</td><td><span class="tag tag-green">Xuất sắc</span></td></tr>
+    <tr><td>7 &ndash; &lt;10</td><td>4</td><td><span class="tag tag-blue">Tốt</span></td></tr>
+    <tr><td>5 &ndash; &lt;7</td><td>3</td><td><span class="tag tag-amber">Khá</span></td></tr>
+    <tr><td>3 &ndash; &lt;5</td><td>2</td><td><span class="tag tag-rose">Trung bình</span></td></tr>
+    <tr><td>&lt; 3</td><td>1</td><td>Cần cải thiện</td></tr>
   </table>
+  <p>Công thức chi tiết: xem mục <strong>Điểm KPI</strong> trong báo cáo kỹ thuật / <code>helpers.js</code> (<code>_computeKpi</code>).</p>
 </section>
 
-<!-- 12. THÔNG BÁO -->
+<!-- 15. THÔNG BÁO -->
 <section id="thong-bao">
-  <h2>12. Thông báo</h2>
-  <p>Trang hiển thị tất cả thông báo của người dùng, phân trang và có bộ lọc.</p>
+  <h2>15. Thông báo</h2>
+  <p>Trang hiển thị tất cả thông báo của người dùng (<code>/notifications</code>), phân trang và có bộ lọc.</p>
   <ul>
-    <li><strong>Danh sách thông báo:</strong> Hiển thị tất cả thông báo theo thời gian (mới nhất trước)</li>
-    <li><strong>Phân trang:</strong> Mỗi trang 20 thông báo, có thể chuyển trang</li>
-    <li><strong>Lọc:</strong> Lọc theo loại thông báo (nhiệm vụ, bình luận, đề xuất, phê duyệt, hệ thống)</li>
+    <li><strong>Danh sách thông báo:</strong> Hiển thị theo thời gian (mới nhất trước)</li>
+    <li><strong>Lọc theo loại:</strong> Thông báo (bảng tin) / Đề cập (@tên) / Trả lời / Hạn chót (nhắc sắp hạn) / Cập nhật nhiệm vụ / Đề xuất</li>
     <li><strong>Đã đọc / Chưa đọc:</strong> In đậm thông báo chưa đọc. Nhấn vào để đánh dấu đã đọc và điều hướng</li>
+    <li>Thông báo <strong>realtime</strong>: cập nhật tức thì khi có sự kiện mới (chuông header hiện số chưa đọc)</li>
     <li>Người dùng không thể tự xóa thông báo</li>
   </ul>
   <div class="note">
-    <strong>Mẹo:</strong> Nhấn vào biểu tượng chuông ở header để xem nhanh thông báo gần đây, hoặc nhấn "Xem tất cả" để mở trang đầy đủ.
+    <strong>Mẹo:</strong> Nhấn vào biểu tượng chuông ở header để xem nhanh thông báo gần đây, hoặc "Xem tất cả" để mở trang đầy đủ.
   </div>
 </section>
 
-<!-- 13. THÔNG TIN CÁ NHÂN -->
+<!-- 16. THÔNG TIN CÁ NHÂN -->
 <section id="thong-tin-ca-nhan">
-  <h2>13. Thông tin cá nhân</h2>
+  <h2>16. Thông tin cá nhân</h2>
   <ul>
     <li><strong>Họ tên:</strong> Cập nhật tên hiển thị</li>
     <li><strong>Nhắc hạn trước (ngày):</strong> Số ngày trước hạn để nhận thông báo (mặc định 2 ngày)</li>
     <li><strong>Đổi mật khẩu:</strong> Nhập mật khẩu hiện tại, mật khẩu mới (tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường và số)</li>
+    <li>Hiển thị email, phòng ban, chức vụ hiện tại của bạn</li>
   </ul>
 </section>
 
-<!-- 14. THÙNG RÁC -->
+<!-- 17. THÙNG RÁC -->
 <section id="thung-rac">
-  <h2>14. Thùng rác</h2>
-  <p>Chỉ quản trị viên (<strong>can_manage = true</strong>) mới có quyền truy cập.</p>
+  <h2>17. Thùng rác &amp; Lưu trữ</h2>
+  <p>Chỉ quản trị viên (<strong>can_manage = true</strong>) mới có quyền truy cập (<code>/trash</code>).</p>
   <ul>
     <li>Chọn tab "Kế hoạch" hoặc "Nhiệm vụ"</li>
     <li>Danh sách các mục đã xóa mềm (soft-deleted)</li>
-    <li><strong>Khôi phục:</strong> Nhấn nút "Khôi phục" để đưa mục trở lại</li>
+    <li><strong>Khôi phục:</strong> Nhấn "Khôi phục" để đưa mục trở lại hoạt động</li>
     <li><strong>Xóa vĩnh viễn:</strong> Nhấn "Xóa hẳn", sau đó xác nhận. <strong>Không thể hoàn tác!</strong></li>
   </ul>
+  <div class="note">
+    <strong>Vòng đời dữ liệu:</strong> Dữ liệu đang dùng &rarr; xóa mềm (vào Thùng rác) &rarr; khôi phục hoặc xóa vĩnh viễn. Trang <a href="#quan-tri">Dữ liệu</a> có thêm chức năng lưu trữ (archive) và tối ưu dữ liệu cũ.
+  </div>
 </section>
 
-<!-- 15. QUẢN TRỊ -->
+<!-- 18. QUẢN TRỊ -->
 <section id="quan-tri">
-  <h2>15. Quản trị hệ thống</h2>
-  <p>Chỉ quản trị viên (<strong>can_manage = true</strong>) mới có quyền truy cập. Gồm 3 tab trong trang Quản trị:</p>
+  <h2>18. Quản trị hệ thống</h2>
+  <p>Chỉ quản trị viên (<strong>can_manage = true</strong>) mới có quyền truy cập. Trang Quản trị (<code>/admin</code>) gồm 5 tab:</p>
 
-  <h3>15.1. Phòng ban</h3>
+  <h3>18.1. Phòng ban</h3>
   <ul>
-    <li>Thêm / Sửa / Xóa phòng ban</li>
-    <li>Mỗi phòng ban có: mã, tên, trưởng phòng, đánh dấu tính báo cáo</li>
-    <li>Chỉ phòng có <strong>Tính báo cáo</strong> mới xuất hiện trong thống kê</li>
+    <li>Thêm / Sửa / Xóa phòng ban: mã, tên, trưởng phòng</li>
+    <li>Tùy chọn <strong>Tính báo cáo</strong> — chỉ phòng có cờ này mới xuất hiện trong thống kê</li>
   </ul>
 
-  <h3>15.2. Chức vụ</h3>
+  <h3>18.2. Tổ chuyên môn</h3>
   <ul>
-    <li>Thêm / Sửa / Xóa chức vụ</li>
-    <li>Mỗi chức vụ có: mã, tên, mô tả, cấp bậc, phạm vi xem, các quyền CRUD</li>
-    <li>Xem chi tiết quyền ở mục <a href="#phan-quyen">Phân quyền</a></li>
+    <li>Thêm / Sửa / Xóa tổ chuyên môn: mã, tên, mô tả, phòng cha</li>
+    <li>Gán thành viên; tổ được dùng để lọc dữ liệu theo phạm vi <code>view_scope = group</code> và kênh trao đổi tổ</li>
   </ul>
 
-  <h3>15.3. Người dùng</h3>
+  <h3>18.3. Chức vụ</h3>
   <ul>
-    <li>Thêm / Sửa người dùng</li>
-    <li>Gán phòng ban, chức vụ, số ngày nhắc hạn</li>
-    <li>Kích hoạt / Vô hiệu hóa tài khoản (verified)</li>
+    <li>Thêm / Sửa / Xóa chức vụ: mã, tên, mô tả, cấp bậc (Lãnh đạo / Quản lý / Nhân viên), phạm vi xem, các quyền</li>
+    <li>Chi tiết quyền xem mục <a href="#phan-quyen">Phân quyền</a></li>
+  </ul>
+
+  <h3>18.4. Người dùng</h3>
+  <ul>
+    <li>Thêm / Sửa người dùng: email, tên, gán phòng ban, chức vụ, tổ chuyên môn, số ngày nhắc hạn</li>
+    <li>Kích hoạt / Vô hiệu hóa tài khoản (disabled) — tài khoản bị vô hiệu hóa bị chặn mọi thao tác ở máy chủ</li>
     <li>Đặt lại mật khẩu</li>
   </ul>
 
-  <h3>15.4. Nhật ký</h3>
-  <p>Trang riêng tại <code>/admin/logs</code>. Xem nhật ký hoạt động: thời gian, người dùng, hành động, mục tiêu, IP. Phân trang. Các hành động được ghi lại: đăng nhập, đăng xuất, tạo/sửa/xóa người dùng.</p>
-
-  <h3>15.5. Dữ liệu</h3>
-  <p>Trang riêng tại <code>/admin/data</code>.</p>
+  <h3>18.5. Kiểm tra hiện diện (Presence)</h3>
   <ul>
-    <li><strong>Xuất:</strong> Chọn collection (kế hoạch, nhiệm vụ, người dùng, chức vụ, phòng ban) và định dạng (xlsx/csv/json)</li>
-    <li><strong>Nhập:</strong> Dán JSON hoặc tải file lên; tải file mẫu trước khi nhập</li>
-    <li><strong>Sao lưu:</strong> Tạo bản sao lưu toàn bộ dữ liệu (tải file .zip)</li>
-    <li><strong>Khôi phục:</strong> Tải file sao lưu lên để khôi phục. <strong>Cần xác nhận trước khi thực hiện.</strong></li>
+    <li><strong>Kích hoạt đợt kiểm tra:</strong> mở cửa sổ nhận heartbeat từ người dùng (đặt tên tùy chọn)</li>
+    <li><strong>Đang có mặt ngay bây giờ:</strong> ai đã gửi heartbeat trong 60 giây qua</li>
+    <li><strong>Chạy kiểm tra:</strong> chốt danh sách Có mặt / Vắng mặt của một đợt</li>
+    <li><strong>Lịch sử đợt kiểm tra:</strong> danh sách đợt trước kèm số người có mặt / vắng</li>
+    <li>Người dùng gửi heartbeat tự động từ app mobile / web khi mở ứng dụng</li>
+  </ul>
+
+  <h3>18.6. Nhật ký hoạt động</h3>
+  <p>Trang riêng <code>/admin/logs</code>: xem nhật ký thời gian, người dùng, hành động, mục tiêu, IP; phân trang. Các hành động được ghi: đăng nhập, đăng xuất, tạo / sửa / xóa dữ liệu quan trọng.</p>
+
+  <h3>18.7. Dữ liệu</h3>
+  <p>Trang riêng <code>/admin/data</code> gồm 4 thẻ:</p>
+  <ul>
+    <li><strong>Xuất dữ liệu:</strong> Chọn collection (kế hoạch, nhiệm vụ, người dùng, chức vụ, phòng ban, tổ chuyên môn) và định dạng (xlsx / csv / json)</li>
+    <li><strong>Nhập dữ liệu:</strong> Dán JSON hoặc tải file lên; có file mẫu để tham khảo trước khi nhập</li>
+    <li><strong>Sao lưu &amp; Phục hồi:</strong> Tạo bản sao lưu toàn bộ dữ liệu (file .zip) và khôi phục từ file sao lưu. <strong>Khôi phục cần xác nhận trước khi thực hiện.</strong></li>
+    <li><strong>Lưu trữ &amp; Tối ưu:</strong> Lưu trữ (archive) dữ liệu cũ và tối ưu hiệu năng hệ thống</li>
   </ul>
 </section>
 
-<!-- 16. PHÂN QUYỀN -->
+<!-- 19. PHÂN QUYỀN -->
 <section id="phan-quyen">
-  <h2>16. Phân quyền</h2>
-  <p>Hệ thống phân quyền dựa trên chức vụ (Role), mỗi chức vụ có các quyền sau:</p>
+  <h2>19. Phân quyền</h2>
+  <p>Hệ thống phân quyền dựa trên <strong>chức vụ (Role)</strong> của từng người dùng, gồm cấp bậc, phạm vi xem và các quyền hành động.</p>
 
-  <h3>16.1. Cấp bậc (Level)</h3>
+  <h3>19.1. Cấp bậc (Level)</h3>
   <ul>
     <li><strong>Leadership:</strong> Lãnh đạo</li>
     <li><strong>Management:</strong> Quản lý</li>
     <li><strong>Employee:</strong> Nhân viên</li>
   </ul>
 
-  <h3>16.2. Phạm vi xem (View Scope)</h3>
+  <h3>19.2. Phạm vi xem (View Scope)</h3>
   <table>
-    <tr><th>Phạm vi</th><th>Dữ liệu hiển thị trên Dashboard</th></tr>
+    <tr><th>Phạm vi</th><th>Dữ liệu hiển thị</th></tr>
     <tr><td><strong>all</strong></td><td>Tất cả kế hoạch / nhiệm vụ trong hệ thống</td></tr>
-    <tr><td><strong>department</strong></td><td>Chỉ kế hoạch / nhiệm vụ thuộc phòng ban của người dùng</td></tr>
-    <tr><td><strong>personal</strong></td><td>Chỉ nhiệm vụ cá nhân (người thực hiện / giám sát / phối hợp)</td></tr>
+    <tr><td><strong>department</strong></td><td>Kế hoạch / nhiệm vụ thuộc phòng ban của người dùng (kể cả phòng phối hợp)</td></tr>
+    <tr><td><strong>group</strong></td><td>Nhiệm vụ thuộc các tổ chuyên môn của người dùng</td></tr>
+    <tr><td><strong>personal</strong></td><td>Chỉ nhiệm vụ cá nhân (người thực hiện / giám sát / phối hợp / phụ trách kế hoạch)</td></tr>
   </table>
+  <div class="note">
+    <strong>Fail-closed:</strong> Nếu không xác định được chức vụ hợp lệ (chưa gán hoặc chức vụ đã bị gỡ / xóa), hệ thống tự thu hẹp về <strong>personal</strong> — không bao giờ mặc định cho xem toàn bộ.
+  </div>
 
-  <h3>16.3. Quyền CRUD</h3>
+  <h3>19.3. Quyền hành động</h3>
   <table>
     <tr><th>Quyền</th><th>Mô tả</th></tr>
     <tr><td>can_add_plans</td><td>Thêm kế hoạch mới</td></tr>
@@ -718,31 +836,45 @@
     <tr><td>can_add_tasks</td><td>Thêm nhiệm vụ mới</td></tr>
     <tr><td>can_edit_tasks</td><td>Sửa nhiệm vụ</td></tr>
     <tr><td>can_delete_tasks</td><td>Xóa nhiệm vụ</td></tr>
-    <tr><td><strong>can_manage</strong></td><td>Quản trị toàn hệ thống (Admin &amp; Thùng rác)</td></tr>
+    <tr><td>can_approve_leave</td><td>Duyệt / từ chối đơn nghỉ phép (theo phạm vi duyệt)</td></tr>
+    <tr><td>can_view_salary</td><td>Xem lương / hồ sơ nhân sự (theo phạm vi xem)</td></tr>
+    <tr><td><strong>can_manage</strong></td><td>Quản trị toàn hệ thống (Quản trị, Thùng rác, Dữ liệu, Nhật ký, Bảng tin)</td></tr>
   </table>
 
+  <h3>19.4. Phạm vi duyệt nghỉ phép (Approval Scope)</h3>
+  <table>
+    <tr><th>Phạm vi</th><th>Đơn nghỉ phép được duyệt</th></tr>
+    <tr><td><strong>department</strong></td><td>Đơn dưới 3 ngày của người cùng phòng ban</td></tr>
+    <tr><td><strong>group</strong></td><td>Đơn dưới 3 ngày của người cùng tổ chuyên môn</td></tr>
+    <tr><td><strong>all</strong></td><td>Mọi đơn (từ 3 ngày trở lên)</td></tr>
+  </table>
+  <p><code>can_manage</code> luôn duyệt được mọi đơn.</p>
+
   <div class="note">
-    <strong>Lưu ý:</strong> Quyền <strong>can_manage</strong> là quyền cao nhất, cho phép truy cập trang Quản trị, Nhân sự, Thùng rác. Chỉ nên cấp cho những người dùng tin cậy.
+    <strong>Lưu ý:</strong> Quyền <strong>can_manage</strong> là quyền cao nhất — truy cập toàn bộ trang Quản trị, Nhân sự, Thùng rác, Dữ liệu. Chỉ nên cấp cho những người dùng tin cậy.
   </div>
 </section>
 
-<!-- 17. MOBILE -->
+<!-- 20. MOBILE -->
 <section id="mobile">
-  <h2>17. Phiên bản Mobile</h2>
-  <p>iPlanner có phiên bản dành cho thiết bị di động, tối ưu giao diện cảm ứng. Truy cập qua đường dẫn <code>/m/*</code> hoặc sử dụng ứng dụng di động (React Native).</p>
+  <h2>20. Phiên bản Mobile</h2>
+  <p>iPlanner có phiên bản dành cho thiết bị di động, tối ưu giao diện cảm ứng. Tự động chuyển sang giao diện mobile khi truy cập từ điện thoại / máy tính bảng (hoặc ép xem bằng <code>?device=mobile</code>).</p>
 
-  <h3>17.1. Các chức năng Mobile</h3>
+  <h3>20.1. Các chức năng Mobile</h3>
   <ul>
-    <li><strong>Dashboard:</strong> <code>/m</code> &mdash; Tổng quan nhiệm vụ, thẻ trạng thái, cảnh báo</li>
-    <li><strong>Nhiệm vụ:</strong> <code>/m/tasks</code> &mdash; Danh sách nhiệm vụ, xem chi tiết, cập nhật trạng thái</li>
+    <li><strong>Tổng quan:</strong> <code>/m</code> &mdash; thẻ trạng thái, cảnh báo, chấm công nhanh</li>
+    <li><strong>Bảng tin:</strong> <code>/m/announcements</code> &mdash; xem thông báo nội bộ</li>
+    <li><strong>Việc của tôi:</strong> <code>/m/tasks</code> &mdash; danh sách nhiệm vụ, lọc trạng thái, xem chi tiết, cập nhật trạng thái</li>
+    <li><strong>KPI:</strong> <code>/m/kpi</code> &mdash; điểm KPI, bảng "Của tôi" và xếp hạng</li>
     <li><strong>Chấm công:</strong> <code>/m/attendance</code> &mdash; Check-in / Check-out với xác thực WiFi</li>
-    <li><strong>Cá nhân:</strong> <code>/m/profile</code> &mdash; Thông tin cá nhân, đổi mật khẩu</li>
+    <li><strong>Cá nhân:</strong> <code>/m/profile</code> &mdash; thông tin cá nhân, đổi mật khẩu</li>
+    <li><strong>Thông báo:</strong> <code>/m/notifications</code> &mdash; danh sách thông báo theo loại</li>
   </ul>
 
-  <h3>17.2. Chấm công trên Mobile</h3>
+  <h3>20.2. Chấm công trên Mobile</h3>
   <p>Trên thiết bị Android, ứng dụng có thể đọc tên WiFi thực tế thông qua <code>react-native-wifi-reborn</code>, cho phép xác thực chấm công tự động dựa trên mạng WiFi nội bộ. iOS không hỗ trợ đọc SSID kể từ iOS 13+.</p>
 
-  <h3>17.3. PWA (Progressive Web App)</h3>
+  <h3>20.3. PWA (Progressive Web App)</h3>
   <p>Phiên bản web trên trình duyệt di động có thể được cài đặt như một ứng dụng (Add to Home Screen) để trải nghiệm gần giống app native.</p>
 </section>
 

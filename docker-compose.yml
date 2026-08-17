@@ -9,6 +9,10 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    # Dev hot reload: the image's ENTRYPOINT hardcodes --hooksWatch=false, so override it
+    # here to make the hooks watcher env-driven. Run with PB_HOOKS_WATCH=true to reload
+    # pb_hooks/*.js on save (default false keeps production behavior).
+    entrypoint: ["pocketbase", "serve", "--http=0.0.0.0:8090", "--dir=/pb/pb_data", "--hooksDir=/pb/pb_hooks", "--migrationsDir=/pb/pb_migrations", "--publicDir=/pb/pb_public", "--hooksWatch=${PB_HOOKS_WATCH:-false}"]
     container_name: mbs-planner-pb
     ports:
       # Bind 8090 chỉ trên localhost — cổng vào duy nhất từ bên ngoài là nginx

@@ -10,6 +10,33 @@ function _arr(v) {
   return [v]
 }
 
+// ---- JSON field decoding ----
+// PB 0.39 returns a json-type field's value via record.get() as a RAW []byte (a JS
+// array of byte values), NOT a parsed JS value — e.g. an empty json array comes back
+// as [91,93] (the bytes of "[]"), and ["192.168.1.0/24"] as the bytes of the raw
+// JSON text. Decode it robustly so a json array field can be read in any form:
+// real parsed array, byte array (PB), raw JSON string, null/empty.
+function _jsonArr(v) {
+  var out
+  if (v === null || v === undefined) return []
+  if (typeof v === "string") {
+    try { out = JSON.parse(v) } catch (ex) { return [] }
+  } else if (Array.isArray(v)) {
+    // a real parsed array has string/object entries; a byte array has number entries
+    if (v.length > 0 && typeof v[0] === "number") {
+      var s = ""
+      for (var i = 0; i < v.length; i++) s += String.fromCharCode(v[i])
+      try { out = JSON.parse(s) } catch (ex) { return [] }
+    } else {
+      return v
+    }
+  } else {
+    return [v]
+  }
+  if (out === null) return []
+  return Array.isArray(out) ? out : [out]
+}
+
 function _eq(a, b) {
   if (Array.isArray(a) || Array.isArray(b)) {
     var A = Array.isArray(a) ? a : [a]
@@ -683,6 +710,7 @@ module.exports = {
   taskFields: _taskFields,
   eq: _eq,
   roleInfo: _roleInfo,
+  jsonArr: _jsonArr,
   getTask: _getTask,
   notifyTask: _notifyTask,
   taskParticipantIds: _taskParticipantIds,
