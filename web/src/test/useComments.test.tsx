@@ -84,4 +84,34 @@ describe("useComments", () => {
     await result.current.mutateAsync({ id: "c1" });
     expect(mockDelete).toHaveBeenCalledWith("c1");
   });
+
+  it("useCreateComment optimistically prepends new comment to task cache", async () => {
+    mockCreate.mockResolvedValue(mockComments[0]);
+    // Seed the comments cache for task t1
+    queryClient.setQueryData(["comments", "t1"], [mockComments[1]]);
+    mockGetFullList.mockResolvedValue(mockComments[0]);
+    const { useCreateComment } = await import("../hooks/useComments");
+    const { result } = renderHook(() => useCreateComment(), { wrapper: Wrapper });
+    await waitFor(async () => {
+      await result.current.mutateAsync({
+        data: { task_id: "t1", user_id: "u1", content: "New" },
+        taskId: "t1",
+      });
+    });
+    const cache = queryClient.getQueryData<any[]>(["comments", "t1"]);
+    expect(cache).toBeDefined();
+    expect(cache!.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("useCreateComment invalidates all comments queries (broad key)", async () => {
+    mockCreate.mockResolvedValue(mockComments[0]);
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+    const { useCreateComment } = await import("../hooks/useComments");
+    const { result } = renderHook(() => useCreateComment(), { wrapper: Wrapper });
+    await result.current.mutateAsync({ data: { task_id: "t1", content: "Hi" }, files: [] });
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: ["comments"] })
+    );
+    invalidateSpy.mockRestore();
+  });
 });

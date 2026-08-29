@@ -4,10 +4,58 @@ export function formatDate(dateStr?: string) {
   return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("vi-VN");
 }
 
+export function formatDateShort(dateStr?: string) {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  return isNaN(d.getTime())
+    ? "—"
+    : d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
+}
+
+export function formatDateLong(dateStr?: string) {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  return isNaN(d.getTime())
+    ? "—"
+    : d.toLocaleDateString("vi-VN", { day: "numeric", month: "numeric", year: "numeric" });
+}
+
 export function formatDateTime(dateStr?: string) {
   if (!dateStr) return "—";
   const d = new Date(dateStr);
   return isNaN(d.getTime()) ? "—" : d.toLocaleString("vi-VN");
+}
+
+export function formatDateTimeShort(dateStr?: string) {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  return isNaN(d.getTime())
+    ? "—"
+    : d.toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "numeric", month: "numeric", year: "numeric" });
+}
+
+export function formatTimeShort(dateStr?: string) {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  return isNaN(d.getTime())
+    ? "—"
+    : d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+}
+
+export function formatMonthYear(dateStr?: string) {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  return isNaN(d.getTime())
+    ? "—"
+    : d.toLocaleDateString("vi-VN", { month: "long", year: "numeric" });
+}
+
+export function formatMonthYearShort(dateStr?: string) {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  return isNaN(d.getTime())
+    ? "—"
+    : d.toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" });
 }
 
 export function timeAgo(iso?: string): string {

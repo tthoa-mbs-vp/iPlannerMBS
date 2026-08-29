@@ -308,7 +308,7 @@ export default function InteractiveGanttChart({ plan, tasks, canEdit = true }: {
                       </div>
                     </div>
                     <div className="absolute left-0 top-0 h-full flex items-center pointer-events-none" style={{ left: `${cStart * colWidthPct}%` }}>
-                      <span className="text-[9px] text-slate-400 ml-0.5 leading-none dark:text-slate-500">{task.weight}%</span>
+                      <span className="text-[9px] text-slate-400 ml-0.5 leading-none dark:text-slate-500"></span>
                     </div>
                   </div>
                 </div>

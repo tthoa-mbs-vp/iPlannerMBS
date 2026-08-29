@@ -4,6 +4,7 @@ import { useAuthStore } from "../stores/authStore";
 import { useToastStore } from "../stores/toastStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { getNotificationTypeLabel, decodeRef } from "./useNotifications";
+import type { Notification } from "@shared/types";
 
 export function useRealtimeNotifications() {
   const userId = useAuthStore((s) => s.user?.id);
@@ -13,7 +14,7 @@ export function useRealtimeNotifications() {
   useEffect(() => {
     if (!userId) return;
 
-    const handler = (e: any) => {
+    const handler = (e: { action: string; record: Notification }) => {
       if (e.action === "create") {
         const record = e.record;
         if (record.user_id === userId) {

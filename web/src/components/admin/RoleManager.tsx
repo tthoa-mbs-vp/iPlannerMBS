@@ -3,7 +3,7 @@ import { useRoles, useCreateRole, useUpdateRole, useDeleteRole } from "../../hoo
 import { Plus, Pencil, Trash2, Check, X, UserCheck, Upload, Search } from "lucide-react";
 import ExportButton from "../shared/ExportButton";
 const ImportModal = lazy(() => import("./ImportModal"));
-import { exportToExcel, exportToCSV, exportToJSON, ROLE_EXPORT_COLUMNS } from "../../utils/importExport";
+import { exportToExcel, exportToCsv, exportToJson, ROLE_EXPORT_COLUMNS } from "../../utils/importExport";
 import type { Role, RoleLevel, ViewScope, ApprovalScope } from "@shared/types";
 import { btn } from "../../utils/buttonClasses";
 import Spinner from "../shared/Spinner";
@@ -93,7 +93,7 @@ export default function RoleManager() {
       if (editingId === "new") await createRole.mutateAsync(data);
       else if (editingId) await updateRole.mutateAsync({ id: editingId, data });
       setEditingId(null);
-    } catch (err: any) { setError(err?.message || "Lỗi"); }
+    } catch (err: unknown) { setError(err instanceof Error ? err.message : "Lỗi"); }
   };
 
   const handleDelete = async (id: string) => {
@@ -144,8 +144,8 @@ export default function RoleManager() {
                 approval_scope: r.approval_scope === "all" ? "Toàn bộ" : r.approval_scope === "department" ? "Phòng ban" : r.approval_scope === "group" ? "Tổ chuyên môn" : "—",
               }));
               if (format === "xlsx") exportToExcel(data, ROLE_EXPORT_COLUMNS, "chuc-vu");
-              else if (format === "csv") exportToCSV(data, ROLE_EXPORT_COLUMNS, "chuc-vu");
-              else exportToJSON(data, ROLE_EXPORT_COLUMNS, "chuc-vu");
+              else if (format === "csv") exportToCsv(data, ROLE_EXPORT_COLUMNS, "chuc-vu");
+              else exportToJson(data, "chuc-vu");
             }}
           />
           <button onClick={() => setShowImport(true)}
@@ -231,8 +231,8 @@ export default function RoleManager() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button onClick={() => startEdit(r)} className={btn.edit}><Pencil className="h-4 w-4" /></button>
-                      <button onClick={() => handleDelete(r.id)} className={btn.delete}><Trash2 className="h-4 w-4" /></button>
+                      <button onClick={() => startEdit(r)} className={btn.edit} aria-label="Chỉnh sửa"><Pencil className="h-4 w-4" /></button>
+                      <button onClick={() => handleDelete(r.id)} className={btn.delete} aria-label="Xóa"><Trash2 className="h-4 w-4" /></button>
                     </td>
                   </tr>
                 )
@@ -263,6 +263,7 @@ function InlineRoleRow({
   scope: string; onScopeChange: (v: string) => void;
   approvalScope: string; onApprovalScopeChange: (v: string) => void;
   perms: Record<string, boolean>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onPermsChange: (p: any) => void;
   error: string; isSaving: boolean; onSave: () => void; onCancel: () => void;
 }) {
@@ -309,7 +310,7 @@ function InlineRoleRow({
             {PERM_FIELDS.map((pf) => (
               <label key={pf.key} className="flex items-center gap-1.5 text-xs">
                 <input type="checkbox"
-                  checked={(perms as any)[pf.key]}
+                  checked={!!perms[pf.key]}
                   onChange={(e) => onPermsChange({ ...perms, [pf.key]: e.target.checked })}
                   className="rounded border-slate-300 text-amber-600 focus:ring-amber-500 dark:border-slate-600 dark:text-amber-400" />
                 {pf.label}
@@ -335,8 +336,8 @@ function InlineRoleRow({
         <td className="px-4 py-2 text-right">
           <label className="mb-1 block text-xs font-medium text-amber-700 dark:text-amber-300">Thao tác</label>
           <div className="flex items-center justify-end gap-1 pt-1">
-            <button type="button" onClick={() => onSave()} disabled={isSaving} className={btn.save}><Check className="h-4 w-4" /></button>
-            <button type="button" onClick={onCancel} className={btn.cancel}><X className="h-4 w-4" /></button>
+            <button type="button" onClick={() => onSave()} disabled={isSaving} className={btn.save} aria-label="Lưu"><Check className="h-4 w-4" /></button>
+            <button type="button" onClick={onCancel} className={btn.cancel} aria-label="Hủy"><X className="h-4 w-4" /></button>
           </div>
         </td>
       </tr>

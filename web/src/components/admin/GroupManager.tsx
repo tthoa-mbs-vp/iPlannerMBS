@@ -9,7 +9,7 @@ import { useDepartments, useUsers } from "../../hooks/useDepartments";
 import { Plus, Pencil, Trash2, Check, X, Network, Upload, Search } from "lucide-react";
 import ExportButton from "../shared/ExportButton";
 const ImportModal = lazy(() => import("./ImportModal"));
-import { exportToExcel, exportToCSV, exportToJSON, GROUP_EXPORT_COLUMNS } from "../../utils/importExport";
+import { exportToExcel, exportToCsv, exportToJson, GROUP_EXPORT_COLUMNS } from "../../utils/importExport";
 import type { ProfessionalGroup, User } from "@shared/types";
 import { btn } from "../../utils/buttonClasses";
 import Spinner from "../shared/Spinner";
@@ -84,11 +84,11 @@ export default function GroupManager() {
     }
     setError("");
     try {
-      const data: any = {
+      const data = {
         code: editCode,
         name: editName,
         description: editDesc || undefined,
-        department_id: parentDept,
+        department_id: parentDept || undefined,
       };
       if (editingId === "new") {
         await createGroup.mutateAsync(data);
@@ -96,8 +96,8 @@ export default function GroupManager() {
         await updateGroup.mutateAsync({ id: editingId, data });
       }
       setEditingId(null);
-    } catch (err: any) {
-      setError(err?.message || "Lỗi");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Lỗi");
     }
   };
 
@@ -151,8 +151,8 @@ export default function GroupManager() {
               member_count: (membersByGroup[g.id] || []).length,
             }));
             if (format === "xlsx") exportToExcel(data, GROUP_EXPORT_COLUMNS, "to-chuyen-mon");
-            else if (format === "csv") exportToCSV(data, GROUP_EXPORT_COLUMNS, "to-chuyen-mon");
-            else exportToJSON(data, GROUP_EXPORT_COLUMNS, "to-chuyen-mon");
+            else if (format === "csv") exportToCsv(data, GROUP_EXPORT_COLUMNS, "to-chuyen-mon");
+            else exportToJson(data, "to-chuyen-mon");
           }}
         />
         <button onClick={() => setShowImport(true)}
@@ -219,8 +219,8 @@ export default function GroupManager() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button onClick={() => startEdit(g)} className={btn.edit}><Pencil className="h-4 w-4" /></button>
-                      <button onClick={() => handleDelete(g.id)} className={btn.delete}><Trash2 className="h-4 w-4" /></button>
+                      <button onClick={() => startEdit(g)} className={btn.edit} aria-label="Chỉnh sửa"><Pencil className="h-4 w-4" /></button>
+                      <button onClick={() => handleDelete(g.id)} className={btn.delete} aria-label="Xóa"><Trash2 className="h-4 w-4" /></button>
                     </td>
                   </tr>
                 )
@@ -286,8 +286,8 @@ function InlineGroupRow({
         <td className="px-4 py-2 text-right">
           <label className="mb-1 block text-xs font-medium text-teal-700 dark:text-teal-300">Thao tác</label>
           <div className="flex items-center justify-end gap-1 pt-1">
-            <button type="button" onClick={() => onSave()} disabled={isSaving} className={btn.save}><Check className="h-4 w-4" /></button>
-            <button type="button" onClick={onCancel} className={btn.cancel}><X className="h-4 w-4" /></button>
+            <button type="button" onClick={() => onSave()} disabled={isSaving} className={btn.save} aria-label="Lưu"><Check className="h-4 w-4" /></button>
+            <button type="button" onClick={onCancel} className={btn.cancel} aria-label="Hủy"><X className="h-4 w-4" /></button>
           </div>
         </td>
       </tr>

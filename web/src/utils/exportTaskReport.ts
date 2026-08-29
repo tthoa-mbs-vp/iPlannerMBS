@@ -15,7 +15,6 @@ export interface TaskReportRow {
   start_date: string;
   deadline: string;
   status: string;
-  weight: string;
   is_high_impact: string;
   file_count: number;
   rating: string;
@@ -53,7 +52,7 @@ export function buildTaskReportRow(task: Task): TaskReportRow {
     start_date: fmtDate(task.start_date),
     deadline: fmtDate(task.deadline),
     status: TASK_STATUS_LABELS[task.status] || task.status,
-    weight: String(task.weight ?? ""),
+    
     is_high_impact: task.is_high_impact ? "Có" : "Không",
     file_count: 0,
     rating: task.rating ? String(task.rating) : "—",
@@ -110,7 +109,6 @@ export function buildTaskInfoBlock(task: Task): PdfInfoBlock {
       { label: "Ngày bắt đầu", value: row.start_date },
       { label: "Hạn hoàn thành", value: row.deadline },
       { label: "Trạng thái", value: row.status },
-      { label: "Trọng số (%)", value: row.weight },
       { label: "Trọng điểm", value: row.is_high_impact },
       { label: "Xếp loại", value: row.rating },
     ],

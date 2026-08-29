@@ -1,6 +1,6 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { pb } from "../api/client";
-import { useToastStore } from "../stores/toastStore";
+import { useMutationWithToast } from "./useMutationWithToast";
 import type { Comment } from "@shared/types";
 
 const THREAD_PAGE_SIZE = 30;
@@ -92,70 +92,67 @@ export function useAllComments() {
 }
 
 export function useCreateComment() {
-  const addToast = useToastStore((s) => s.addToast);
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ data, files: fileList }: { data: Partial<Comment>; files?: File[]; taskId?: string }) => {
+  return useMutationWithToast(
+    ({ data, files: fileList }: { data: Partial<Comment>; files?: File[]; taskId?: string }) => {
       return pb.collection("comments").create({
         ...data,
         files: fileList && fileList.length > 0 ? fileList : undefined,
       });
     },
-    onSuccess: async (res, vars) => {
-      addToast("success", "Thêm bình luận thành công");
-      if (vars.taskId) {
-        await qc.invalidateQueries({ queryKey: ["comments", vars.taskId] });
-        try {
-          const full = await pb.collection("comments").getOne<Comment>(res.id, { expand: "user_id,quote_id.user_id" });
-          prependComment(qc, vars.taskId, full);
-        } catch {
-          prependComment(qc, vars.taskId, res as unknown as Comment);
+    {
+      successMessage: "Thêm bình luận thành công",
+      errorMessage: "Không thể thêm bình luận",
+      invalidateKeys: [["comments"]],
+      onSuccess: async (res, vars) => {
+        if (vars.taskId) {
+          try {
+            const full = await pb.collection("comments").getOne<Comment>(res.id, { expand: "user_id,quote_id.user_id" });
+            prependComment(qc, vars.taskId, full);
+          } catch {
+            prependComment(qc, vars.taskId, res as unknown as Comment);
+          }
         }
-      }
-    },
-    onError: (error: any) => {
-      addToast("error", error instanceof Error ? error.message : "Có lỗi xảy ra");
-    },
-  });
+      },
+    }
+  );
 }
 
 export function useUpdateComment() {
-  const addToast = useToastStore((s) => s.addToast);
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, data, files: fileList }: { id: string; data: Partial<Comment>; files?: File[]; taskId?: string }) => {
+  return useMutationWithToast(
+    ({ id, data, files: fileList }: { id: string; data: Partial<Comment>; files?: File[]; taskId?: string }) => {
       return pb.collection("comments").update(id, {
         ...data,
         files: fileList && fileList.length > 0 ? fileList : undefined,
       });
     },
-    onSuccess: async (res, vars) => {
-      addToast("success", "Cập nhật bình luận thành công");
-      if (vars.taskId) {
-        await qc.invalidateQueries({ queryKey: ["comments", vars.taskId] });
-        mergeComment(qc, vars.taskId, res as unknown as Comment);
-      }
-    },
-    onError: (error: any) => {
-      addToast("error", error instanceof Error ? error.message : "Có lỗi xảy ra");
-    },
-  });
+    {
+      successMessage: "Cập nhật bình luận thành công",
+      errorMessage: "Không thể cập nhật bình luận",
+      invalidateKeys: [["comments"]],
+      onSuccess: async (res, vars) => {
+        if (vars.taskId) {
+          mergeComment(qc, vars.taskId, res as unknown as Comment);
+        }
+      },
+    }
+  );
 }
 
 export function useDeleteComment() {
-  const addToast = useToastStore((s) => s.addToast);
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id }: { id: string; taskId?: string }) => pb.collection("comments").delete(id),
-    onSuccess: async (_res, vars) => {
-      addToast("success", "Xóa bình luận thành công");
-      if (vars.taskId) {
-        await qc.invalidateQueries({ queryKey: ["comments", vars.taskId] });
-        removeComment(qc, vars.taskId, vars.id);
-      }
-    },
-    onError: (error: any) => {
-      addToast("error", error instanceof Error ? error.message : "Có lỗi xảy ra");
-    },
-  });
+  return useMutationWithToast(
+    ({ id }: { id: string; taskId?: string }) => pb.collection("comments").delete(id),
+    {
+      successMessage: "Xóa bình luận thành công",
+      errorMessage: "Không thể xóa bình luận",
+      invalidateKeys: [["comments"]],
+      onSuccess: (_res, vars) => {
+        if (vars.taskId) {
+          removeComment(qc, vars.taskId, vars.id);
+        }
+      },
+    }
+  );
 }

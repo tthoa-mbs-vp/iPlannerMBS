@@ -23,7 +23,7 @@ export function sanitizeHtml(html: string): string {
       }
     }
   });
-  return doc.body.innerHTML;
+  return (doc.body || doc.documentElement).innerHTML;
 }
 
 export function stripTags(html: string): string {

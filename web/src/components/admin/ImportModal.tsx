@@ -28,8 +28,8 @@ export default function ImportModal({ onClose, collection: presetCollection }: P
         ? await importFromPasteData(pasteText, collection)
         : await importFromFile(file!, collection);
       setResult(res);
-    } catch (err: any) {
-      setResult({ collection, total: 0, success: 0, errors: [{ row: 0, message: err?.message || "Lỗi" }] });
+    } catch (err: unknown) {
+      setResult({ collection, total: 0, success: 0, errors: [{ row: 0, message: err instanceof Error ? err.message : "Lỗi" }] });
     }
     setImporting(false);
   };

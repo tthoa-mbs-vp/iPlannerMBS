@@ -9,6 +9,7 @@ export function useKpiScores() {
     queryFn: async () => {
       if (!pb.authStore.isValid) throw new Error("Not authenticated");
       const result = await pb.collection("kpi_scores").getFullList<KpiScore>({
+        fields: "id,task_id,base_score,difficulty_coeff,max_converted_score,progress_score,result_rating,final_score,created",
         expand: "task_id",
         requestKey: "kpi_scores-full",
       });
@@ -35,7 +36,7 @@ export function useBatchCalculateKpi() {
       if (created > 0) addToast("success", `Đã tính KPI cho ${created} nhiệm vụ`);
       await qc.invalidateQueries({ queryKey: ["kpi_scores"] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       addToast("error", error instanceof Error ? error.message : "Có lỗi khi tính KPI");
     },
   });

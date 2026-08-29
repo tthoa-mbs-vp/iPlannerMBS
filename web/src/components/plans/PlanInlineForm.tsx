@@ -96,8 +96,8 @@ export default function PlanInlineForm({ initialValues, onSubmit, onCancel, pend
         is_sudden: sudden,
         is_high_impact: highImpact,
       });
-    } catch (err: any) {
-      setError(err?.message || "Có lỗi xảy ra");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Có lỗi xảy ra");
     }
   };
 
@@ -108,7 +108,7 @@ export default function PlanInlineForm({ initialValues, onSubmit, onCancel, pend
           {title || (showId ? "Sửa kế hoạch" : "Thêm kế hoạch mới")}
         </span>
         {showId && <span className="text-[10px] text-slate-400 dark:text-slate-500">ID: {showId}</span>}
-        <button type="button" onClick={onCancel}
+        <button type="button" onClick={onCancel} aria-label="Hủy"
           className="rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-300">
           <X className="h-3.5 w-3.5" />
         </button>

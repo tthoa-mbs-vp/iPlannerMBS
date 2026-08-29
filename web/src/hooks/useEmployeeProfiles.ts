@@ -31,8 +31,8 @@ export function useEmployeeProfile(userId: string | undefined) {
             expand: "user_id,user_id.department_id,user_id.role_id",
           });
         return result;
-      } catch (e: any) {
-        if (e?.status === 404) return null;
+      } catch (e: unknown) {
+        if (e && typeof e === "object" && "status" in e && (e as { status: number }).status === 404) return null;
         throw e;
       }
     },

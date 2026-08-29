@@ -1,4 +1,5 @@
-import { NavLink } from "react-router-dom";
+import { useEffect } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import { APP_NAME } from "../../config/app";
 import {
@@ -17,12 +18,14 @@ import {
   Activity,
   Database,
   BookOpen,
+  ShieldCheck,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 interface NavItem {
   to: string;
   label: string;
-  icon: any;
+  icon: LucideIcon;
   adminOnly?: boolean;
   hrOnly?: boolean;
 }
@@ -30,7 +33,7 @@ interface NavItem {
 interface ExternalItem {
   href: string;
   label: string;
-  icon: any;
+  icon: LucideIcon;
   external: true;
 }
 
@@ -56,6 +59,7 @@ const sections: { title: string; items: SidebarItem[] }[] = [
     items: [
       { to: "/hr", label: "Nhân sự", icon: UserCog, hrOnly: true },
       { to: "/attendance", label: "Chấm công", icon: Clock },
+      { to: "/surprise-check", label: "Kiểm tra đột xuất", icon: ShieldCheck, adminOnly: true },
       { to: "/leave", label: "Nghỉ phép", icon: CalendarDays },
     ],
   },
@@ -83,27 +87,94 @@ const sections: { title: string; items: SidebarItem[] }[] = [
   },
 ];
 
-export default function Sidebar({ open }: { open: boolean }) {
+interface SidebarProps {
+  open: boolean;
+  mobile?: boolean;
+  onCloseMobile?: () => void;
+}
+
+export default function Sidebar({ open, mobile, onCloseMobile }: SidebarProps) {
   const user = useAuthStore((s) => s.user);
   const role = user?.expand?.role_id;
   const isAdmin = role?.can_manage;
   const canViewSalary = !!role?.can_view_salary;
+  const location = useLocation();
+
+  // Close mobile sidebar on navigation
+  useEffect(() => {
+    if (mobile && onCloseMobile) {
+      onCloseMobile();
+    }
+    // Only run on path change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
+  if (mobile) {
+    return (
+      <>
+        {/* Backdrop */}
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity lg:hidden"
+          onClick={onCloseMobile}
+          aria-hidden="true"
+        />
+        {/* Drawer */}
+        <aside className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col glass-sidebar text-white shadow-2xl transition-transform duration-300 lg:hidden">
+          <SidebarContent
+            open={true}
+            isAdmin={isAdmin}
+            canViewSalary={canViewSalary}
+            onCloseMobile={onCloseMobile}
+          />
+        </aside>
+      </>
+    );
+  }
 
   return (
     <aside
-      className={`flex flex-col bg-slate-900 text-white transition-all duration-300 shadow-xl shrink-0 ${
+      className={`hidden lg:flex flex-col glass-sidebar text-white transition-all duration-300 shrink-0 ${
         open ? "w-64" : "w-16"
       }`}
     >
+      <SidebarContent open={open} isAdmin={isAdmin} canViewSalary={canViewSalary} />
+    </aside>
+  );
+}
+
+function SidebarContent({
+  open,
+  isAdmin,
+  canViewSalary,
+  onCloseMobile,
+}: {
+  open: boolean;
+  isAdmin?: boolean;
+  canViewSalary?: boolean;
+  onCloseMobile?: () => void;
+}) {
+  return (
+    <>
       <div className={`flex h-16 items-center border-b border-slate-700/50 ${open ? "justify-between px-6" : "justify-center"}`}>
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-700">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30">
             <ClipboardList className="h-5 w-5 text-white" />
           </div>
           {open && (
             <span className="text-lg font-bold text-white">{APP_NAME}</span>
           )}
         </div>
+        {onCloseMobile && (
+          <button
+            onClick={onCloseMobile}
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white lg:hidden"
+            aria-label="Đóng menu"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
       </div>
 
       <nav className={`flex-1 space-y-1 overflow-y-auto py-4 ${open ? "px-3" : "px-2"}`}>
@@ -122,14 +193,14 @@ export default function Sidebar({ open }: { open: boolean }) {
               if ("hrOnly" in item && item.hrOnly && !isAdmin && !canViewSalary) return null;
               const Icon = item.icon;
               const linkClasses = (active: boolean) =>
-                `flex items-center rounded-lg text-sm font-medium transition-all duration-200 ${
+                `flex items-center rounded-xl text-sm font-medium transition-all duration-200 ${
                   open
                     ? "gap-3 px-3.5 py-2.5"
                     : "justify-center px-0 py-3"
                 } ${
                   active
-                    ? "bg-slate-700/80 text-white font-semibold"
-                    : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+                    ? "bg-gradient-to-r from-indigo-500/20 to-purple-500/20 text-white font-semibold shadow-lg shadow-indigo-500/10 border border-white/10"
+                    : "text-slate-400 hover:bg-white/5 hover:text-slate-200 hover:border-white/5 border border-transparent"
                 }`;
               if ("external" in item) {
                 return (
@@ -165,6 +236,6 @@ export default function Sidebar({ open }: { open: boolean }) {
           </div>
         ))}
       </nav>
-    </aside>
+    </>
   );
 }

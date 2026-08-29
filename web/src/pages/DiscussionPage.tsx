@@ -27,12 +27,13 @@ import CommentSection from "../components/tasks/CommentSection";
 import ChannelChat from "../components/chat/ChannelChat";
 import type { ChannelRef } from "../hooks/useChatMessages";
 import { formatTime } from "../components/chat/chatShared";
+import type { LucideIcon } from "lucide-react";
 
 interface ChannelItem {
   key: string;
   label: string;
   sub: string;
-  icon: any;
+  icon: LucideIcon;
   ref: ChannelRef;
 }
 
@@ -174,10 +175,10 @@ export default function DiscussionPage() {
         <span className="hidden text-xs text-slate-400 sm:block dark:text-slate-500">Cập nhật theo thời gian thực</span>
       </div>
 
-      <div className="flex flex-1 min-h-0 gap-4">
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0 gap-4">
         {activeTab === "nhiem-vu" ? (
           <>
-            <div className="flex w-80 shrink-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm min-h-0 dark:border-slate-700 dark:bg-slate-900">
+            <div className="flex w-full lg:w-80 shrink-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm min-h-0 dark:border-slate-700 dark:bg-slate-900">
               <div className="flex items-center gap-2 border-b border-slate-100 px-3 py-2.5 dark:border-slate-700">
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-300">
                   <MessagesSquare className="h-4 w-4" />
@@ -287,7 +288,7 @@ export default function DiscussionPage() {
           </>
         ) : (
           <>
-            <div className="flex w-80 shrink-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm min-h-0 dark:border-slate-700 dark:bg-slate-900">
+            <div className="flex w-full lg:w-80 shrink-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm min-h-0 dark:border-slate-700 dark:bg-slate-900">
               <div className="flex items-center gap-2 border-b border-slate-100 px-3 py-2.5 dark:border-slate-700">
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-50 text-teal-600 dark:bg-teal-950/50 dark:text-teal-300">
                   <Users className="h-4 w-4" />

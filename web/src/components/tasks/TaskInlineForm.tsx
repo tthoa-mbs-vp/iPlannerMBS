@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X, Check, Loader2 } from "lucide-react";
 import CollaboratorSelect from "../shared/CollaboratorSelect";
+import type { TaskCategory } from "@shared/types";
 
 interface UserBrief {
   id: string;
@@ -24,7 +25,6 @@ interface Props {
     collaborator_ids?: string[];
     start_date?: string;
     deadline?: string;
-    weight?: number | string;
     is_recurring?: boolean;
     is_ad_hoc?: boolean;
     is_high_impact?: boolean;
@@ -32,13 +32,12 @@ interface Props {
   onSubmit: (data: {
     name: string;
     description?: string;
-    category: string;
+    category: TaskCategory;
     executor_id: string;
     supervisor_id?: string;
     collaborator_ids: string[];
     start_date: string;
     deadline: string;
-    weight: number;
     is_recurring?: boolean;
     plan_id?: string;
     is_ad_hoc: boolean;
@@ -87,7 +86,6 @@ export default function TaskInlineForm({ initialValues, onSubmit, onCancel, pend
   const [collaborators, setCollaborators] = useState<string[]>(initialValues?.collaborator_ids?.filter((id) => id !== initialValues?.executor_id && id !== initialValues?.supervisor_id) || []);
   const [startDate, setStartDate] = useState(initialValues?.start_date?.slice(0, 10) || new Date().toISOString().slice(0, 10));
   const [deadline, setDeadline] = useState(initialValues?.deadline?.slice(0, 10) || "");
-  const [weight, setWeight] = useState(String(initialValues?.weight ?? 100));
   const [recurring, setRecurring] = useState(initialValues?.is_recurring || false);
   const [selectedPlanId, setSelectedPlanId] = useState(planId || "");
   const [error, setError] = useState("");
@@ -125,12 +123,11 @@ export default function TaskInlineForm({ initialValues, onSubmit, onCancel, pend
         collaborator_ids: collaborators,
         start_date: new Date(startDate).toISOString(),
         deadline: new Date(deadline).toISOString(),
-        weight: Math.min(100, Math.max(0, parseInt(weight) || 100)),
         is_recurring: showRecurring ? recurring : undefined,
         plan_id: selectedPlanId || undefined,
       });
-    } catch (err: any) {
-      setError(err?.message || "Có lỗi xảy ra");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Có lỗi xảy ra");
     }
   };
 
@@ -138,7 +135,7 @@ export default function TaskInlineForm({ initialValues, onSubmit, onCancel, pend
     <form onSubmit={handleSubmit} className={`rounded-xl border ${col.border} ${col.bg} p-3 space-y-2`}>
       <div className="flex items-center justify-between">
         <span className={`font-bold ${col.label} ${dim.heading}`}>{title || "Thêm nhiệm vụ mới"}</span>
-        <button type="button" onClick={onCancel}
+        <button type="button" onClick={onCancel} aria-label="Hủy"
           className="rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200">
           <X className="h-3.5 w-3.5" />
         </button>
@@ -192,9 +189,7 @@ export default function TaskInlineForm({ initialValues, onSubmit, onCancel, pend
           className={`rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 ${dim.field} ${col.ring} focus:outline-none`} />
         <input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)}
           className={`rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 ${dim.field} ${col.ring} focus:outline-none`} />
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <div className="flex items-center gap-3">
+      </div>      <div className="flex items-center gap-3">
           <label className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
             <input type="checkbox" checked={isAdHoc} onChange={(e) => setIsAdHoc(e.target.checked)} className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-800" />
             Đột xuất
@@ -204,12 +199,6 @@ export default function TaskInlineForm({ initialValues, onSubmit, onCancel, pend
             Quan trọng
           </label>
         </div>
-        <div className="flex items-center gap-1">
-          <input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} min="0" max="100"
-            className={`w-full rounded-lg border border-slate-300 ${dim.field} ${col.ring} focus:outline-none dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500 dark:border-slate-600`} />
-          <span className="text-[10px] text-slate-400 shrink-0 dark:text-slate-500">%</span>
-        </div>
-      </div>
       <CollaboratorSelect
         users={eligibleUsers}
         selected={collaborators}

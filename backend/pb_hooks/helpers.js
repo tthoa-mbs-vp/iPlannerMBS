@@ -184,24 +184,21 @@ function _recalcPlanProgress(planId) {
     $app.save(plan)
     return
   }
-  var totalWeight = 0
-  var weightedProgress = 0
+  var progressSum = 0
   var allCompleted = true
   var hasStarted = false
   for (var ti = 0; ti < tasks.length; ti++) {
     var t = tasks[ti]
-    var weight = Math.max(t.getFloat("weight") || 0, 0)
-    totalWeight += weight
     var status = t.getString("status")
     var taskProgress = 0
     if (status === "completed") taskProgress = 100
     else if (status === "pending_approval") taskProgress = 75
     else if (status === "in_progress") taskProgress = 50
-    weightedProgress += weight * taskProgress
+    progressSum += taskProgress
     if (status !== "completed") allCompleted = false
     if (status === "in_progress" || status === "pending_approval" || status === "completed") hasStarted = true
   }
-  var newProgress = totalWeight > 0 ? Math.round(weightedProgress / totalWeight) : 0
+  var newProgress = tasks.length > 0 ? Math.round(progressSum / tasks.length) : 0
   plan.set("progress", newProgress)
   if (allCompleted && plan.getString("status") !== "cancelled") plan.set("status", "completed")
   else if (hasStarted && plan.getString("status") === "not_started") plan.set("status", "in_progress")
@@ -472,7 +469,7 @@ function _computeKpi(task) {
   }
 
   var rating = task.getFloat("rating") || 0
-  var resultLevel = rating / 5.0
+  var resultLevel = rating / 10.0
 
   var performanceScore = _round1(baseScore * (0.3 * scheduleLevel + 0.7 * resultLevel))
   var actualScore = _round1(performanceScore * difficultyCoeff)
@@ -530,7 +527,7 @@ function _isManager(c) {
 
 var _taskFields = [
   "name", "description", "plan_id", "category", "host_dept_id", "executor_id", "supervisor_id",
-  "collaborator_ids", "start_date", "deadline", "status", "weight", "is_recurring",
+  "collaborator_ids", "start_date", "deadline", "status", "is_recurring",
   "recurring_type", "recurring_value", "is_deleted", "is_ad_hoc", "is_high_impact",
   "coordinating_dept_id", "completed_at", "rating", "rated_by_id", "rated_at",
 ]

@@ -3,12 +3,12 @@ import { useAdminUsersPaginated, useDepartments, useRoles } from "../../hooks/us
 import { useProfessionalGroups } from "../../hooks/useProfessionalGroups";
 import { useDebounce } from "../../hooks/useDebounce";
 import { pb } from "../../api/client";
-
+import { useToastStore } from "../../stores/toastStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { Pencil, RotateCcw, Check, X, Plus, Users as UsersIcon, Upload, Key, Search } from "lucide-react";
 import ExportButton from "../shared/ExportButton";
 const ImportModal = lazy(() => import("./ImportModal"));
-import { exportToExcel, exportToCSV, exportToJSON, USER_EXPORT_COLUMNS } from "../../utils/importExport";
+import { exportToExcel, exportToCsv, exportToJson, USER_EXPORT_COLUMNS } from "../../utils/importExport";
 import type { User } from "@shared/types";
 import { btn } from "../../utils/buttonClasses";
 import Spinner from "../shared/Spinner";
@@ -35,6 +35,7 @@ export default function UserManager() {
   const { data: roles } = useRoles();
   const { data: groups } = useProfessionalGroups();
   const qc = useQueryClient();
+  const addToast = useToastStore((s) => s.addToast);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editEmail, setEditEmail] = useState("");
@@ -114,7 +115,7 @@ export default function UserManager() {
       }
       qc.invalidateQueries({ queryKey: ["users"] });
       setEditingId(null);
-    } catch (err: any) { setError(err?.message || "Lỗi"); }
+    } catch (err: unknown) { setError(err instanceof Error ? err.message : "Lỗi"); }
     setIsSaving(false);
   };
 
@@ -161,7 +162,7 @@ export default function UserManager() {
       setAdminCreds(null);
       setResetPassword("");
       setResetPasswordConfirm("");
-    } catch (err: any) { alert(err.message); }
+    } catch (err: unknown) { addToast("error", err instanceof Error ? err.message : "Lỗi"); }
     finally { setAdminSaving(false); }
   };
 
@@ -196,8 +197,8 @@ export default function UserManager() {
                     reminder_days: u.reminder_days ?? 2,
                   }));
                   if (format === "xlsx") exportToExcel(data, USER_EXPORT_COLUMNS, "nguoi-dung");
-                  else if (format === "csv") exportToCSV(data, USER_EXPORT_COLUMNS, "nguoi-dung");
-                  else exportToJSON(data, USER_EXPORT_COLUMNS, "nguoi-dung");
+                  else if (format === "csv") exportToCsv(data, USER_EXPORT_COLUMNS, "nguoi-dung");
+                  else exportToJson(data, "nguoi-dung");
                 })
                 .catch(() => {});
             }}
@@ -281,8 +282,8 @@ export default function UserManager() {
                   <td className="px-4 py-2 text-right">
                     <label className="mb-1 block text-xs font-medium text-violet-700 dark:text-violet-300">Thao tác</label>
                     <div className="flex items-center justify-end gap-1 pt-1">
-                      <button onClick={handleSave} disabled={isSaving} className={btn.save}><Check className="h-4 w-4" /></button>
-                      <button onClick={cancelEdit} className={btn.cancel}><X className="h-4 w-4" /></button>
+                      <button onClick={handleSave} disabled={isSaving} className={btn.save} aria-label="Lưu"><Check className="h-4 w-4" /></button>
+                      <button onClick={cancelEdit} className={btn.cancel} aria-label="Hủy"><X className="h-4 w-4" /></button>
                     </div>
                   </td>
                 </tr>
@@ -337,8 +338,8 @@ export default function UserManager() {
                       <td className="px-4 py-2 text-right">
                         <label className="mb-1 block text-xs font-medium text-violet-700 dark:text-violet-300">Thao tác</label>
                         <div className="flex items-center gap-1 pt-1">
-                          <button onClick={handleSave} disabled={isSaving} className={btn.save}><Check className="h-4 w-4" /></button>
-                          <button onClick={cancelEdit} className={btn.cancel}><X className="h-4 w-4" /></button>
+                          <button onClick={handleSave} disabled={isSaving} className={btn.save} aria-label="Lưu"><Check className="h-4 w-4" /></button>
+                          <button onClick={cancelEdit} className={btn.cancel} aria-label="Hủy"><X className="h-4 w-4" /></button>
                         </div>
                       </td>
                     </tr>

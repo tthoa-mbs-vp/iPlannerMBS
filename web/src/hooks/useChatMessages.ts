@@ -97,8 +97,8 @@ export function useCreateChatMessage() {
         prependMessage(qc, vars.ch, res as unknown as ChatMessage);
       }
     },
-    onError: (error: any) => {
-      addToast("error", error instanceof Error ? error.message : "Có lỗi xảy ra");
+    onError: (error: Error) => {
+      addToast("error", error.message);
     },
   });
 }
@@ -112,8 +112,8 @@ export function useDeleteChatMessage() {
       addToast("success", "Xóa tin nhắn thành công");
       removeMessage(qc, vars.ch, vars.id);
     },
-    onError: (error: any) => {
-      addToast("error", error instanceof Error ? error.message : "Có lỗi xảy ra");
+    onError: (error: Error) => {
+      addToast("error", error.message);
     },
   });
 }
@@ -122,7 +122,7 @@ export function useChatRealtime(ch: ChannelRef | null) {
   const qc = useQueryClient();
   useEffect(() => {
     if (!ch) return;
-    const handler = async (e: any) => {
+    const handler = async (e: { action: string; record: ChatMessage }) => {
       const rec: ChatMessage = e.record;
       if (!rec || !recordMatchesChannel(rec, ch)) return;
       if (e.action === "create") {

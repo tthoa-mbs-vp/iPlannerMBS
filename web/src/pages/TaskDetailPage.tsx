@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { usePersistedState } from "../hooks/usePersistedState";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Info, MessageSquare, User, CalendarDays, Target, Award, Users, Pencil, Trash2, FileText, Download, Clock, Activity, Paperclip, X, Check, AlertTriangle } from "lucide-react";
+import { Info, MessageSquare, User as UserIcon, CalendarDays, Award, Users, Pencil, Trash2, FileText, Download, Clock, Activity, Paperclip, X, Check, AlertTriangle, type LucideIcon } from "lucide-react";
 import { pb, getFileUrl } from "../api/client";
 import { useTask, useUpdateTask, useSoftDeleteTask } from "../hooks/useTasks";
 import { useComments, useCreateComment } from "../hooks/useComments";
@@ -16,13 +16,13 @@ import Modal from "../components/shared/Modal";
 import { useAuthStore } from "../stores/authStore";
 import { usePageTitleStore } from "../stores/pageTitleStore";
 import { TASK_STATUS_LABELS, TASK_STATUS_STYLES, TASK_STATUS_COLORS } from "../utils/constants";
-import { isTaskOverdue } from "../utils/format";
+import { isTaskOverdue, formatDate, formatDateTime } from "../utils/format";
 import { exportAttachmentsZip, exportTaskReportPdf, collectTaskAttachments, safeFilename } from "../utils/exportTaskReport";
-import type { KpiScore, SystemLog, Task, TaskStatus } from "@shared/types";
+import type { KpiScore, SystemLog, Task, TaskStatus, User } from "@shared/types";
 
 const IMAGE_EXTS = ["png", "jpg", "jpeg", "gif", "webp"];
 
-function Card({ icon: Icon, title, accent, children }: { icon: any; title: string; accent?: string; children: React.ReactNode }) {
+function Card({ icon: Icon, title, accent, children }: { icon: LucideIcon; title: string; accent?: string; children: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm overflow-hidden flex flex-col h-full">
       <div className={`flex items-center gap-2.5 px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 ${accent || "bg-gradient-to-r from-slate-50 to-slate-100/50 dark:from-slate-800/60 dark:to-slate-800/30"}`}>
@@ -38,7 +38,7 @@ function Card({ icon: Icon, title, accent, children }: { icon: any; title: strin
   );
 }
 
-function InfoCardBody({ task, users, canEdit, canDelete, onEdit, onDelete, onApprove, onComplete }: { task: any; users?: any[]; canEdit?: boolean; canDelete?: boolean; onEdit: () => void; onDelete: () => void; onApprove?: () => void; onComplete?: () => void; }) {
+function InfoCardBody({ task, users, canEdit, canDelete, onEdit, onDelete, onApprove, onComplete }: { task: Task; users?: User[]; canEdit?: boolean; canDelete?: boolean; onEdit: () => void; onDelete: () => void; onApprove?: () => void; onComplete?: () => void; }) {
   const user = useAuthStore((s) => s.user);
   const updateTask = useUpdateTask();
   const taskId = task.id;
@@ -74,14 +74,15 @@ function InfoCardBody({ task, users, canEdit, canDelete, onEdit, onDelete, onApp
   const isOverdue = isTaskOverdue(task);
 
   const userName = (field: string) => {
-    const u = task.expand?.[field] || users?.find((x) => x.id === task[field]);
+    const expand = task.expand as Record<string, unknown> | undefined;
+    const u = expand?.[field] as { name?: string; email?: string } | undefined;
     return u?.name || u?.email || "—";
   };
 
   const collabNames = () => {
-    const expanded = task.expand?.collaborator_ids;
-    if (Array.isArray(expanded) && expanded.length) return expanded.filter(Boolean).map((u: any) => u?.name || u?.email).filter(Boolean).join(", ");
-    if (expanded && typeof expanded === "object" && !Array.isArray(expanded)) return expanded?.name || expanded?.email || "—";
+    const expanded = task.expand?.collaborator_ids as User[] | User | undefined;
+    if (Array.isArray(expanded) && expanded.length) return expanded.filter(Boolean).map((u: User) => u?.name || u?.email).filter(Boolean).join(", ");
+    if (expanded && typeof expanded === "object" && !Array.isArray(expanded)) return (expanded as User).name || (expanded as User).email || "—";
     const ids = task.collaborator_ids;
     if (Array.isArray(ids) && ids.length) return ids.map((cid: string) => { const u = users?.find((x) => x.id === cid); return u?.name || u?.email; }).filter(Boolean).join(", ");
     if (typeof ids === "string" && ids) { const u = users?.find((x) => x.id === ids); return u?.name || u?.email || "—"; }
@@ -114,29 +115,25 @@ function InfoCardBody({ task, users, canEdit, canDelete, onEdit, onDelete, onApp
         </div>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{task.description || "—"}</p>
       </div>
-      <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
         <div>
-          <label className="flex items-center gap-1 text-xs font-medium text-slate-400 dark:text-slate-500"><User className="h-3 w-3" /> Người thực hiện</label>
+          <label className="flex items-center gap-1 text-xs font-medium text-slate-400 dark:text-slate-500"><UserIcon className="h-3 w-3" /> Người thực hiện</label>
           <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{userName("executor_id")}</p>
         </div>
         <div>
-          <label className="flex items-center gap-1 text-xs font-medium text-slate-400 dark:text-slate-500"><User className="h-3 w-3" /> Người giám sát</label>
+          <label className="flex items-center gap-1 text-xs font-medium text-slate-400 dark:text-slate-500"><UserIcon className="h-3 w-3" /> Người giám sát</label>
           <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{userName("supervisor_id")}</p>
         </div>
         <div>
           <label className="flex items-center gap-1 text-xs font-medium text-slate-400 dark:text-slate-500"><CalendarDays className="h-3 w-3" /> Ngày bắt đầu</label>
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{new Date(task.start_date).toLocaleDateString("vi-VN")}</p>
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{formatDate(task.start_date)}</p>
         </div>
         <div>
           <label className="flex items-center gap-1 text-xs font-medium text-slate-400 dark:text-slate-500"><CalendarDays className="h-3 w-3" /> Hạn chót</label>
           <p className={`text-sm font-medium ${isOverdue ? "text-rose-600 dark:text-rose-400" : "text-slate-700 dark:text-slate-200"}`}>
-            {new Date(task.deadline).toLocaleDateString("vi-VN")}
+            {formatDate(task.deadline)}
             {isOverdue && <span className="ml-1 text-xs text-rose-500 dark:text-rose-400">(Quá hạn)</span>}
           </p>
-        </div>
-        <div>
-          <label className="flex items-center gap-1 text-xs font-medium text-slate-400 dark:text-slate-500"><Target className="h-3 w-3" /> Trọng số</label>
-          <p className="text-sm font-bold text-indigo-600 dark:text-indigo-300">{task.weight}%</p>
         </div>
         <div>
           <label className="flex items-center gap-1 text-xs font-medium text-slate-400 dark:text-slate-500"><Award className="h-3 w-3" /> Phân loại</label>
@@ -200,6 +197,11 @@ function InfoCardBody({ task, users, canEdit, canDelete, onEdit, onDelete, onApp
   );
 }
 
+const RATING_LABELS: Record<number, string> = {
+  10: "Xuất sắc", 9: "Xuất sắc", 8: "Tốt", 7: "Tốt", 6: "Khá",
+  5: "Trung bình", 4: "Trung bình", 3: "Kém", 2: "Kém", 1: "Rất kém"
+};
+
 function KpiTab({ task, taskId }: { task?: Task; taskId: string }) {
   const { data: kpiScores } = useQuery({
     queryKey: ["kpi_score", taskId],
@@ -210,18 +212,19 @@ function KpiTab({ task, taskId }: { task?: Task; taskId: string }) {
       return records[0] || null;
     },
     enabled: !!taskId,
+    staleTime: 60_000,
   });
 
   const r = kpiScores || (task ? calculateKpi(task) : null);
   const isStored = !!kpiScores;
 
-  const RATING_LABELS: Record<number, string> = { 5: "Xuất sắc", 4: "Tốt", 3: "Khá", 2: "Trung bình", 1: "Cần cải thiện" };
+
   const scheduleLabel = (v: number) => v >= 100 ? "Đúng hạn" : v >= 80 ? "Trễ 1-3 ngày" : v >= 60 ? "Trễ 4-5 ngày" : v > 0 ? "Trễ >5 ngày" : "—";
 
   return (
     <div className="space-y-4">
       {r ? (
-        <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
           <div className="text-center">
             <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{isStored ? (r.final_score?.toFixed(1) || "—") : "—"}</p>
             <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">Điểm thực tế</p>
@@ -339,7 +342,7 @@ function FilesTab({ task, taskId }: { task?: Task; taskId: string }) {
                     {f.filename.split("_").pop() || f.filename}
                   </p>
                   <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                    {f.authorName} · {new Date(f.createdAt).toLocaleDateString("vi-VN")}
+                    {f.authorName} · {formatDate(f.createdAt)}
                   </p>
                 </div>
                 <Download className="h-4 w-4 text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors shrink-0" />
@@ -408,7 +411,7 @@ function LogTab({ taskId, taskName }: { taskId: string; taskName: string }) {
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{log.action}</p>
                 <span className="text-[11px] text-slate-400 dark:text-slate-500 whitespace-nowrap">
-                  {new Date(log.created).toLocaleString("vi-VN")}
+                  {formatDateTime(log.created)}
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-0.5">{log.target}</p>
@@ -438,7 +441,7 @@ export default function TaskDetailPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [leftTab, setLeftTab] = usePersistedState<"info" | "files" | "log" | "kpi">(`task_tab_${taskId || "new"}`, "info");
   const [showRating, setShowRating] = useState(false);
-  const [selectedRating, setSelectedRating] = useState(3);
+  const [selectedRating, setSelectedRating] = useState(10);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const [completeContent, setCompleteContent] = useState("");
   const [completeFiles, setCompleteFiles] = useState<File[]>([]);
@@ -450,7 +453,7 @@ export default function TaskDetailPage() {
     try {
       if (completeContent.trim() || completeFiles.length > 0) {
         await createComment.mutateAsync({
-          data: { task_id: taskId, user_id: user.id, content: completeContent.trim() || "[Hoàn thành nhiệm vụ]" } as any,
+          data: { task_id: taskId, user_id: user.id, content: completeContent.trim() || "[Hoàn thành nhiệm vụ]" },
           files: completeFiles.length > 0 ? completeFiles : undefined,
           taskId,
         });
@@ -537,7 +540,7 @@ export default function TaskDetailPage() {
       {taskError ? (
         <div className="flex flex-col items-center py-12 text-red-500">
           <p className="text-sm font-medium">Không thể tải nhiệm vụ</p>
-          <p className="mt-1 text-xs text-red-400">{(taskError as any)?.message || "Vui lòng thử lại"}</p>
+          <p className="mt-1 text-xs text-red-400">{(taskError as Error | null)?.message || "Vui lòng thử lại"}</p>
         </div>
       ) : isLoading || !task ? (
         <div className="flex justify-center py-12">
@@ -549,9 +552,9 @@ export default function TaskDetailPage() {
           <p className="text-sm font-medium">Bạn không có quyền xem nhiệm vụ này.</p>
         </div>
       ) : (
-        <div className="flex flex-1 gap-5 min-h-0">
+        <div className="flex flex-col lg:flex-row gap-5 min-h-0">
           {/* Left: Info card with internal tabs */}
-          <div className="w-1/2 min-w-0">
+          <div className="w-full lg:w-1/2 min-w-0">
             <Card icon={Info} title="Thông tin" accent="bg-gradient-to-r from-blue-50 to-indigo-50/50 dark:from-blue-950/40 dark:to-indigo-950/40">
               <div className="flex gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 p-1 mb-4">
                 {(canManage
@@ -586,7 +589,6 @@ export default function TaskDetailPage() {
                         collaborator_ids: Array.isArray(task.collaborator_ids) ? task.collaborator_ids : [],
                         start_date: task.start_date,
                         deadline: task.deadline,
-                        weight: task.weight,
                         is_recurring: task.is_recurring,
                       }}
                       onSubmit={async (data) => {
@@ -600,7 +602,6 @@ export default function TaskDetailPage() {
                           supervisor_id: data.supervisor_id || null,
                           start_date: data.start_date,
                           deadline: data.deadline,
-                          weight: data.weight,
                           is_recurring: data.is_recurring,
                         };
                         if (data.collaborator_ids.length > 0) {
@@ -650,7 +651,7 @@ export default function TaskDetailPage() {
           </div>
 
           {/* Right: Báo cáo & thảo luận */}
-          <div className="w-1/2 min-w-0 flex flex-col rounded-2xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
+          <div className="w-full lg:w-1/2 min-w-0 flex flex-col rounded-2xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
             <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-indigo-50 to-purple-50/50 dark:from-indigo-950/40 dark:to-purple-950/40">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/90 shadow-sm dark:bg-white/10">
                 <MessageSquare className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
@@ -670,21 +671,23 @@ export default function TaskDetailPage() {
       {showRating && (
         <Modal title="Đánh giá kết quả" onClose={() => setShowRating(false)} maxWidth="sm" accentColor="amber">
           <div className="p-6">
-            <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Chọn xếp loại cho nhiệm vụ này</p>
-            <div className="mt-4 flex justify-center gap-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button key={star} onClick={() => setSelectedRating(star)}
-                  className={`h-10 w-10 rounded-full text-lg font-bold transition-all ${
-                    selectedRating >= star
-                      ? "bg-amber-400 text-white shadow-md scale-110"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700"
-                  }`}>
-                  {star}
-                </button>
-              ))}
+            <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Chọn điểm đánh giá kết quả (1-10)</p>
+            <div className="mt-4 flex items-center gap-3">
+              <span className="text-xs font-medium text-slate-400 dark:text-slate-500">1</span>
+              <input
+                type="range"
+                min={1}
+                max={10}
+                value={selectedRating}
+                onChange={(e) => setSelectedRating(Number(e.target.value))}
+                className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
+              />
+              <span className="text-xs font-medium text-slate-400 dark:text-slate-500">10</span>
             </div>
-            <div className="mt-2 text-center text-xs text-slate-400 dark:text-slate-500">
-              {selectedRating === 5 ? "Xuất sắc" : selectedRating === 4 ? "Tốt" : selectedRating === 3 ? "Khá" : selectedRating === 2 ? "Trung bình" : "Cần cải thiện"}
+            <div className="mt-2 text-center">
+              <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
+                {selectedRating}/10 — {RATING_LABELS[selectedRating] || ""}
+              </span>
             </div>
             <div className="mt-5 flex justify-end gap-2">
               <button onClick={() => setShowRating(false)}
@@ -725,7 +728,7 @@ export default function TaskDetailPage() {
                 {completeFiles.map((f, i) => (
                   <span key={i} className="flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 px-2 py-1 text-xs text-slate-600 dark:text-slate-300">
                     {f.name}
-                    <button onClick={() => setCompleteFiles(completeFiles.filter((_, j) => j !== i))}
+                    <button onClick={() => setCompleteFiles(completeFiles.filter((_, j) => j !== i))} aria-label="Xóa file"
                       className="text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400"><X className="h-3 w-3" /></button>
                   </span>
                 ))}

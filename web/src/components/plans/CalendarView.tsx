@@ -97,14 +97,14 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
               Tuần
             </button>
           </div>
-          <button onClick={() => navigate(-1)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200">
+          <button onClick={() => navigate(-1)} aria-label="Tháng trước" className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200">
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button onClick={() => { setViewDate(new Date(now.getFullYear(), now.getMonth(), 1)); setWeekIndex(Math.floor((now.getDate() + now.getDay()) / 7)); }}
             className="rounded-lg px-2.5 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50 transition-colors dark:text-indigo-400 dark:hover:bg-indigo-950/40">
             Hôm nay
           </button>
-          <button onClick={() => navigate(1)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200">
+          <button onClick={() => navigate(1)} aria-label="Tháng sau" className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200">
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>

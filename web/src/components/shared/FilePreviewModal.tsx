@@ -15,11 +15,11 @@ export default function FilePreviewModal({ url, filename, isImage, onClose }: Pr
           <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200" title={filename}>{filename}</p>
           <div className="flex items-center gap-1">
             <a href={url} target="_blank" rel="noopener noreferrer" download={filename}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200" title="Tải xuống">
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200" title="Tải xuống" aria-label="Tải xuống">
               <Download className="h-4 w-4" />
             </a>
             <button onClick={onClose}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200" title="Đóng">
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200" title="Đóng" aria-label="Đóng">
               <X className="h-4 w-4" />
             </button>
           </div>

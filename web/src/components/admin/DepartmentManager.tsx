@@ -11,8 +11,8 @@ import ExportButton from "../shared/ExportButton";
 const ImportModal = lazy(() => import("./ImportModal"));
 import {
   exportToExcel,
-  exportToCSV,
-  exportToJSON,
+  exportToCsv,
+  exportToJson,
   DEPT_EXPORT_COLUMNS,
 } from "../../utils/importExport";
 import type { Department } from "@shared/types";
@@ -66,11 +66,11 @@ export default function DepartmentManager() {
     }
     setError("");
     try {
-      const data: any = {
+      const data = {
         code: editCode,
         name: editName,
         is_counted: editCounted,
-        leader_id: editLeader || null,
+        leader_id: editLeader || undefined,
       };
       if (editingId === "new") {
         await createDept.mutateAsync(data);
@@ -78,8 +78,8 @@ export default function DepartmentManager() {
         await updateDept.mutateAsync({ id: editingId, data });
       }
       setEditingId(null);
-    } catch (err: any) {
-      setError(err?.message || "Lỗi");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Lỗi");
     }
   };
 
@@ -128,8 +128,8 @@ export default function DepartmentManager() {
             if (format === "xlsx")
               exportToExcel(data, DEPT_EXPORT_COLUMNS, "phong-ban");
             else if (format === "csv")
-              exportToCSV(data, DEPT_EXPORT_COLUMNS, "phong-ban");
-            else exportToJSON(data, DEPT_EXPORT_COLUMNS, "phong-ban");
+              exportToCsv(data, DEPT_EXPORT_COLUMNS, "phong-ban");
+            else exportToJson(data, "phong-ban");
           }}
         />
         <button onClick={() => setShowImport(true)}
@@ -297,10 +297,10 @@ export default function DepartmentManager() {
                       {d.is_counted ? "Có" : "Không"}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button onClick={() => startEdit(d)} className={btn.edit}>
+                      <button onClick={() => startEdit(d)} className={btn.edit} aria-label="Chỉnh sửa">
                         <Pencil className="h-4 w-4" />
                       </button>
-                      <button onClick={() => handleDelete(d.id)} className={btn.delete}>
+                      <button onClick={() => handleDelete(d.id)} className={btn.delete} aria-label="Xóa">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </td>

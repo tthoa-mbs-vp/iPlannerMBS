@@ -20,11 +20,11 @@ export default function ToastContainer() {
         return (
           <div
             key={t.id}
-            className={`flex items-center gap-3 rounded-xl border ${cfg.border} ${cfg.bg} px-4 py-3 shadow-lg animate-in slide-in-from-right-2 fade-in`}
+            className={`flex items-center gap-3 rounded-2xl glass-panel px-4 py-3 animate-in slide-in-from-right-2 fade-in`}
           >
             <Icon className={`h-5 w-5 ${cfg.text}`} />
             <p className={`text-sm font-medium ${cfg.text}`}>{t.message}</p>
-            <button onClick={() => removeToast(t.id)} className={`ml-2 ${cfg.text} hover:opacity-70`}>
+            <button onClick={() => removeToast(t.id)} className={`ml-2 ${cfg.text} hover:opacity-70`} aria-label="Đóng thông báo">
               <X className="h-4 w-4" />
             </button>
           </div>

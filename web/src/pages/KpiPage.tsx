@@ -6,6 +6,8 @@ import { useUsers } from "../hooks/useDepartments";
 import { useAuthStore } from "../stores/authStore";
 import { usePageTitleStore } from "../stores/pageTitleStore";
 import { Award, CheckCircle, Clock, TrendingUp, RefreshCw, BarChart3, Star, Zap, FileDown, Trophy, User as UserIcon } from "lucide-react";
+import KpiTaskTable from "../components/kpi/KpiTaskTable";
+import RatingDistCard from "../components/kpi/RatingDistCard";
 import { exportToExcel } from "../utils/importExport";
 import { exportHtmlToPdf } from "../utils/exportPdf";
 import { getRatingBadgeStyle } from "../utils/constants";
@@ -15,8 +17,7 @@ import Leaderboard from "../components/kpi/Leaderboard";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale/vi";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, LineChart, Line,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line,
 } from "recharts";
 import ErrorState from "../components/shared/ErrorState";
 import TabBar from "../components/shared/TabBar";
@@ -48,14 +49,6 @@ const KPI_EXPORT_COLUMNS: ColumnDef[] = [
 
 function getRating(avgScore: number): number {
   return avgScore >= 10 ? 5 : avgScore >= 7 ? 4 : avgScore >= 5 ? 3 : avgScore >= 3 ? 2 : 1;
-}
-
-function getScheduleLabel(progress: number): string {
-  if (progress >= 100) return "Đúng hạn";
-  if (progress >= 80) return "Trễ 1-3 ngày";
-  if (progress >= 60) return "Trễ 4-5 ngày";
-  if (progress > 0) return "Trễ >5 ngày";
-  return "Chưa hoàn thành";
 }
 
 function getMonthOptions() {
@@ -104,78 +97,7 @@ const VIEW_TABS = [
   { key: "mine", label: "Của tôi", icon: UserIcon, gradient: "from-violet-500 to-purple-600" },
 ];
 
-function KpiTaskTable({ items, title }: { items: KpiScore[]; title: string }) {
-  return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
-      <h3 className="mb-4 font-semibold text-slate-800 dark:text-slate-100">{title}</h3>
-      <table className="w-full">
-        <thead>
-          <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60">
-            <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Nhiệm vụ</th>
-            <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Cơ bản</th>
-            <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Khó</th>
-            <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Tối đa</th>
-            <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Tiến độ</th>
-            <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Kết quả</th>
-            <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Thực tế</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((k) => {
-            const task = k.expand?.task_id;
-            const maxScore = k.max_converted_score ?? Math.round(k.base_score * k.difficulty_coeff * 10) / 10;
-            const isFinalValid = k.id !== "";
-            return (
-            <tr key={task?.id || k.task_id} className="even:bg-slate-100 dark:even:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
-              <td className="px-4 py-3 text-sm text-slate-800 dark:text-slate-100">{task?.name || k.task_id}</td>
-              <td className="px-4 py-3 text-center text-sm text-slate-600 dark:text-slate-400">{k.base_score}</td>
-              <td className="px-4 py-3 text-center text-sm text-slate-600 dark:text-slate-400">{(k.difficulty_coeff * 100).toFixed(0)}%</td>
-              <td className="px-4 py-3 text-center text-sm font-semibold text-slate-700 dark:text-slate-200">{maxScore.toFixed(1)}</td>
-              <td className="px-4 py-3 text-center text-sm text-slate-600 dark:text-slate-400" title={getScheduleLabel(k.progress_score)}>{isFinalValid ? k.progress_score : "—"}</td>
-              <td className="px-4 py-3 text-center">
-                {isFinalValid ? (
-                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${getRatingBadgeStyle(k.result_rating)}`}>
-                  {RATING_LABELS[Math.round(k.result_rating)] || k.result_rating}
-                </span>
-                ) : "—"}
-              </td>
-              <td className="px-4 py-3 text-center text-sm font-bold text-indigo-600 dark:text-indigo-300">{isFinalValid ? k.final_score : "—"}</td>
-            </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
 
-function RatingDistCard({ data }: { data: { name: string; value: number; color: string }[] }) {
-  return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
-      <h3 className="mb-4 flex items-center gap-2 font-semibold text-slate-800 dark:text-slate-100">
-        <Star className="h-4 w-4 text-amber-500 dark:text-amber-400" />
-        Phân bố xếp loại KPI
-      </h3>
-      {data.length > 0 ? (
-        <ResponsiveContainer width="100%" height={280}>
-          <PieChart>
-            <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label>
-              {data.map((entry, idx) => (
-                <Cell key={idx} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
-      ) : (
-        <div className="flex h-[280px] items-center justify-center text-sm text-slate-400 dark:text-slate-500">
-          Chưa có dữ liệu
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default function KpiPage() {
   const user = useAuthStore((s) => s.user);
@@ -260,12 +182,11 @@ export default function KpiPage() {
         (k) => k.expand?.task_id?.executor_id === u.id,
       ) || [];
       const userCompleted = filteredCompletedTasks.filter((t) => t.executor_id === u.id);
-      const totalWeight = userCompleted.reduce((sum, t) => sum + (t.weight || 0), 0);
       const avgScore = userScores.length > 0
         ? userScores.reduce((s, k) => s + (k.final_score || 0), 0) / userScores.length
         : 0;
-      return { user: u, taskCount: userCompleted.length, totalWeight, avgScore };
-    }).sort((a, b) => b.totalWeight - a.totalWeight) || [];
+      return { user: u, taskCount: userCompleted.length, avgScore };
+    }).sort((a, b) => b.taskCount - a.taskCount) || [];
   }, [users, filteredKpiScores, filteredCompletedTasks]);
 
   const userKpiTotalPages = Math.max(1, Math.ceil(userKpi.length / userKpiPageSize));
@@ -377,8 +298,8 @@ export default function KpiPage() {
     try {
       const { created, failed } = await calcKpi.mutateAsync();
       setRecalcStatus(`Đã tính KPI cho ${created} nhiệm vụ${failed ? ` (${failed} thất bại)` : ""}.`);
-    } catch (err: any) {
-      setRecalcStatus(err?.message || "Không thể tính lại KPI.");
+    } catch (err: unknown) {
+      setRecalcStatus(err instanceof Error ? err.message : "Không thể tính lại KPI.");
     }
     setTimeout(() => setRecalcStatus(""), 3000);
   }, [canManage, unscoredTasks.length, calcKpi, setRecalcStatus]);
@@ -474,7 +395,7 @@ export default function KpiPage() {
   }, [unscoredTasks.length, calcKpi.isPending, canManage, handleRecalculateAll]);
 
   if (kpiError || tasksError || usersError) {
-    const msg = (kpiError || tasksError || usersError) as any;
+    const msg = (kpiError || tasksError || usersError) as Error | null;
     return (
       <ErrorState
         message="Không thể tải dữ liệu"
@@ -645,24 +566,23 @@ export default function KpiPage() {
           <EmptyState icon={Award} message="Chưa có dữ liệu KPI. Hoàn thành nhiệm vụ để tính điểm." className="py-12" />
         ) : (
           <>
+          <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60">
                 <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Người dùng</th>
                 <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">NV hoàn thành</th>
-                <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Tổng trọng số</th>
                 <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Điểm TB</th>
                 <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Xếp loại</th>
               </tr>
             </thead>
             <tbody>
-              {paginatedUserKpi.map(({ user, taskCount, totalWeight, avgScore }) => {
+              {paginatedUserKpi.map(({ user, taskCount, avgScore }) => {
                 const rating = getRating(avgScore);
                 return (
                   <tr key={user.id} className="even:bg-slate-100 dark:even:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
                     <td className="px-4 py-3 text-sm font-medium text-slate-800 dark:text-slate-100">{user.name || user.email}</td>
                     <td className="px-4 py-3 text-center text-sm text-slate-600 dark:text-slate-400">{taskCount}</td>
-                    <td className="px-4 py-3 text-center text-sm font-semibold text-indigo-600 dark:text-indigo-300">{totalWeight}</td>
                     <td className="px-4 py-3 text-center text-sm font-semibold text-emerald-600 dark:text-emerald-400">{avgScore.toFixed(1)}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${getRatingBadgeStyle(rating)}`}>
@@ -675,6 +595,7 @@ export default function KpiPage() {
               })}
             </tbody>
           </table>
+          </div>
           <Pagination
             page={userKpiPage}
             totalPages={userKpiTotalPages}

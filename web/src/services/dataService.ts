@@ -5,12 +5,12 @@ const COLLECTION_FIELDS: Record<string, string[]> = {
   roles: ["id", "name", "description", "code", "level", "view_scope", "can_add_plans", "can_edit_plans", "can_delete_plans", "can_add_tasks", "can_edit_tasks", "can_delete_tasks", "can_manage", "created", "updated"],
   users: ["id", "email", "name", "role_id", "department_id", "reminder_days", "disabled", "verified", "created", "updated"],
   plans: ["id", "name", "description", "leader_id", "host_dept_id", "partner_dept_ids", "start_date", "end_date", "status", "is_sudden", "is_high_impact", "is_deleted", "progress", "created", "updated"],
-  tasks: ["id", "name", "description", "plan_id", "category", "host_dept_id", "executor_id", "supervisor_id", "collaborator_ids", "status", "start_date", "deadline", "weight", "is_recurring", "recurring_type", "recurring_value", "is_deleted", "is_ad_hoc", "is_high_impact", "coordinating_dept_id", "completed_at", "rating", "rated_by_id", "rated_at", "created", "updated"],
+  tasks: ["id", "name", "description", "plan_id", "category", "host_dept_id", "executor_id", "supervisor_id", "collaborator_ids", "status", "start_date", "deadline", "is_recurring", "recurring_type", "recurring_value", "is_deleted", "is_ad_hoc", "is_high_impact", "coordinating_dept_id", "completed_at", "rating", "rated_by_id", "rated_at", "created", "updated"],
   proposals: ["id", "task_id", "type", "reason", "status", "requester_id", "approver_id", "new_deadline", "created", "updated"],
   comments: ["id", "task_id", "user_id", "content", "created", "updated"],
   kpi_scores: ["id", "task_id", "base_score", "difficulty_coeff", "progress_score", "result_rating", "final_score", "created", "updated"],
   professional_groups: ["id", "code", "name", "description", "department_id", "created", "updated"],
-  archived_tasks: ["id", "original_id", "name", "description", "plan_id", "executor_id", "status", "priority", "start_date", "due_date", "completion_date", "progress", "weight", "archived_at", "created"],
+  archived_tasks: ["id", "original_id", "name", "description", "plan_id", "executor_id", "status", "priority", "start_date", "due_date", "completion_date", "progress", "archived_at", "created"],
   archived_plans: ["id", "original_id", "name", "description", "leader_id", "host_dept_id", "partner_dept_ids", "group_id", "start_date", "end_date", "status", "is_sudden", "is_high_impact", "progress", "archived_at", "created"],
 };
 
@@ -123,17 +123,19 @@ export interface ImportResult {
   errors: { row: number; message: string }[];
 }
 
-function parseFieldErrors(err: any): string {
-  if (err?.data && typeof err.data === "object") {
+function parseFieldErrors(err: unknown): string {
+  const errorObj = err as Record<string, unknown> | undefined;
+  if (errorObj?.data && typeof errorObj.data === "object") {
     const fieldErrors: string[] = [];
-    for (const [field, info] of Object.entries(err.data)) {
-      const msg = (info as any)?.message || "";
+    for (const [field, info] of Object.entries(errorObj.data as Record<string, unknown>)) {
+      const infoObj = info as Record<string, unknown> | undefined;
+      const msg = (typeof infoObj?.message === 'string' ? infoObj.message : '') || '';
       const label = FIELD_TO_LABEL[field] || field;
       if (msg) fieldErrors.push(`[${label}] ${msg}`);
     }
     if (fieldErrors.length > 0) return fieldErrors.join("; ");
   }
-  return err?.message || "Lỗi không xác định";
+  return (errorObj?.message as string) || "Lỗi không xác định";
 }
 
 function sanitizeRow(
@@ -328,7 +330,6 @@ const LABEL_TO_FIELD: Record<string, string> = {
   "Tên nhiệm vụ": "name",
   "Phân loại": "category",
   "Hạn hoàn thành": "deadline",
-  "Trọng số (%)": "weight",
   "Lặp lại": "is_recurring",
   "Mã phòng": "code",
   "Tên phòng": "name",

@@ -85,8 +85,8 @@ export default function DataImportExport() {
       setSelectedTaskIds(new Set());
       archiveStatsQuery.refetch();
       archivedListsQuery.refetch();
-    } catch (err: any) {
-      setArchiveRestoreResult(`Lỗi: ${err?.message || "Thao tác thất bại"}`);
+    } catch (err: unknown) {
+      setArchiveRestoreResult(`Lỗi: ${err instanceof Error ? err.message : "Thao tác thất bại"}`);
     }
     setArchiveRestoring(false);
   };
@@ -124,8 +124,8 @@ export default function DataImportExport() {
         setArchiveResult(`Lưu trữ thành công! Đã chuyển ${res.result?.archived_tasks || 0} nhiệm vụ, ${res.result?.archived_comments || 0} bình luận và ${res.result?.archived_plans || 0} Kế hoạch sang bảng lưu trữ.`);
         archiveStatsQuery.refetch();
       }
-    } catch (err: any) {
-      setArchiveResult(`Lỗi: ${err?.message || "Thao tác thất bại"}`);
+    } catch (err: unknown) {
+      setArchiveResult(`Lỗi: ${err instanceof Error ? err.message : "Thao tác thất bại"}`);
     }
     setArchiving(false);
   };
@@ -192,8 +192,8 @@ export default function DataImportExport() {
         }
       }
       setRestoreResult(`Đã khôi phục ${totalCreated} bản ghi thành công`);
-    } catch (err: any) {
-      setRestoreResult(`Lỗi: ${err?.message || "Không thể khôi phục"}`);
+    } catch (err: unknown) {
+      setRestoreResult(`Lỗi: ${err instanceof Error ? err.message : "Không thể khôi phục"}`);
     }
     setRestoring(false);
   };
@@ -381,7 +381,7 @@ export default function DataImportExport() {
                   <span>Cảnh báo bảo toàn Kế hoạch ({archiveStats.warnings.length} Kế hoạch bị tạm giữ lưu trữ):</span>
                 </div>
                 <ul className="mt-2 space-y-1.5 text-xs text-amber-700 max-h-40 overflow-y-auto dark:text-amber-300">
-                  {archiveStats.warnings.map((w: any, idx: number) => (
+                  {archiveStats.warnings.map((w: { plan_name: string; reason: string }, idx: number) => (
                     <li key={idx} className="flex items-start gap-1.5">
                       <span className="font-bold">•</span>
                       <span><strong>{w.plan_name}:</strong> {w.reason}</span>

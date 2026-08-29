@@ -45,6 +45,7 @@ import {
   PLAN_STATUS_LABELS,
   PLAN_STATUS_STYLES,
 } from "../utils/constants";
+import { formatDate } from "../utils/format";
 
 type PageTab = "info" | "gantt";
 type RightTab = "info" | "discussion";
@@ -351,7 +352,7 @@ export default function PlanDetailPage() {
                     <span className="text-xs text-slate-400 dark:text-slate-500">Phòng phối hợp:</span>
                     <span className="font-medium">
                       {plan.expand?.partner_dept_ids && plan.expand.partner_dept_ids.length > 0
-                        ? plan.expand.partner_dept_ids.map((d: any) => d.name).join(", ")
+                        ? plan.expand.partner_dept_ids.map((d: { name?: string }) => d.name).join(", ")
                         : "—"}
                     </span>
                   </div>
@@ -359,7 +360,7 @@ export default function PlanDetailPage() {
                     <Calendar className="h-4 w-4 text-slate-400 dark:text-slate-500" />
                     <span className="text-xs text-slate-400 dark:text-slate-500">Thời gian:</span>
                     <span className="font-medium">
-                      {new Date(plan.start_date).toLocaleDateString("vi-VN")} → {new Date(plan.end_date).toLocaleDateString("vi-VN")}
+                      {formatDate(plan.start_date)} → {formatDate(plan.end_date)}
                     </span>
                   </div>
                 </div>
@@ -409,7 +410,7 @@ export default function PlanDetailPage() {
                       className="h-3.5 w-3.5 rounded accent-purple-600" />
                     <span className="text-[11px] text-slate-400 dark:text-slate-500">Ký xác nhận</span>
                   </label>
-                  <button onClick={handleExportReport} disabled={exporting || visibleTasks.length === 0} title="Xuất báo cáo tổng hợp + file đính kèm"
+                  <button onClick={handleExportReport} disabled={exporting || visibleTasks.length === 0} title="Xuất báo cáo tổng hợp + file đính kèm" aria-label="Xuất báo cáo"
                     className="rounded-lg border border-indigo-200 bg-indigo-50 p-1.5 text-indigo-600 hover:bg-indigo-100 transition-colors disabled:opacity-50 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300 dark:hover:bg-indigo-900/40">
                     <FileDown className={`h-4 w-4 ${exporting ? "animate-pulse" : ""}`} />
                   </button>
@@ -477,7 +478,7 @@ export default function PlanDetailPage() {
                         ...data,
                         host_dept_id: plan.host_dept_id,
                         status: "not_started",
-                      } as any);
+                      });
                       setShowTaskForm(false);
                     }}
                     onCancel={() => setShowTaskForm(false)}
@@ -508,7 +509,7 @@ export default function PlanDetailPage() {
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">{task.weight}%</span>
+                          <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400"></span>
                           {selectedTaskId === task.id && <ChevronRight className="h-3.5 w-3.5 text-purple-400 dark:text-purple-300" />}
                         </div>
                       </div>
@@ -517,7 +518,7 @@ export default function PlanDetailPage() {
                         <span className="truncate" title={task.expand?.executor_id?.name || "—"}>{task.expand?.executor_id?.name || "—"}</span>
                         <span>·</span>
                         <Clock className="h-3 w-3" />
-                        <span>{new Date(task.deadline).toLocaleDateString("vi-VN")}</span>
+                        <span>{formatDate(task.deadline)}</span>
                       </div>
                     </div>
                   ))
@@ -596,7 +597,7 @@ export default function PlanDetailPage() {
                             <span className="text-xs text-slate-400 dark:text-slate-500">Phối hợp:</span>
                             <span className="font-medium">
                               {selectedTask.expand?.collaborator_ids && selectedTask.expand.collaborator_ids.length > 0
-                                ? selectedTask.expand.collaborator_ids.map((u: any) => u.name).join(", ")
+                                ? selectedTask.expand.collaborator_ids.map((u: { name?: string; email?: string }) => u.name || u.email).join(", ")
                                 : "—"}
                             </span>
                           </div>
@@ -604,13 +605,13 @@ export default function PlanDetailPage() {
                             <Calendar className="h-4 w-4 text-slate-400 dark:text-slate-500" />
                             <span className="text-xs text-slate-400 dark:text-slate-500">Thời gian:</span>
                             <span className="font-medium">
-                              {new Date(selectedTask.start_date).toLocaleDateString("vi-VN")} → {new Date(selectedTask.deadline).toLocaleDateString("vi-VN")}
+                              {formatDate(selectedTask.start_date)} → {formatDate(selectedTask.deadline)}
                             </span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                             <Target className="h-4 w-4 text-slate-400 dark:text-slate-500" />
                             <span className="text-xs text-slate-400 dark:text-slate-500">Trọng số:</span>
-                            <span className="font-bold text-indigo-600 dark:text-indigo-400">{selectedTask.weight}%</span>
+                            <span className="font-bold text-indigo-600 dark:text-indigo-400"></span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                             <Tag className="h-4 w-4 text-slate-400 dark:text-slate-500" />

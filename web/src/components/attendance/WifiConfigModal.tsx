@@ -129,7 +129,7 @@ export default function WifiConfigModal({ onClose }: Props) {
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={onClose} aria-label="Đóng"
             className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200"
           >
             <X className="h-5 w-5" />

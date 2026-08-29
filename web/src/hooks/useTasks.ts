@@ -6,6 +6,9 @@ import type { Task } from "@shared/types";
 
 const COLLECTION = "tasks";
 
+/** Fields needed for list/table views (avoids fetching heavy description body). */
+const LIST_FIELDS = "id,name,plan_id,category,host_dept_id,executor_id,supervisor_id,collaborator_ids,start_date,deadline,status,is_recurring,is_ad_hoc,is_high_impact,completed_at,rating,is_deleted,created,updated";
+
 export function useTasks(filter?: string) {
   return useQuery({
     queryKey: ["tasks", filter],
@@ -14,7 +17,8 @@ export function useTasks(filter?: string) {
       const records = await pb.collection(COLLECTION).getFullList<Task>(500, {
         sort: "-created",
         filter: addSoftDeleteFilter(filter),
-        expand: "plan_id,host_dept_id,executor_id,supervisor_id,collaborator_ids",
+        fields: LIST_FIELDS,
+        expand: "plan_id,host_dept_id,executor_id,supervisor_id",
       });
       return records;
     },
@@ -49,6 +53,7 @@ export function useTrashedTasks() {
       return pb.collection(COLLECTION).getFullList<Task>({
         sort: "-updated",
         filter: "is_deleted=true",
+        fields: LIST_FIELDS,
         expand: "plan_id,executor_id,supervisor_id",
       });
     },

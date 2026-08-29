@@ -161,7 +161,6 @@ export interface Task {
   start_date: string;
   deadline: string;
   status: TaskStatus;
-  weight: number;
   is_recurring: boolean;
   recurring_type?: RecurringType;
   recurring_value?: number;
@@ -245,7 +244,8 @@ export type NotificationType =
   | "deadline_warning"
   | "task_update"
   | "proposal_update"
-  | "announcement";
+  | "announcement"
+  | "surprise_check";
 
 export interface Notification {
   id: string;
@@ -404,7 +404,6 @@ export interface ArchivedTask {
   due_date?: string;
   completion_date?: string;
   progress?: number;
-  weight?: number;
   archived_at: string;
   created: string;
   updated: string;
@@ -496,6 +495,54 @@ export interface PresenceCheckEntry {
   responded: boolean;
   responded_at?: string;
   device_info?: string;
+}
+
+export interface SystemConfig {
+  id: string;
+  key: string;
+  value: string;
+  enabled: boolean;
+  int_value?: number;
+  created: string;
+  updated: string;
+}
+
+// --- Surprise Check (Kiểm tra đột xuất) ---
+
+export type SurpriseCheckStatus = "pending" | "responded" | "expired";
+
+export interface SurpriseCheck {
+  id: string;
+  campaign_id: string;
+  user_id: string;
+  status: SurpriseCheckStatus;
+  password_hash?: string;
+  respond_method?: "password" | "biometric";
+  responded_at?: string;
+  device_info?: string;
+  created: string;
+  updated: string;
+  expand?: {
+    campaign_id?: PresenceCampaign;
+    user_id?: User;
+  };
+}
+
+export interface SurpriseCheckCampaign {
+  id: string;
+  name: string;
+  status: "active" | "closed";
+  started_by?: string;
+  started_at: string;
+  ended_at?: string;
+  notes?: string;
+  target_user_ids?: string[];
+  response_window_minutes: number;
+  created: string;
+  updated: string;
+  expand?: {
+    started_by?: User;
+  };
 }
 
 

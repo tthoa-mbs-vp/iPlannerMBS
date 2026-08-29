@@ -34,7 +34,7 @@ export function calculateKpi(task: Task): Partial<KpiScore> {
   }
 
   const rating = task.rating || 0;
-  const resultLevel = rating / 5.0;
+  const resultLevel = rating / 10.0;
 
   const performanceScore = Math.round(baseScore * (0.3 * scheduleLevel + 0.7 * resultLevel) * 10) / 10;
 

@@ -24,3 +24,12 @@ mobile/node_modules/
 # OS
 .DS_Store
 Thumbs.db
+-e 
+# Database files
+backend/*.db
+
+# Lock files
+web/bun.lock
+
+# Generated reports
+web/public/code-quality-report.md

@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { pb, getUserAvatar } from "../api/client";
 import { useEmployeeProfile, useUpsertEmployeeProfile } from "../hooks/useEmployeeProfiles";
 import { useAuthStore } from "../stores/authStore";
+import { useToastStore } from "../stores/toastStore";
 import { usePageTitleStore } from "../stores/pageTitleStore";
 import {
   User as UserIcon, Briefcase, CreditCard, Pencil, Save, Loader2, GraduationCap, DollarSign, Key, UserCog,
@@ -16,7 +17,9 @@ import type { User } from "@shared/types";
 
 type PageTab = "general" | "qualifications" | "work" | "salary";
 
-const tabs: { key: PageTab; label: string; icon: any; color: string }[] = [
+import type { LucideIcon } from "lucide-react";
+
+const tabs: { key: PageTab; label: string; icon: LucideIcon; color: string }[] = [
   { key: "general", label: "Thông tin chung", icon: UserIcon, color: "from-blue-500 to-indigo-600" },
   { key: "qualifications", label: "Chuyên môn nghiệp vụ", icon: GraduationCap, color: "from-amber-500 to-orange-600" },
   { key: "work", label: "Quá trình công tác", icon: Briefcase, color: "from-cyan-500 to-sky-600" },
@@ -49,7 +52,7 @@ function Field({ label, value, editValue, onChange, type, selectOptions, editing
   );
 }
 
-function CardSection({ icon: Icon, title, gradient, children, actions }: { icon: any; title: string; gradient: string; children: React.ReactNode; actions?: React.ReactNode }) {
+function CardSection({ icon: Icon, title, gradient, children, actions }: { icon: LucideIcon; title: string; gradient: string; children: React.ReactNode; actions?: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-slate-200/80 bg-white shadow-sm overflow-hidden dark:border-slate-700 dark:bg-slate-900">
       <div className={`flex items-center justify-between px-5 py-3 border-b border-slate-100 bg-gradient-to-r ${gradient} dark:border-slate-700`}>
@@ -98,6 +101,7 @@ export default function HRDetailPage() {
       });
     },
     enabled: !!id,
+    staleTime: 60_000,
     retry: 3,
   });
 
@@ -139,6 +143,7 @@ export default function HRDetailPage() {
   }
   const qc = useQueryClient();
   const checkAuth = useAuthStore((s) => s.checkAuth);
+  const addToast = useToastStore((s) => s.addToast);
 
   const handleSaveAccount = async () => {
     if (!id) return;
@@ -150,16 +155,16 @@ export default function HRDetailPage() {
       });
       if (isSelf) await checkAuth();
       qc.invalidateQueries({ queryKey: ["user", id] });
-    } catch (err: any) {
-      alert(err?.message || "Lỗi");
+    } catch (err: unknown) {
+      addToast("error", err instanceof Error ? err.message : "Lỗi");
     }
     setSaving(false);
   };
 
   const handleChangePassword = async () => {
     if (!id) return;
-    if (!oldPassword || !newPassword) { alert("Vui lòng nhập đầy đủ mật khẩu"); return; }
-    if (newPassword.length < 8) { alert("Mật khẩu mới phải có ít nhất 8 ký tự"); return; }
+    if (!oldPassword || !newPassword) { addToast("error", "Vui lòng nhập đầy đủ mật khẩu"); return; }
+    if (newPassword.length < 8) { addToast("error", "Mật khẩu mới phải có ít nhất 8 ký tự"); return; }
     setPwSaving(true);
     try {
       await pb.collection("users").update(id, {
@@ -170,8 +175,8 @@ export default function HRDetailPage() {
       setOldPassword("");
       setNewPassword("");
       setChangingPw(false);
-    } catch (err: any) {
-      alert(err?.message || "Lỗi khi đổi mật khẩu");
+    } catch (err: unknown) {
+      addToast("error", err instanceof Error ? err.message : "Lỗi khi đổi mật khẩu");
     }
     setPwSaving(false);
   };

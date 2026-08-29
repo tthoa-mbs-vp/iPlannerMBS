@@ -36,6 +36,7 @@ const AttendancePage = lazy(() => import("./pages/AttendancePage"));
 const LeavePage = lazy(() => import("./pages/LeavePage"));
 const HRPage = lazy(() => import("./pages/HRPage"));
 const HRDetailPage = lazy(() => import("./pages/HRDetailPage"));
+const SurpriseCheckPage = lazy(() => import("./pages/SurpriseCheckPage"));
 
 
 function PageLoader() {
@@ -127,6 +128,7 @@ export default function App() {
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/admin/logs" element={<LogsPage />} />
             <Route path="/admin/data" element={<DataPage />} />
+            <Route path="/surprise-check" element={<SurpriseCheckPage />} />
           </Route>
           <Route
             element={

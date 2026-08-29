@@ -51,7 +51,7 @@ export function useMarkAsRead() {
   return useMutationWithToast(
     (id: string) => pb.collection("notifications").update(id, { is_read: true }),
     {
-      invalidateKeys: [["notifications"]],
+      invalidateKeys: [["notifications"], ["notifications", "unread-count"]],
     }
   );
 }
@@ -61,14 +61,28 @@ export function useMarkAllAsRead() {
   return useMutationWithToast(
     async () => {
       if (!userId) return;
-      const unread = await pb.collection("notifications").getFullList({
-        filter: `user_id="${userId}" && is_read=false`,
-      });
-      await Promise.all(unread.map((n) => pb.collection("notifications").update(n.id, { is_read: true })));
+      // PocketBase doesn't support bulk-update, so paginate through unread
+      // notifications and batch-update each page to avoid fetching the full
+      // list into memory when there are thousands.
+      const PAGE = 100;
+      let page = 1;
+      let total = Infinity;
+      while ((page - 1) * PAGE < total) {
+        const result = await pb.collection("notifications").getList(page, PAGE, {
+          filter: `user_id="${userId}" && is_read=false`,
+          fields: "id",
+        });
+        total = result.totalItems;
+        if (result.items.length === 0) break;
+        await Promise.all(
+          result.items.map((n) => pb.collection("notifications").update(n.id, { is_read: true }))
+        );
+        page++;
+      }
     },
     {
       successMessage: "Đã đánh dấu tất cả là đã đọc",
-      invalidateKeys: [["notifications"]],
+      invalidateKeys: [["notifications"], ["notifications", "unread-count"]],
     }
   );
 }
@@ -104,6 +118,7 @@ const TYPE_PREFIX: Record<string, string> = {
   task_update: "Cập nhật",
   proposal_update: "Đề xuất",
   announcement: "Thông báo",
+  surprise_check: "Kiểm tra đột xuất",
 };
 
 export function getNotificationTypeLabel(type: string): string {
