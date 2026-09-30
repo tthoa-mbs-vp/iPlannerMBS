@@ -15,6 +15,9 @@ backend/bin/
 # Note: pb_migrations/ is NOT ignored — migrations must be tracked for reproducibility
 
 # Web
+# web/public/ is copied verbatim into dist/ and served publicly — only end-user
+# docs belong there. Internal review/analysis docs live in docs/ at the repo root.
+web/public/*.md
 web/dist/
 web/tsconfig.tsbuildinfo
 # Never commit real env files — use web/.env.example as the documented template.

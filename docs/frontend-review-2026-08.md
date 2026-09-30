@@ -2,6 +2,8 @@
 
 > Ngày: 2026-08-17 · Phạm vi: `web/src` (+ đối chiếu `shared/types.ts`, `web/scripts/pb-schema.json`, `backend/pb_hooks/*`)
 > Phương pháp: đối chiếu tự động schema ↔ types ↔ select-lists ↔ constants, quét dead code, phân tích bundle Vite, rà React Query patterns. Mọi phát hiện kèm file/dòng dẫn chứng.
+>
+> **Vị trí:** tài liệu nội bộ, nằm trong `docs/` ở gốc repo — cố tình KHÔNG đặt trong `web/public/` để không bị đóng gói và phát hành công khai cùng bản build.
 
 ---
 
