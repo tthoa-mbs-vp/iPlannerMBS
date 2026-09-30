@@ -3,6 +3,7 @@ import {
   useDepartments,
   useCreateDepartment,
   useUpdateDepartment,
+  type DepartmentInput,
   useDeleteDepartment,
   useUsers,
 } from "../../hooks/useDepartments";
@@ -16,6 +17,7 @@ import {
   DEPT_EXPORT_COLUMNS,
 } from "../../utils/importExport";
 import type { Department } from "@shared/types";
+import { errorMessage } from "../../utils/errors";
 import { btn } from "../../utils/buttonClasses";
 import Spinner from "../shared/Spinner";
 import ManagerHeader from "../shared/ManagerHeader";
@@ -66,7 +68,7 @@ export default function DepartmentManager() {
     }
     setError("");
     try {
-      const data: any = {
+      const data: DepartmentInput = {
         code: editCode,
         name: editName,
         is_counted: editCounted,
@@ -78,8 +80,8 @@ export default function DepartmentManager() {
         await updateDept.mutateAsync({ id: editingId, data });
       }
       setEditingId(null);
-    } catch (err: any) {
-      setError(err?.message || "Lỗi");
+    } catch (err: unknown) {
+      setError(errorMessage(err, "Lỗi"));
     }
   };
 

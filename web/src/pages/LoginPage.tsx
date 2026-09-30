@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import { APP_NAME, APP_VERSION } from "../config/app";
 import { isMobileDevice } from "../utils/device";
+import { errorMessage } from "../utils/errors";
 import { ClipboardList } from "lucide-react";
 
 export default function LoginPage() {
@@ -29,8 +30,8 @@ export default function LoginPage() {
     try {
       await login(email, password, remember);
       navigate(homePath, { replace: true });
-    } catch (err: any) {
-      setError(err?.message || "Đăng nhập thất bại");
+    } catch (err: unknown) {
+      setError(errorMessage(err, "Đăng nhập thất bại"));
     } finally {
       setLoading(false);
     }

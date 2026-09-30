@@ -4,8 +4,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import PlansPage from "../pages/PlansPage";
 
+type AuthStoreShape = {
+  user: { id: string; email: string; expand: { role_id: { can_manage: boolean; view_scope: string } } };
+  isAuthenticated: boolean;
+};
+
 vi.mock("../stores/authStore", () => ({
-  useAuthStore: vi.fn((sel?: (s: any) => any) => {
+  useAuthStore: vi.fn((sel?: (s: AuthStoreShape) => unknown) => {
     const store = {
       user: { id: "1", email: "admin@mbs.com", expand: { role_id: { can_manage: true, view_scope: "all" } } },
       isAuthenticated: true,

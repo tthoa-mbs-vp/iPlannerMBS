@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { X, Check, Loader2 } from "lucide-react";
 import CollaboratorSelect from "../shared/CollaboratorSelect";
+import { errorMessage } from "../../utils/errors";
+import type { TaskCategory } from "@shared/types";
 
 interface UserBrief {
   id: string;
@@ -18,7 +20,7 @@ interface Props {
   initialValues?: {
     name?: string;
     description?: string;
-    category?: string;
+    category?: TaskCategory;
     executor_id?: string;
     supervisor_id?: string;
     collaborator_ids?: string[];
@@ -31,7 +33,7 @@ interface Props {
   onSubmit: (data: {
     name: string;
     description?: string;
-    category: string;
+    category: TaskCategory;
     executor_id: string;
     supervisor_id?: string;
     collaborator_ids: string[];
@@ -109,7 +111,9 @@ export default function TaskInlineForm({ initialValues, onSubmit, onCancel, pend
       return;
     }
     setError("");
-    const derivedCategory = isAdHoc ? "sudden" : isHighImpact ? "important" : "normal";
+    // Annotated so the literal union survives — otherwise the ternary widens to
+    // `string` and the create-task payload has to be cast at every call site.
+    const derivedCategory: TaskCategory = isAdHoc ? "sudden" : isHighImpact ? "important" : "normal";
     try {
       await onSubmit({
         name: name.trim(),
@@ -125,8 +129,8 @@ export default function TaskInlineForm({ initialValues, onSubmit, onCancel, pend
         is_recurring: showRecurring ? recurring : undefined,
         plan_id: selectedPlanId || undefined,
       });
-    } catch (err: any) {
-      setError(err?.message || "Có lỗi xảy ra");
+    } catch (err: unknown) {
+      setError(errorMessage(err));
     }
   };
 

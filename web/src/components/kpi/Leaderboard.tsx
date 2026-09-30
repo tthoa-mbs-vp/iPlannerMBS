@@ -31,7 +31,7 @@ export default function Leaderboard() {
     if (viewMode === "individual") {
       const userScores = new Map<string, { total: number; count: number }>();
       filtered.forEach((ks) => {
-        const taskUserId = (ks as any).expand?.task_id?.executor_id;
+        const taskUserId = ks.expand?.task_id?.executor_id;
         if (taskUserId && userMap.has(taskUserId)) {
           const entry = userScores.get(taskUserId) || { total: 0, count: 0 };
           entry.total += ks.final_score || 0;
@@ -56,7 +56,7 @@ export default function Leaderboard() {
     } else {
       const deptScores = new Map<string, { total: number; count: number }>();
       filtered.forEach((ks) => {
-        const taskUserId = (ks as any).expand?.task_id?.executor_id;
+        const taskUserId = ks.expand?.task_id?.executor_id;
         if (taskUserId && userMap.has(taskUserId)) {
           const dept = userMap.get(taskUserId)?.expand?.department_id?.name || "Chưa có phòng ban";
           const entry = deptScores.get(dept) || { total: 0, count: 0 };

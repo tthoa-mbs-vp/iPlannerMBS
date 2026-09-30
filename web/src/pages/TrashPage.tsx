@@ -9,6 +9,10 @@ import { useTrashedTasks, useRestoreTask, usePermanentDeleteTask, useBulkPermane
 import TabBar from "../components/shared/TabBar";
 import Spinner from "../components/shared/Spinner";
 import EmptyState from "../components/shared/EmptyState";
+import type { Plan, Task } from "@shared/types";
+
+/** Trash holds plans or tasks, depending on the active tab. */
+type TrashItem = Plan | Task;
 
 export default function TrashPage() {
   const [tab, setTab] = usePersistedState<"plans" | "tasks">("trash_tab", "plans");
@@ -73,7 +77,7 @@ function TrashList({ type }: { type: "plans" | "tasks" }) {
         {confirmBulk ? (
           <div className="flex items-center gap-2">
             <span className="text-xs text-red-600 font-medium dark:text-red-400">Xóa vĩnh viễn tất cả ({items.length})?</span>
-            <button onClick={async () => { await bulkDelete(items.map((i: any) => i.id)); setConfirmBulk(false); }} disabled={isBulkDeleting}
+            <button onClick={async () => { await bulkDelete(items.map((i: TrashItem) => i.id)); setConfirmBulk(false); }} disabled={isBulkDeleting}
               className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors">
               {isBulkDeleting ? "..." : "Xác nhận"}
             </button>
@@ -89,15 +93,14 @@ function TrashList({ type }: { type: "plans" | "tasks" }) {
             Xóa tất cả ({items.length})
           </button>
         )}
-      </div>
-      {items.map((item: any) => (
+      </div>            {items.map((item: TrashItem) => (
         <div key={item.id}
           className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 dark:bg-red-950/50">
             <Trash2 className="h-5 w-5 text-red-400" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-slate-800 truncate dark:text-slate-100" title={item.name || item.email || item.id}>{item.name || item.email || item.id}</p>
+            <p className="text-sm font-medium text-slate-800 truncate dark:text-slate-100" title={item.name || item.id}>{item.name || item.id}</p>
             <p className="text-xs text-slate-400 dark:text-slate-500">
               {type === "plans" ? "Kế hoạch" : "Nhiệm vụ"} · Đã xóa {new Date(item.updated).toLocaleDateString("vi-VN")}
             </p>

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, type Mock } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Sidebar from "../components/layout/Sidebar";
@@ -21,7 +21,7 @@ const mockUserState = {
 };
 
 vi.mock("../stores/authStore", () => ({
-  useAuthStore: vi.fn((selector: any) => (selector ? selector(mockUserState) : mockUserState)),
+  useAuthStore: vi.fn((selector?: (s: typeof mockUserState) => unknown) => (selector ? selector(mockUserState) : mockUserState)),
 }));
 
 describe("Sidebar", () => {
@@ -39,7 +39,8 @@ describe("Sidebar", () => {
 
   it("hides admin-only items for non-admin users", () => {
     const plain = { ...mockUserState, user: { ...mockUserState.user, expand: { ...mockUserState.user.expand, role_id: { can_manage: false, view_scope: "personal", level: "employee" } } } };
-    (useAuthStore as any).mockImplementation((sel: any) => (sel ? sel(plain) : plain));    render(
+    (useAuthStore as unknown as Mock).mockImplementation((sel?: (s: typeof plain) => unknown) => (sel ? sel(plain) : plain));
+    render(
       <MemoryRouter>
         <Sidebar open />
       </MemoryRouter>

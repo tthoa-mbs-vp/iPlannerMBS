@@ -4,6 +4,7 @@ import { Plus, Pencil, Trash2, Check, X, UserCheck, Upload, Search } from "lucid
 import ExportButton from "../shared/ExportButton";
 const ImportModal = lazy(() => import("./ImportModal"));
 import { exportToExcel, exportToCSV, exportToJSON, ROLE_EXPORT_COLUMNS } from "../../utils/importExport";
+import { errorMessage } from "../../utils/errors";
 import type { Role, RoleLevel, ViewScope, ApprovalScope } from "@shared/types";
 import { btn } from "../../utils/buttonClasses";
 import Spinner from "../shared/Spinner";
@@ -22,7 +23,15 @@ const SCOPE_OPTIONS = [
   { value: "personal", label: "Cá nhân" },
 ];
 
-const PERM_FIELDS = [
+/** The editable boolean permission flags on a Role. */
+type RolePerms = Pick<
+  Role,
+  | "can_add_plans" | "can_edit_plans" | "can_delete_plans"
+  | "can_add_tasks" | "can_edit_tasks" | "can_delete_tasks"
+  | "can_manage" | "can_approve_leave" | "can_view_salary"
+>;
+
+const PERM_FIELDS: { key: keyof RolePerms; label: string }[] = [
   { key: "can_add_plans", label: "Thêm kế hoạch" },
   { key: "can_edit_plans", label: "Sửa kế hoạch" },
   { key: "can_delete_plans", label: "Xóa kế hoạch" },
@@ -93,7 +102,7 @@ export default function RoleManager() {
       if (editingId === "new") await createRole.mutateAsync(data);
       else if (editingId) await updateRole.mutateAsync({ id: editingId, data });
       setEditingId(null);
-    } catch (err: any) { setError(err?.message || "Lỗi"); }
+    } catch (err: unknown) { setError(errorMessage(err, "Lỗi")); }
   };
 
   const handleDelete = async (id: string) => {
@@ -262,8 +271,8 @@ function InlineRoleRow({
   level: string; onLevelChange: (v: string) => void;
   scope: string; onScopeChange: (v: string) => void;
   approvalScope: string; onApprovalScopeChange: (v: string) => void;
-  perms: Record<string, boolean>;
-  onPermsChange: (p: any) => void;
+  perms: RolePerms;
+  onPermsChange: (p: RolePerms) => void;
   error: string; isSaving: boolean; onSave: () => void; onCancel: () => void;
 }) {
   return (
@@ -309,7 +318,7 @@ function InlineRoleRow({
             {PERM_FIELDS.map((pf) => (
               <label key={pf.key} className="flex items-center gap-1.5 text-xs">
                 <input type="checkbox"
-                  checked={(perms as any)[pf.key]}
+                  checked={perms[pf.key]}
                   onChange={(e) => onPermsChange({ ...perms, [pf.key]: e.target.checked })}
                   className="rounded border-slate-300 text-amber-600 focus:ring-amber-500 dark:border-slate-600 dark:text-amber-400" />
                 {pf.label}

@@ -35,7 +35,9 @@ export default [
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
-      "@typescript-eslint/no-explicit-any": "off",
+      // `any` is no longer tolerated anywhere in this codebase (0 occurrences as
+      // of 2026-09). Kept at "error" so it cannot creep back in.
+      "@typescript-eslint/no-explicit-any": "error",
       "no-empty": ["error", { allowEmptyCatch: true }],
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/set-state-in-effect": "warn",

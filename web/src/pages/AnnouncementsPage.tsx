@@ -9,6 +9,7 @@ import {
 import Spinner from "../components/shared/Spinner";
 import EmptyState from "../components/shared/EmptyState";
 import ErrorState from "../components/shared/ErrorState";
+import { errorMessage } from "../utils/errors";
 import Modal from "../components/shared/Modal";
 import { sanitizeHtml, stripTags } from "../utils/sanitize";
 import type { Announcement } from "@shared/types";
@@ -69,7 +70,7 @@ export default function AnnouncementsPage() {
   };
 
   if (isLoading) return <Spinner size="md" />;
-  if (error) return <ErrorState message="Không thể tải bảng tin" subMessage={(error as any)?.message || "Vui lòng thử lại"} onRetry={() => refetch()} />;
+  if (error) return <ErrorState message="Không thể tải bảng tin" subMessage={errorMessage(error, "Vui lòng thử lại")} onRetry={() => refetch()} />;
 
   return (
     <div className="flex h-full gap-5">

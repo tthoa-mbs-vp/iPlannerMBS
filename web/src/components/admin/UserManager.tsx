@@ -2,6 +2,7 @@ import { lazy, Suspense, useState } from "react";
 import { useAdminUsersPaginated, useDepartments, useRoles } from "../../hooks/useDepartments";
 import { useProfessionalGroups } from "../../hooks/useProfessionalGroups";
 import { useDebounce } from "../../hooks/useDebounce";
+import { errorMessage } from "../../utils/errors";
 import { pb } from "../../api/client";
 
 import { useQueryClient } from "@tanstack/react-query";
@@ -116,7 +117,7 @@ export default function UserManager() {
       }
       qc.invalidateQueries({ queryKey: ["users"] });
       setEditingId(null);
-    } catch (err: any) { setError(err?.message || "Lỗi"); }
+    } catch (err: unknown) { setError(errorMessage(err, "Lỗi")); }
     setIsSaving(false);
   };
 
@@ -165,7 +166,7 @@ export default function UserManager() {
       setAdminCreds(null);
       setResetPassword("");
       setResetPasswordConfirm("");
-    } catch (err: any) { alert(err.message); }
+    } catch (err: unknown) { alert(errorMessage(err, "Thao tác thất bại")); }
     finally { setAdminSaving(false); }
   };
 

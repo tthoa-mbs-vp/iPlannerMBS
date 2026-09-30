@@ -350,7 +350,7 @@ export default function PlanDetailPage() {
                     <span className="text-xs text-slate-400 dark:text-slate-500">Phòng phối hợp:</span>
                     <span className="font-medium">
                       {plan.expand?.partner_dept_ids && plan.expand.partner_dept_ids.length > 0
-                        ? plan.expand.partner_dept_ids.map((d: any) => d.name).join(", ")
+                        ? plan.expand.partner_dept_ids.map((d) => d.name).join(", ")
                         : "—"}
                     </span>
                   </div>
@@ -476,7 +476,7 @@ export default function PlanDetailPage() {
                         ...data,
                         host_dept_id: plan.host_dept_id,
                         status: "not_started",
-                      } as any);
+                      });
                       setShowTaskForm(false);
                     }}
                     onCancel={() => setShowTaskForm(false)}
@@ -594,7 +594,7 @@ export default function PlanDetailPage() {
                             <span className="text-xs text-slate-400 dark:text-slate-500">Phối hợp:</span>
                             <span className="font-medium">
                               {selectedTask.expand?.collaborator_ids && selectedTask.expand.collaborator_ids.length > 0
-                                ? selectedTask.expand.collaborator_ids.map((u: any) => u.name).join(", ")
+                                ? selectedTask.expand.collaborator_ids.map((u) => u.name).join(", ")
                                 : "—"}
                             </span>
                           </div>

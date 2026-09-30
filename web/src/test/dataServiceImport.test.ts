@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 
-const h = vi.hoisted(() => ({ created: [] as any[] }));
+const h = vi.hoisted(() => ({ created: [] as { collection: string; data: Record<string, unknown> }[] }));
 
 vi.mock("../api/client", () => ({
   pb: {
@@ -10,7 +10,7 @@ vi.mock("../api/client", () => ({
         if (name === "roles") return [{ id: "role-tp", code: "TP" }];
         return [];
       }),
-      create: vi.fn((d: any) => {
+      create: vi.fn((d: Record<string, unknown>) => {
         h.created.push({ collection: name, data: d });
         return { ...d, id: "new-id" };
       }),
@@ -31,8 +31,8 @@ describe("users import resolves codes to ids", () => {
     expect(result.success).toBe(1);
     const createdUser = h.created.find((c) => c.collection === "users");
     expect(createdUser).toBeTruthy();
-    expect(createdUser.data.department_id).toBe("dept-kt");
-    expect(createdUser.data.role_id).toBe("role-tp");
+    expect(createdUser?.data.department_id).toBe("dept-kt");
+    expect(createdUser?.data.role_id).toBe("role-tp");
   });
 
   it("passes through raw ids when already valid", async () => {
@@ -42,8 +42,8 @@ describe("users import resolves codes to ids", () => {
     const file = new File([json], "users.json", { type: "application/json" });
     await importFromFile(file, "users");
     const createdUser = h.created.find((c) => c.collection === "users" && c.data.email === "test2@mbs.com");
-    expect(createdUser.data.department_id).toBe("dept-kt");
-    expect(createdUser.data.role_id).toBe("role-tp");
+    expect(createdUser?.data.department_id).toBe("dept-kt");
+    expect(createdUser?.data.role_id).toBe("role-tp");
   });
 
   it("users paste hint uses mã chức vụ / mã phòng ban", () => {

@@ -19,6 +19,7 @@ import {
   MessageCircle,
   ChevronRight,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import TabBar from "../components/shared/TabBar";
 import Spinner from "../components/shared/Spinner";
 import ErrorState from "../components/shared/ErrorState";
@@ -32,7 +33,7 @@ interface ChannelItem {
   key: string;
   label: string;
   sub: string;
-  icon: any;
+  icon: LucideIcon;
   ref: ChannelRef;
 }
 

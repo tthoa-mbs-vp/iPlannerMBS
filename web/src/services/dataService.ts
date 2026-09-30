@@ -286,7 +286,7 @@ export async function importFromPasteData(
 
   const sep = lines[0].includes("\t") ? "\t" : "|";
   const headers = lines[0].split(sep).map((h) => h.trim());
-  const records: Record<string, any>[] = [];
+  const records: PBRecord[] = [];
 
   for (let i = 1; i < lines.length; i++) {
     const vals = lines[i].split(sep).map((v) => v.trim());

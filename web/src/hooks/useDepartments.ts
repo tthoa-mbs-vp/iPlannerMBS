@@ -3,6 +3,17 @@ import { pb } from "../api/client";
 import { useMutationWithToast } from "../hooks/useMutationWithToast";
 import type { Department, Role, User } from "@shared/types";
 
+/**
+ * Writable shape of a department.
+ *
+ * The read model (`Department`) is not directly usable as a write model: a
+ * relation field is simply optional when reading, but clearing it requires an
+ * explicit null, which PocketBase only accepts on write.
+ */
+export type DepartmentInput = Omit<Partial<Department>, "leader_id"> & {
+  leader_id?: string | null;
+};
+
 export function useDepartments() {
   return useQuery({
     queryKey: ["departments"],
@@ -21,7 +32,7 @@ export function useDepartments() {
 
 export function useCreateDepartment() {
   return useMutationWithToast(
-    (data: Partial<Department>) => pb.collection("departments").create(data),
+    (data: DepartmentInput) => pb.collection("departments").create(data),
     {
       successMessage: "Tạo phòng ban thành công",
       invalidateKeys: [["departments"]],
@@ -31,7 +42,7 @@ export function useCreateDepartment() {
 
 export function useUpdateDepartment() {
   return useMutationWithToast(
-    ({ id, data }: { id: string; data: Partial<Department> }) =>
+    ({ id, data }: { id: string; data: DepartmentInput }) =>
       pb.collection("departments").update(id, data),
     {
       successMessage: "Cập nhật phòng ban thành công",

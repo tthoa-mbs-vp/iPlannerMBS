@@ -5,7 +5,7 @@ vi.mock("../api/client", () => ({
   pb: {
     collection: vi.fn(() => ({
       getFullList: vi.fn(),
-      create: vi.fn((d: any) => ({ ...d, id: "mock-id" })),
+      create: vi.fn((d: Record<string, unknown>) => ({ ...d, id: "mock-id" })),
     })),
     authStore: { record: { id: "admin" } },
   },

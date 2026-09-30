@@ -21,6 +21,34 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - run: npm ci
       - run: npm run ci
+      # Fails on a coverage regression; thresholds live in web/vite.config.ts.
+      - run: npm run test:coverage
+      # Known-issues gate. Every advisory below is a transitive dep of the
+      # dev/build toolchain (jsdom, eslint, vite-plugin-pwa -> workbox-build) and
+      # none of them is emitted into dist/. `npm audit --omit=dev` is NOT used as
+      # the gate because npm still walks those packages through vite-plugin-pwa,
+      # so it reports build-only issues as if they were shipped.
+      # A new advisory, or one already listed becoming unfixed upstream, fails.
+      - name: Dependency audit (allowlisted dev toolchain)
+        run: |
+          set -e
+          ALLOWED="undici brace-expansion fast-uri js-yaml nanoid postcss vitest @vitest/mocker @vitest/coverage-v8"
+          NEW=$(npm audit --json | node -e '
+            let d = ""; process.stdin.on("data", c => d += c).on("end", () => {
+              const a = JSON.parse(d);
+              const allowed = new Set(process.argv[1].split(" "));
+              const bad = Object.entries(a.vulnerabilities)
+                .filter(([name]) => !allowed.has(name))
+                .map(([name, v]) => `${name} (${v.severity})`);
+              console.log(bad.join("\n"));
+            });
+          ' "$ALLOWED")
+          if [ -n "$NEW" ]; then
+            echo "::error::Unrecognised vulnerabilities (not in the dev-toolchain baseline):"
+            echo "$NEW"
+            exit 1
+          fi
+          echo "Only known dev-toolchain advisories remain."
 
   # The integration tests boot a FRESH PocketBase instance — the migration chain
   # (created_* + updated_* in backend/pb_migrations) self-bootstraps the full 27-

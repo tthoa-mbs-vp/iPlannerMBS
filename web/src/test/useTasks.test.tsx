@@ -66,15 +66,15 @@ describe("useTasks", () => {
     mockCreate.mockResolvedValue(mockTasks[0]);
     const { useCreateTask } = await import("../hooks/useTasks");
     const { result } = renderHook(() => useCreateTask(), { wrapper: Wrapper });
-    await result.current.mutateAsync({ name: "New Task" });
-    expect(mockCreate).toHaveBeenCalledWith({ name: "New Task" });
+    await result.current.mutateAsync({ name: "New Task", category: "normal" });
+    expect(mockCreate).toHaveBeenCalledWith({ name: "New Task", category: "normal" });
   });
 
   it("useUpdateTask calls pb update", async () => {
     mockUpdate.mockResolvedValue({ ...mockTasks[0], name: "Updated" });
     const { useUpdateTask } = await import("../hooks/useTasks");
     const { result } = renderHook(() => useUpdateTask(), { wrapper: Wrapper });
-    await result.current.mutateAsync({ id: "1", data: { name: "Updated" } as any });
+    await result.current.mutateAsync({ id: "1", data: { name: "Updated" } });
     expect(mockUpdate).toHaveBeenCalledWith("1", { name: "Updated" });
   });
 

@@ -50,7 +50,7 @@ export async function exportToExcel<T extends RowData>(
 
   const groupHeaderRows: number[] = [];
   if (options.groupBy) {
-    const groups = new Map<string, any[]>();
+    const groups = new Map<string, RowData[]>();
     rows.forEach((r) => {
       const g = options.groupBy!(r) || "—";
       if (!groups.has(g)) groups.set(g, []);

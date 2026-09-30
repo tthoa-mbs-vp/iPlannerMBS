@@ -9,6 +9,7 @@ import { Award, CheckCircle, Clock, TrendingUp, RefreshCw, BarChart3, Star, Zap,
 import { exportToExcel } from "../utils/importExport";
 import { exportHtmlToPdf } from "../utils/exportPdf";
 import { getRatingBadgeStyle } from "../utils/constants";
+import { errorMessage } from "../utils/errors";
 import {
   aggregateUserKpi,
   buildTaskKpi,
@@ -346,8 +347,8 @@ export default function KpiPage() {
     try {
       const { created, failed } = await calcKpi.mutateAsync();
       setRecalcStatus(`Đã tính KPI cho ${created} nhiệm vụ${failed ? ` (${failed} thất bại)` : ""}.`);
-    } catch (err: any) {
-      setRecalcStatus(err?.message || "Không thể tính lại KPI.");
+    } catch (err: unknown) {
+      setRecalcStatus(errorMessage(err, "Không thể tính lại KPI."));
     }
     setTimeout(() => setRecalcStatus(""), 3000);
   }, [canManage, unscoredTasks.length, calcKpi, setRecalcStatus]);
@@ -443,11 +444,11 @@ export default function KpiPage() {
   }, [unscoredTasks.length, calcKpi.isPending, canManage, handleRecalculateAll]);
 
   if (kpiError || tasksError || usersError) {
-    const msg = (kpiError || tasksError || usersError) as any;
+    const msg = errorMessage(kpiError || tasksError || usersError, "Vui lòng thử lại");
     return (
       <ErrorState
         message="Không thể tải dữ liệu"
-        subMessage={msg?.message || "Vui lòng thử lại"}
+        subMessage={msg}
         onRetry={() => { refetchKpi(); refetchTasks(); refetchUsers(); }}
       />
     );

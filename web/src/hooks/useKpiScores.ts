@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { pb } from "../api/client";
 import { useToastStore } from "../stores/toastStore";
+import { errorMessage } from "../utils/errors";
 import type { KpiScore } from "@shared/types";
 
 export function useKpiScores() {
@@ -35,8 +36,8 @@ export function useBatchCalculateKpi() {
       if (created > 0) addToast("success", `Đã tính KPI cho ${created} nhiệm vụ`);
       await qc.invalidateQueries({ queryKey: ["kpi_scores"] });
     },
-    onError: (error: any) => {
-      addToast("error", error instanceof Error ? error.message : "Có lỗi khi tính KPI");
+    onError: (error: unknown) => {
+      addToast("error", errorMessage(error, "Có lỗi khi tính KPI"));
     },
   });
 }

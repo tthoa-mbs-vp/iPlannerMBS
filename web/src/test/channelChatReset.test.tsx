@@ -12,7 +12,7 @@ const mockUserState = {
 };
 
 vi.mock("../stores/authStore", () => ({
-  useAuthStore: vi.fn((selector: any) => (selector ? selector(mockUserState) : mockUserState)),
+  useAuthStore: vi.fn((selector?: (s: typeof mockUserState) => unknown) => (selector ? selector(mockUserState) : mockUserState)),
 }));
 
 vi.mock("../hooks/useDepartments", () => ({
@@ -22,13 +22,13 @@ vi.mock("../hooks/useDepartments", () => ({
 // Stub the chat building blocks so the test can observe the search filter state.
 vi.mock("../components/chat/chatShared", () => ({
   ChatComposer: () => <div>composer</div>,
-  ChatFilters: ({ search, onSearchChange }: any) => (
+  ChatFilters: ({ search, onSearchChange }: { search: string; onSearchChange: (v: string) => void }) => (
     <input aria-label="Tìm kiếm" value={search} onChange={(e) => onSearchChange(e.target.value)} />
   ),
   AttachmentDisplay: () => null,
-  formatTime: (s: any) => s,
-  highlightMentions: (s: any) => s,
-  filterMessages: (msgs: any[]) => msgs,
+  formatTime: (s: string) => s,
+  highlightMentions: (s: string) => s,
+  filterMessages: (msgs: unknown[]) => msgs,
   chatSenders: () => [],
   useFilePreview: () => ({ url: null, open: () => {}, close: () => {} }),
 }));

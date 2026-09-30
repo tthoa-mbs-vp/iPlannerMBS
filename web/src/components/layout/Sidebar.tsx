@@ -18,12 +18,13 @@ import {
   Activity,
   Database,
   BookOpen,
+  type LucideIcon,
 } from "lucide-react";
 
 interface NavItem {
   to: string;
   label: string;
-  icon: any;
+  icon: LucideIcon;
   adminOnly?: boolean;
   hrOnly?: boolean;
 }
@@ -31,7 +32,7 @@ interface NavItem {
 interface ExternalItem {
   href: string;
   label: string;
-  icon: any;
+  icon: LucideIcon;
   external: true;
 }
 

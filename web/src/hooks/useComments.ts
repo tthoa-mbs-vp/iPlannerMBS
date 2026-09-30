@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { pb } from "../api/client";
 import { useToastStore } from "../stores/toastStore";
+import { errorMessage } from "../utils/errors";
 import type { Comment } from "@shared/types";
 
 const THREAD_PAGE_SIZE = 30;
@@ -113,8 +114,8 @@ export function useCreateComment() {
         }
       }
     },
-    onError: (error: any) => {
-      addToast("error", error instanceof Error ? error.message : "Có lỗi xảy ra");
+    onError: (error: unknown) => {
+      addToast("error", errorMessage(error));
     },
   });
 }
@@ -136,8 +137,8 @@ export function useUpdateComment() {
         mergeComment(qc, vars.taskId, res as unknown as Comment);
       }
     },
-    onError: (error: any) => {
-      addToast("error", error instanceof Error ? error.message : "Có lỗi xảy ra");
+    onError: (error: unknown) => {
+      addToast("error", errorMessage(error));
     },
   });
 }
@@ -154,8 +155,8 @@ export function useDeleteComment() {
         removeComment(qc, vars.taskId, vars.id);
       }
     },
-    onError: (error: any) => {
-      addToast("error", error instanceof Error ? error.message : "Có lỗi xảy ra");
+    onError: (error: unknown) => {
+      addToast("error", errorMessage(error));
     },
   });
 }

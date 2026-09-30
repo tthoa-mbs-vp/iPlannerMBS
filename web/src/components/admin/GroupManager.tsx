@@ -3,6 +3,7 @@ import {
   useProfessionalGroups,
   useCreateProfessionalGroup,
   useUpdateProfessionalGroup,
+  type ProfessionalGroupInput,
   useDeleteProfessionalGroup,
 } from "../../hooks/useProfessionalGroups";
 import { useDepartments, useUsers } from "../../hooks/useDepartments";
@@ -11,6 +12,7 @@ import ExportButton from "../shared/ExportButton";
 const ImportModal = lazy(() => import("./ImportModal"));
 import { exportToExcel, exportToCSV, exportToJSON, GROUP_EXPORT_COLUMNS } from "../../utils/importExport";
 import type { ProfessionalGroup, User } from "@shared/types";
+import { errorMessage } from "../../utils/errors";
 import { btn } from "../../utils/buttonClasses";
 import Spinner from "../shared/Spinner";
 import ManagerHeader from "../shared/ManagerHeader";
@@ -84,7 +86,7 @@ export default function GroupManager() {
     }
     setError("");
     try {
-      const data: any = {
+      const data: ProfessionalGroupInput = {
         code: editCode,
         name: editName,
         description: editDesc || undefined,
@@ -96,8 +98,8 @@ export default function GroupManager() {
         await updateGroup.mutateAsync({ id: editingId, data });
       }
       setEditingId(null);
-    } catch (err: any) {
-      setError(err?.message || "Lỗi");
+    } catch (err: unknown) {
+      setError(errorMessage(err, "Lỗi"));
     }
   };
 

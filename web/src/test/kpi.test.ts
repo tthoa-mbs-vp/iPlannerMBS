@@ -1,8 +1,17 @@
 import { describe, it, expect } from "vitest";
 import { calculateKpi } from "../utils/kpi";
-import type { Task } from "@shared/types";
+import type { Plan, Task } from "@shared/types";
 
-function makeTask(overrides: Partial<Task> = {}): Task {
+/**
+ * Overrides for makeTask. `expand` is deliberately looser than Task's: tests
+ * only ever need one or two fields of the nested plan, and requiring a full
+ * Plan just to set `partner_dept_ids` forced an `as any` at every call site.
+ */
+type TaskOverrides = Omit<Partial<Task>, "expand"> & {
+  expand?: Omit<NonNullable<Task["expand"]>, "plan_id"> & { plan_id?: Partial<Plan> };
+};
+
+function makeTask(overrides: TaskOverrides = {}): Task {
   const now = Date.now();
   return {
     id: "task1",
@@ -20,8 +29,10 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     is_deleted: false,
     created: new Date(now).toISOString(),
     updated: new Date(now).toISOString(),
+    // The one cast lives here, in the factory, instead of at every call site:
+    // expand is intentionally partial in TaskOverrides.
     ...overrides,
-  };
+  } as Task;
 }
 
 describe("calculateKpi", () => {
@@ -69,7 +80,7 @@ describe("calculateKpi", () => {
     const result = calculateKpi(makeTask({
       category: "normal",
       expand: { plan_id: { partner_dept_ids: ["dept2"] } },
-    } as any));
+    }));
     expect(result.difficulty_coeff).toBe(1.1);
   });
 
@@ -108,7 +119,7 @@ describe("calculateKpi", () => {
   });
 
   it("scores 100 for completed task without a deadline", () => {
-    const result = calculateKpi(makeTask({ deadline: "" } as any));
+    const result = calculateKpi(makeTask({ deadline: "" }));
     expect(result.progress_score).toBe(100);
   });
 
@@ -118,7 +129,7 @@ describe("calculateKpi", () => {
   });
 
   it("result_rating uses the task rating field", () => {
-    const result = calculateKpi(makeTask({ rating: 5 } as any));
+    const result = calculateKpi(makeTask({ rating: 5 }));
     expect(result.result_rating).toBe(5);
   });
 
@@ -131,7 +142,7 @@ describe("calculateKpi", () => {
 
   it("calculates final_score correctly for on-time important task with rating 5", () => {
     const futureDeadline = new Date(Date.now() + 86400000 * 2).toISOString();
-    const result = calculateKpi(makeTask({ category: "important", deadline: futureDeadline, rating: 5 } as any));
+    const result = calculateKpi(makeTask({ category: "important", deadline: futureDeadline, rating: 5 }));
     // base=10, difficulty=1.2, schedule=1.0, result=1.0, perf=10*(0.3*1+0.7*1)=10, actual=10*1.2=12
     expect(result.final_score).toBe(12);
   });

@@ -497,7 +497,7 @@ export default function DashboardPage() {
             />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {deptStats.map((stat: any) => (
+            {deptStats.map((stat) => (
               <div key={stat.deptId}
                 className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm transition-all duration-300 hover:shadow-md">
                 <div className="mb-2 flex items-center justify-between">

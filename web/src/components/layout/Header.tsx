@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Menu, User, LogOut, Sun, Moon, Monitor } from "lucide-react";
+import { ArrowLeft, Menu, User, LogOut, Sun, Moon, Monitor, type LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import { usePageTitleStore } from "../../stores/pageTitleStore";
@@ -9,7 +9,7 @@ import { useTheme, type ThemeMode } from "../../hooks/useTheme";
 import NotificationDropdown from "./NotificationDropdown";
 import { APP_NAME } from "../../config/app";
 
-const THEME_OPTIONS: { value: ThemeMode; label: string; icon: any }[] = [
+const THEME_OPTIONS: { value: ThemeMode; label: string; icon: LucideIcon }[] = [
   { value: "light", label: "Sáng", icon: Sun },
   { value: "dark", label: "Tối", icon: Moon },
   { value: "system", label: "Hệ thống", icon: Monitor },

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X, Check, Loader2, Clock } from "lucide-react";
 import type { LeaveType, LeavePeriod } from "@shared/types";
 import { LEAVE_TYPE_LABELS, PERIOD_LABELS } from "../../utils/constants";
+import { errorMessage } from "../../utils/errors";
 
 const PERIOD_OPTIONS: { value: LeavePeriod; label: string }[] = (Object.keys(PERIOD_LABELS) as LeavePeriod[]).map((value) => ({
   value,
@@ -66,8 +67,8 @@ export default function LeaveInlineForm({ initialValues, onSubmit, onCancel, pen
         reason: reason.trim(),
         period,
       });
-    } catch (err: any) {
-      setError(err?.message || "Có lỗi xảy ra");
+    } catch (err: unknown) {
+      setError(errorMessage(err));
     }
   };
 

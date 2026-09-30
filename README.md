@@ -97,10 +97,18 @@ Script cần PocketBase đang chạy ở `http://localhost:8090` và biết thô
 cd web
 npm run typecheck    # tsc --noEmit
 npm run lint         # eslint (react-hooks + TanStack Query)
-npm run test         # vitest — 89 test / 19 file
+npm run test         # vitest — 122 test / 23 file
+npm run test:coverage # vitest + coverage, fail nếu dưới ngưỡng trong vite.config.ts
 npm run build        # tsc -b && vite build
-npm run ci           # chạy cả 4 bước trên
+npm run ci           # typecheck + lint + test + build
 ```
+
+ESLint chạy `@typescript-eslint/no-explicit-any` ở mức `error` — codebase hiện **không còn `any` nào**. Đừng thêm lại.
+
+CI (`.github/workflows/ci.yml`) chạy web + backend trên mỗi push/PR, kèm:
+- cổng coverage (ngưỡng khai báo trong `web/vite.config.ts`),
+- cổng `npm audit` với danh sách allow cho dependency của toolchain dev,
+- syntax check + unit + integration test cho backend.
 
 Test backend (không cần server):
 

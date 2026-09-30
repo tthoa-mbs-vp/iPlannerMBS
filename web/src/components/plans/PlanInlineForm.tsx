@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X, Check, Loader2 } from "lucide-react";
 import type { Department, ProfessionalGroup } from "@shared/types";
+import { errorMessage } from "../../utils/errors";
 import CheckCombobox from "../shared/CheckCombobox";
 
 interface UserBrief {
@@ -96,8 +97,8 @@ export default function PlanInlineForm({ initialValues, onSubmit, onCancel, pend
         is_sudden: sudden,
         is_high_impact: highImpact,
       });
-    } catch (err: any) {
-      setError(err?.message || "Có lỗi xảy ra");
+    } catch (err: unknown) {
+      setError(errorMessage(err));
     }
   };
 

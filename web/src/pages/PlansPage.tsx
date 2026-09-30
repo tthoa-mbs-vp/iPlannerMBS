@@ -671,7 +671,7 @@ export default function PlansPage() {  const navigate = useNavigate();
                   ...data,
                   host_dept_id: selectedVirtualDept || selectedPlanData?.host_dept_id || undefined,
                   status: "not_started",
-                } as any);
+                });
                 setShowTaskForm(false);
               }}
               onCancel={() => setShowTaskForm(false)}

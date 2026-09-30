@@ -3,6 +3,15 @@ import { pb } from "../api/client";
 import { useMutationWithToast } from "./useMutationWithToast";
 import type { EmployeeProfile } from "@shared/types";
 
+/** PocketBase throws ClientResponseError; only the status is needed here. */
+function statusOf(e: unknown): number | undefined {
+  if (e && typeof e === "object" && "status" in e) {
+    const s = (e as { status?: unknown }).status;
+    return typeof s === "number" ? s : undefined;
+  }
+  return undefined;
+}
+
 export function useEmployeeProfiles() {
   return useQuery({
     queryKey: ["employee_profiles"],
@@ -31,8 +40,8 @@ export function useEmployeeProfile(userId: string | undefined) {
             expand: "user_id,user_id.department_id,user_id.role_id",
           });
         return result;
-      } catch (e: any) {
-        if (e?.status === 404) return null;
+      } catch (e: unknown) {
+        if (statusOf(e) === 404) return null;
         throw e;
       }
     },

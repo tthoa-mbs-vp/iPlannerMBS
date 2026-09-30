@@ -1,5 +1,5 @@
 import { memo } from "react";
-import type { Task } from "@shared/types";
+import type { Task, User } from "@shared/types";
 import { TASK_STATUS_LABELS, TASK_STATUS_STYLES } from "../../utils/constants";
 import { isTaskOverdue } from "../../utils/format";
 
@@ -34,7 +34,7 @@ const TaskRow = memo(function TaskRow({ task, isSelected, onToggle, onOpen }: Ta
         </div>
         {task.expand?.collaborator_ids && task.expand.collaborator_ids.length > 0 && (
           <div className="text-[11px] text-slate-400 mt-0.5 dark:text-slate-500">
-            {task.expand.collaborator_ids.map((u: any) => u.name).join(", ")}
+            {task.expand.collaborator_ids.map((u: User) => u.name).join(", ")}
           </div>
         )}
       </td>

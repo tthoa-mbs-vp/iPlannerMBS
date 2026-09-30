@@ -97,8 +97,11 @@ export default function CommentSection({ taskId, taskStatus }: {
   const personOptions = useMemo(() => chatSenders(comments, allUsers), [comments, allUsers]);
 
   const handleSend = async (content: string, files: File[]) => {
+    // Guard rather than cast: without a signed-in user there is no author to
+    // record, and the old `as any` silently posted a comment with user_id undefined.
+    if (!user) return;
     await createComment.mutateAsync({
-      data: { task_id: taskId, user_id: user?.id, content, quote_id: quoteId || undefined } as any,
+      data: { task_id: taskId, user_id: user.id, content, quote_id: quoteId || undefined },
       files: files.length > 0 ? files : undefined,
       taskId,
     });
@@ -111,7 +114,7 @@ export default function CommentSection({ taskId, taskStatus }: {
     try {
       await updateComment.mutateAsync({
         id,
-        data: { content: editContent.trim() } as any,
+        data: { content: editContent.trim() },
         files: editFiles.length > 0 ? editFiles : undefined,
         taskId,
       });
