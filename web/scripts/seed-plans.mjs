@@ -185,4 +185,5 @@ for (const p of plans) {
 }
 
 console.log(`\n✅ Seed plans hoàn tất: ${planCount} plan mới, ${taskCount} task mới.`);
-console.log("Tài khoản test: admin@mbs.com / Admin@123456 · truongphong@mbs.com / Test@123456 · nhanvien@mbs.com / Test@123456");
+console.log("Tài khoản test: admin@mbs.com · truongphong@mbs.com · nhanvien@mbs.com");
+console.log("Mật khẩu lấy từ PB_ADMIN_PASSWORD / PB_SEED_PASSWORD trong .env.local (không in ra log).");

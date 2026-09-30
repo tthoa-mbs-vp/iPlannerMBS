@@ -1,8 +1,11 @@
 import PocketBase from "pocketbase";
-import { PB_URL, getAdminCreds } from "./creds.mjs";
+import { PB_URL, getAdminCreds, getSeedPassword, assertLocalTarget } from "./creds.mjs";
+
+assertLocalTarget(); // tạo tài khoản mật khẩu đã biết → chỉ chạy trên máy local
 
 const pb = new PocketBase(PB_URL);
 const { email: adminEmail, password: adminPassword } = getAdminCreds();
+const seedPassword = getSeedPassword();
 
 // Authenticate as superuser
 await pb.collection("_superusers").authWithPassword(adminEmail, adminPassword);
@@ -98,8 +101,8 @@ if (roleIds["ADMIN"] && deptIds["PIT"]) {
 // 4. Create sample users
 log("\nCreating sample users...");
 const sampleUsers = [
-  { email: "truongphong@mbs.com", password: "Test@123456", name: "Trưởng phòng", dept: "PKHTC", role: "TRUONGPHONG" },
-  { email: "nhanvien@mbs.com", password: "Test@123456", name: "Nhân viên", dept: "PKHTC", role: "NV" },
+  { email: "truongphong@mbs.com", name: "Trưởng phòng", dept: "PKHTC", role: "TRUONGPHONG" },
+  { email: "nhanvien@mbs.com", name: "Nhân viên", dept: "PKHTC", role: "NV" },
 ];
 for (const u of sampleUsers) {
   try {
@@ -107,8 +110,8 @@ for (const u of sampleUsers) {
     if (existing) { log(`  ${u.email} exists`); continue; }
     await pb.collection("users").create({
       email: u.email,
-      password: u.password,
-      passwordConfirm: u.password,
+      password: seedPassword,
+      passwordConfirm: seedPassword,
       username: u.email.split("@")[0],
       name: u.name,
       department_id: deptIds[u.dept],
@@ -138,7 +141,8 @@ try {
 } catch (e) { log(`  FAIL: ${e.message}`); }
 
 console.log("\n✅ Seed complete!");
-console.log("\nTài khoản (PB_ADMIN_EMAIL / PB_ADMIN_PASSWORD):");
-console.log(`  ${adminEmail} / ${adminPassword} (Quản trị viên)`);
-console.log("  truongphong@mbs.com / Test@123456 (Trưởng phòng)");
-console.log("  nhanvien@mbs.com / Test@123456 (Nhân viên)");
+console.log("\nTài khoản đã tạo (mật khẩu lấy từ PB_ADMIN_PASSWORD / PB_SEED_PASSWORD):");
+console.log(`  ${adminEmail} — Quản trị viên`);
+console.log("  truongphong@mbs.com — Trưởng phòng");
+console.log("  nhanvien@mbs.com — Nhân viên");
+console.log("\nKhông in mật khẩu ra log. Xem giá trị trong .env.local của bạn.");

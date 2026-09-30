@@ -9,6 +9,13 @@ import { Award, CheckCircle, Clock, TrendingUp, RefreshCw, BarChart3, Star, Zap,
 import { exportToExcel } from "../utils/importExport";
 import { exportHtmlToPdf } from "../utils/exportPdf";
 import { getRatingBadgeStyle } from "../utils/constants";
+import {
+  aggregateUserKpi,
+  buildTaskKpi,
+  createPeriodMatcher,
+  filterCompletedTasksInPeriod,
+  filterKpiScoresInPeriod,
+} from "../utils/kpiSelectors";
 import PdfExportMenu from "../components/shared/PdfExportMenu";
 import type { ColumnDef } from "../utils/importExport";
 import Leaderboard from "../components/kpi/Leaderboard";
@@ -198,74 +205,37 @@ export default function KpiPage() {
   })());
   const [selectedYear, setSelectedYear] = usePersistedState("kpi_selectedYear", format(new Date(), "yyyy"));
 
-  const isInPeriod = useCallback((dateStr: string) => {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return true;
-    if (periodType === "all") return true;
-    if (periodType === "month") return format(d, "yyyy-MM") === selectedMonth;
-    if (periodType === "quarter") {
-      const [year, qStr] = selectedQuarter.split("-Q");
-      return String(d.getFullYear()) === year && Math.floor(d.getMonth() / 3) + 1 === Number(qStr);
-    }
-    return String(d.getFullYear()) === selectedYear;
-  }, [periodType, selectedMonth, selectedQuarter, selectedYear]);
-
-  const completedTasks = useMemo(
-    () => tasks?.filter((t) => t.status === "completed") || [],
-    [tasks],
+  const isInPeriod = useMemo(
+    () =>
+      createPeriodMatcher({
+        periodType,
+        selectedMonth,
+        selectedQuarter,
+        selectedYear,
+      }),
+    [periodType, selectedMonth, selectedQuarter, selectedYear],
   );
 
   const filteredCompletedTasks = useMemo(
-    () => completedTasks.filter((t) => isInPeriod(t.deadline)),
-    [completedTasks, isInPeriod],
-  );
-
-  const filteredKpiScores = useMemo(
-    () => kpiScores?.filter((k) => {
-      if (!k.expand?.task_id || k.expand.task_id.is_deleted) return false;
-      const d = k.expand.task_id.deadline;
-      return d ? isInPeriod(d) : true;
-    }) || [],
+    () => filterCompletedTasksInPeriod(tasks, isInPeriod),
+    [tasks, isInPeriod],
+  );  const filteredKpiScores = useMemo(
+    () => filterKpiScoresInPeriod(kpiScores, isInPeriod),
     [kpiScores, isInPeriod],
   );
 
   const scoredTaskIds = new Set(filteredKpiScores.map((k) => k.task_id));
   const unscoredTasks = filteredCompletedTasks.filter((t) => !scoredTaskIds.has(t.id));
 
-  const allTaskKpi = useMemo(() => {
-    const kpiMap = new Map(filteredKpiScores.map((k) => [k.task_id, k]));
-    const allTasks = tasks?.filter((t) => isInPeriod(t.deadline)) || [];
-    return allTasks.map((t) => {
-      const stored = kpiMap.get(t.id);
-      if (stored) return stored;
-      const computed = calculateKpi(t);
-      return {
-        id: "",
-        task_id: t.id,
-        base_score: computed.base_score!,
-        difficulty_coeff: computed.difficulty_coeff!,
-        max_converted_score: computed.max_converted_score,
-        progress_score: 0,
-        result_rating: 0,
-        final_score: 0,
-        created: "",
-        expand: { task_id: t },
-      } as KpiScore;
-    });
-  }, [tasks, filteredKpiScores, isInPeriod]);
+  const allTaskKpi = useMemo(
+    () => buildTaskKpi(tasks, filteredKpiScores, isInPeriod),
+    [tasks, filteredKpiScores, isInPeriod],
+  );
 
-  const userKpi = useMemo(() => {
-    return users?.map((u) => {
-      const userScores = filteredKpiScores.filter(
-        (k) => k.expand?.task_id?.executor_id === u.id,
-      ) || [];
-      const userCompleted = filteredCompletedTasks.filter((t) => t.executor_id === u.id);
-      const avgScore = userScores.length > 0
-        ? userScores.reduce((s, k) => s + (k.final_score || 0), 0) / userScores.length
-        : 0;
-      return { user: u, taskCount: userCompleted.length, avgScore };
-    }).sort((a, b) => b.taskCount - a.taskCount) || [];
-  }, [users, filteredKpiScores, filteredCompletedTasks]);
+  const userKpi = useMemo(
+    () => aggregateUserKpi(users, filteredKpiScores, filteredCompletedTasks),
+    [users, filteredKpiScores, filteredCompletedTasks],
+  );
 
   const userKpiTotalPages = Math.max(1, Math.ceil(userKpi.length / userKpiPageSize));
   const paginatedUserKpi = useMemo(() =>

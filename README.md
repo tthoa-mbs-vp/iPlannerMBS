@@ -60,6 +60,9 @@ Thêm `PB_HOOKS_WATCH=true` để container tự reload `pb_hooks/` khi sửa.
 | `PB_TRUST_PROXY` | `false` | **Chỉ** bật khi sau reverse proxy mà proxy ghi đè `X-Forwarded-For` **và** port 8090 không reachable trực tiếp — nếu không, ai cũng giả mạo được IP check-in |
 | `TZ` | `Asia/Ho_Chi_Minh` | Server đóng dấu giờ check-in/out; sai TZ làm hỏng logic đi trễ |
 | `PB_HOOKS_WATCH` | `false` | Container có reload hooks khi sửa |
+| `PB_ADMIN_EMAIL` / `PB_ADMIN_PASSWORD` | — | Superuser cho script seed/sync (bắt buộc) |
+| `PB_SEED_PASSWORD` | `Test@123456` (chỉ localhost) | Mật khẩu các tài khoản demo |
+| `PB_ALLOW_REMOTE_SEED` | `0` | Đặt `1` để cho phép seed vào server không phải localhost |
 
 Các biến trên đều có giá trị mặc định hợp lý — chạy được ngay mà không cần file env. Nếu cần chỉnh, tạo `web/.env.local`. File `.env` và `.env.local` **không** được commit.
 
@@ -69,13 +72,13 @@ Các biến trên đều có giá trị mặc định hợp lý — chạy đư�
 
 Sau khi seed dữ liệu:
 
-| Email | Mật khẩu | Vai trò |
+| Email | Mật khẩu lấy từ | Vai trò |
 |---|---|---|
-| `admin@mbs.com` | `Admin@123456` | ADMIN — trưởng phòng PIT |
-| `truongphong@mbs.com` | `Test@123456` | TRUONGPHONG — phòng PKHTC |
-| `nhanvien@mbs.com` | `Test@123456` | NV |
+| `admin@mbs.com` | `PB_ADMIN_PASSWORD` | ADMIN — trưởng phòng PIT |
+| `truongphong@mbs.com` | `PB_SEED_PASSWORD` | TRUONGPHONG — phòng PKHTC |
+| `nhanvien@mbs.com` | `PB_SEED_PASSWORD` | NV |
 
-> ⚠️ Tài khoản demo cho **môi trường phát triển**. Không dùng lại mật khẩu này ở production.
+> ⚠️ Tài khoản demo chỉ dành cho **môi trường phát triển**. Mặc định `PB_SEED_PASSWORD` là `Test@123456`, nhưng giá trị này **chỉ được dùng khi `PB_URL` trỏ về localhost** — chạy seed trên server thật mà không đặt `PB_SEED_PASSWORD` sẽ bị chặn, và phải bật `PB_ALLOW_REMOTE_SEED=1` mới chạy được.
 
 ```bash
 cd web
