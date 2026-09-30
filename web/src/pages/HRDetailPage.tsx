@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import QualificationsTab from "../components/hr/QualificationsTab";
 import SalaryHistoryTab from "../components/hr/SalaryHistoryTab";
+import { validatePassword } from "@shared/validators";
 import WorkHistoryTab from "../components/hr/WorkHistoryTab";
 import { formatDate, toInputDate, contractTypes, contractLabel } from "../utils/format";
 import type { User } from "@shared/types";
@@ -159,7 +160,8 @@ export default function HRDetailPage() {
   const handleChangePassword = async () => {
     if (!id) return;
     if (!oldPassword || !newPassword) { alert("Vui lòng nhập đầy đủ mật khẩu"); return; }
-    if (newPassword.length < 8) { alert("Mật khẩu mới phải có ít nhất 8 ký tự"); return; }
+    const pwError = validatePassword(newPassword);
+    if (pwError) { alert(pwError); return; }
     setPwSaving(true);
     try {
       await pb.collection("users").update(id, {

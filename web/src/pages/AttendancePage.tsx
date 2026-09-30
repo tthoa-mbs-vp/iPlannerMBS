@@ -253,7 +253,7 @@ export default function AttendancePage() {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                 {logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-50/50 transition dark:hover:bg-slate-800/50">
+                  <tr key={log.id} className="even:bg-slate-50/70 hover:bg-slate-50/50 transition dark:even:bg-slate-800/40 dark:hover:bg-slate-800/50">
                     <td className="px-6 py-4 font-semibold text-slate-800 dark:text-slate-100">
                       {new Date(log.check_in).toLocaleDateString("vi-VN")}
                     </td>

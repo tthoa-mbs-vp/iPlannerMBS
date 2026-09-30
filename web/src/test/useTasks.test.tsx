@@ -35,8 +35,8 @@ function Wrapper({ children }: { children: ReactNode }) {
 }
 
 const mockTasks = [
-  { id: "1", name: "Task A", status: "in_progress", weight: 50, category: "normal" },
-  { id: "2", name: "Task B", status: "completed", weight: 80, category: "important" },
+  { id: "1", name: "Task A", status: "in_progress", category: "normal" },
+  { id: "2", name: "Task B", status: "completed", category: "important" },
 ];
 
 describe("useTasks", () => {

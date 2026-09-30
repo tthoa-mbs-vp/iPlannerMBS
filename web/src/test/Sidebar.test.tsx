@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Sidebar from "../components/layout/Sidebar";
 import { useAuthStore } from "../stores/authStore";
@@ -47,5 +47,25 @@ describe("Sidebar", () => {
     expect(screen.queryByText("Nhật ký")).toBeNull();
     expect(screen.queryByText("Thùng rác")).toBeNull();
     expect(screen.getByRole("link", { name: /Hướng dẫn/ })).toBeInTheDocument();
+  });
+
+  it("auto-expands on hover when collapsed and collapses on leave", () => {
+    render(
+      <MemoryRouter>
+        <Sidebar open={false} />
+      </MemoryRouter>
+    );
+    const aside = screen.getByRole("complementary");
+    // Thu gọn: chưa hiện nhãn / tiêu đề section
+    expect(screen.queryByText("Quản lý Công việc")).toBeNull();
+    expect(screen.queryByText("Kế hoạch & Nhiệm vụ")).toBeNull();
+
+    fireEvent.mouseEnter(aside);
+    expect(screen.getByText("Quản lý Công việc")).toBeInTheDocument();
+    expect(screen.getByText("Kế hoạch & Nhiệm vụ")).toBeInTheDocument();
+
+    fireEvent.mouseLeave(aside);
+    expect(screen.queryByText("Quản lý Công việc")).toBeNull();
+    expect(screen.queryByText("Kế hoạch & Nhiệm vụ")).toBeNull();
   });
 });

@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { usePersistedState } from "../hooks/usePersistedState";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Info, MessageSquare, User, CalendarDays, Target, Award, Users, Pencil, Trash2, FileText, Download, Clock, Activity, Paperclip, X, Check, AlertTriangle } from "lucide-react";
+import { Info, MessageSquare, User, CalendarDays, Award, Users, Pencil, Trash2, FileText, Download, Clock, Activity, Paperclip, X, Check, AlertTriangle } from "lucide-react";
 import { pb, getFileUrl } from "../api/client";
 import { useTask, useUpdateTask, useSoftDeleteTask } from "../hooks/useTasks";
 import { useComments, useCreateComment } from "../hooks/useComments";
@@ -18,11 +18,11 @@ import { usePageTitleStore } from "../stores/pageTitleStore";
 import { TASK_STATUS_LABELS, TASK_STATUS_STYLES, TASK_STATUS_COLORS } from "../utils/constants";
 import { isTaskOverdue } from "../utils/format";
 import { exportAttachmentsZip, exportTaskReportPdf, collectTaskAttachments, safeFilename } from "../utils/exportTaskReport";
-import type { KpiScore, SystemLog, Task, TaskStatus } from "@shared/types";
+import type { KpiScore, SystemLog, Task, TaskCategory, TaskStatus, User as UserType } from "@shared/types";
 
 const IMAGE_EXTS = ["png", "jpg", "jpeg", "gif", "webp"];
 
-function Card({ icon: Icon, title, accent, children }: { icon: any; title: string; accent?: string; children: React.ReactNode }) {
+function Card({ icon: Icon, title, accent, children }: { icon: React.ComponentType<{ className?: string }>; title: string; accent?: string; children: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm overflow-hidden flex flex-col h-full">
       <div className={`flex items-center gap-2.5 px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 ${accent || "bg-gradient-to-r from-slate-50 to-slate-100/50 dark:from-slate-800/60 dark:to-slate-800/30"}`}>
@@ -38,7 +38,7 @@ function Card({ icon: Icon, title, accent, children }: { icon: any; title: strin
   );
 }
 
-function InfoCardBody({ task, users, canEdit, canDelete, onEdit, onDelete, onApprove, onComplete }: { task: any; users?: any[]; canEdit?: boolean; canDelete?: boolean; onEdit: () => void; onDelete: () => void; onApprove?: () => void; onComplete?: () => void; }) {
+function InfoCardBody({ task, users, canEdit, canDelete, onEdit, onDelete, onApprove, onComplete }: { task: Task; users?: UserType[]; canEdit?: boolean; canDelete?: boolean; onEdit: () => void; onDelete: () => void; onApprove?: () => void; onComplete?: () => void; }) {
   const user = useAuthStore((s) => s.user);
   const updateTask = useUpdateTask();
   const taskId = task.id;
@@ -74,16 +74,18 @@ function InfoCardBody({ task, users, canEdit, canDelete, onEdit, onDelete, onApp
   const isOverdue = isTaskOverdue(task);
 
   const userName = (field: string) => {
-    const u = task.expand?.[field] || users?.find((x) => x.id === task[field]);
+    const expandVal = task.expand ? (task.expand as Record<string, unknown>)[field] : undefined;
+    const taskVal = (task as unknown as Record<string, unknown>)[field];
+    const u = (expandVal as { name?: string; email?: string } | undefined)
+      || users?.find((x) => x.id === taskVal);
     return u?.name || u?.email || "—";
   };
 
   const collabNames = () => {
     const expanded = task.expand?.collaborator_ids;
-    if (Array.isArray(expanded) && expanded.length) return expanded.filter(Boolean).map((u: any) => u?.name || u?.email).filter(Boolean).join(", ");
-    if (expanded && typeof expanded === "object" && !Array.isArray(expanded)) return expanded?.name || expanded?.email || "—";
+    if (Array.isArray(expanded) && expanded.length) return expanded.filter(Boolean).map((u) => u.name || u.email).filter(Boolean).join(", ");
     const ids = task.collaborator_ids;
-    if (Array.isArray(ids) && ids.length) return ids.map((cid: string) => { const u = users?.find((x) => x.id === cid); return u?.name || u?.email; }).filter(Boolean).join(", ");
+    if (Array.isArray(ids) && ids.length) return ids.map((cid) => { const u = users?.find((x) => x.id === cid); return u?.name || u?.email; }).filter(Boolean).join(", ");
     if (typeof ids === "string" && ids) { const u = users?.find((x) => x.id === ids); return u?.name || u?.email || "—"; }
     return "—";
   };
@@ -133,10 +135,6 @@ function InfoCardBody({ task, users, canEdit, canDelete, onEdit, onDelete, onApp
             {new Date(task.deadline).toLocaleDateString("vi-VN")}
             {isOverdue && <span className="ml-1 text-xs text-rose-500 dark:text-rose-400">(Quá hạn)</span>}
           </p>
-        </div>
-        <div>
-          <label className="flex items-center gap-1 text-xs font-medium text-slate-400 dark:text-slate-500"><Target className="h-3 w-3" /> Trọng số</label>
-          <p className="text-sm font-bold text-indigo-600 dark:text-indigo-300">{task.weight}%</p>
         </div>
         <div>
           <label className="flex items-center gap-1 text-xs font-medium text-slate-400 dark:text-slate-500"><Award className="h-3 w-3" /> Phân loại</label>
@@ -380,7 +378,7 @@ function LogTab({ taskId, taskName }: { taskId: string; taskName: string }) {
     );
   }
 
-  const actionIcons: Record<string, any> = {
+  const actionIcons: Record<string, React.ComponentType<{ className?: string }>> = {
     "Tạo nhiệm vụ": FileText,
     "Sửa nhiệm vụ": Pencil,
     "Xóa nhiệm vụ (soft)": Trash2,
@@ -450,7 +448,7 @@ export default function TaskDetailPage() {
     try {
       if (completeContent.trim() || completeFiles.length > 0) {
         await createComment.mutateAsync({
-          data: { task_id: taskId, user_id: user.id, content: completeContent.trim() || "[Hoàn thành nhiệm vụ]" } as any,
+          data: { task_id: taskId, user_id: user.id, content: completeContent.trim() || "[Hoàn thành nhiệm vụ]" },
           files: completeFiles.length > 0 ? completeFiles : undefined,
           taskId,
         });
@@ -537,7 +535,7 @@ export default function TaskDetailPage() {
       {taskError ? (
         <div className="flex flex-col items-center py-12 text-red-500">
           <p className="text-sm font-medium">Không thể tải nhiệm vụ</p>
-          <p className="mt-1 text-xs text-red-400">{(taskError as any)?.message || "Vui lòng thử lại"}</p>
+          <p className="mt-1 text-xs text-red-400">{taskError?.message || "Vui lòng thử lại"}</p>
         </div>
       ) : isLoading || !task ? (
         <div className="flex justify-center py-12">
@@ -586,28 +584,22 @@ export default function TaskDetailPage() {
                         collaborator_ids: Array.isArray(task.collaborator_ids) ? task.collaborator_ids : [],
                         start_date: task.start_date,
                         deadline: task.deadline,
-                        weight: task.weight,
                         is_recurring: task.is_recurring,
                       }}
                       onSubmit={async (data) => {
-                        const formData: Record<string, any> = {
+                        const formData = {
                           name: data.name,
                           description: data.description,
-                          category: data.category,
+                          category: data.category as TaskCategory,
                           is_ad_hoc: data.is_ad_hoc,
                           is_high_impact: data.is_high_impact,
                           executor_id: data.executor_id,
-                          supervisor_id: data.supervisor_id || null,
+                          supervisor_id: data.supervisor_id || undefined,
                           start_date: data.start_date,
                           deadline: data.deadline,
-                          weight: data.weight,
                           is_recurring: data.is_recurring,
+                          collaborator_ids: data.collaborator_ids.length > 0 ? data.collaborator_ids : [],
                         };
-                        if (data.collaborator_ids.length > 0) {
-                          formData.collaborator_ids = data.collaborator_ids;
-                        } else {
-                          formData.collaborator_ids = [];
-                        }
                         await updateTask.mutateAsync({ id: task.id, data: formData });
                         setShowEditForm(false);
                       }}

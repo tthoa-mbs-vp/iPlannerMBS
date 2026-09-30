@@ -75,8 +75,6 @@ export default function KanbanBoard({ tasks }: Props) {
                 </div>
                 <div className="mt-1.5 flex items-center gap-2 text-[10px] text-slate-400 dark:text-slate-500">
                   <span>{task.expand?.executor_id?.name || "—"}</span>
-                  <span>·</span>
-                  <span>{task.weight}%</span>
                 </div>
                 <div className="mt-1 text-[9px] text-slate-300 dark:text-slate-600">
                   {new Date(task.deadline).toLocaleDateString("vi-VN")}

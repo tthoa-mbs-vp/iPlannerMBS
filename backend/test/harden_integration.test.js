@@ -23,9 +23,9 @@
 //        and cleared when leaving completed.
 //
 // How it works (same harness as scope_integration.test.js / audit_integration.test.js):
-//   - copies the real pb_data/ (schema + dev data) into a temp dir — the base
-//     collections were created via the admin UI, so a fresh pb_data cannot run
-//     these migrations; the copy is authoritative.
+//   - boots PocketBase into a FRESH temp data dir; the schema is created by the
+//     repo's own migration chain (created_* + updated_*), so this exercises the
+//     exact same bootstrap a new deployment/CI instance goes through.
 //   - copies the real pb_hooks/ into a temp hooks dir
 //   - creates a superuser with known credentials via `superuser upsert`
 //   - boots `pocketbase serve`, seeds an isolated dataset, asserts via HTTP.
@@ -34,9 +34,10 @@
 // Env:  PB_EXE=...        (optional, defaults to backend/pocketbase.exe — Windows exe)
 //       PB_IMAGE=...      (optional — when set, the server runs inside a podman container
 //                          built from backend/Dockerfile instead of the local exe, so the
-//                          exact production image is verified. The harness copies pb_data +
-//                          pb_hooks to a repo-local temp dir, mounts them into a throwaway
-//                          container on a random port, and removes it afterwards.
+//                          exact production image is verified. The harness mounts a FRESH
+//                          temp data dir (schema built by the migration chain) + a copy of
+//                          pb_hooks into a throwaway container on a random port, and
+//                          removes it afterwards.
 //                          Example: PB_IMAGE=localhost/iplanner_pocketbase:latest)
 
 "use strict"
@@ -122,7 +123,6 @@ async function main() {
   } else {
     assert(fs.existsSync(EXE), `pocketbase executable not found: ${EXE}`)
   }
-  assert(fs.existsSync(path.join(ROOT, "pb_data", "data.db")), "pb_data/data.db missing — the test copies the real schema")
 
   // container mode mounts the temp dir into the container, so keep it inside the repo
   // (the podman machine reliably shares the project dir; os.tmpdir() may not)
@@ -130,7 +130,9 @@ async function main() {
   const dataDir = path.join(tmp, "data")
   const hooksDir = path.join(tmp, "hooks")
   const logFile = path.join(tmp, "server.log")
-  fs.cpSync(path.join(ROOT, "pb_data"), dataDir, { recursive: true })
+  // FRESH data dir — the migration chain (backend/pb_migrations) self-bootstraps
+  // the full schema, exactly like a new deployment or the CI job
+  fs.mkdirSync(dataDir, { recursive: true })
   fs.cpSync(HOOKS, hooksDir, { recursive: true })
 
   if (CONTAINER_MODE) {
@@ -205,9 +207,9 @@ async function main() {
     const planB = await c("plans", { name: "H1 Plan B", leader_id: userB.id, host_dept_id: deptB.id, partner_dept_ids: [], start_date: "2026-01-01 00:00:00.000Z", end_date: "2026-12-31 00:00:00.000Z", status: "not_started", is_sudden: false, is_high_impact: false })
     const planC = await c("plans", { name: "H1 Plan C", leader_id: userA.id, host_dept_id: deptA.id, partner_dept_ids: [], start_date: "2026-01-01 00:00:00.000Z", end_date: "2026-12-31 00:00:00.000Z", status: "not_started", is_sudden: false, is_high_impact: false })
 
-    const taskA = await c("tasks", { name: "H1 Task A", plan_id: planA.id, category: "normal", host_dept_id: deptA.id, executor_id: userA.id, supervisor_id: userA.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "not_started", weight: 100, is_recurring: false })
-    const taskB = await c("tasks", { name: "H1 Task B", plan_id: planB.id, category: "normal", host_dept_id: deptB.id, executor_id: userB.id, supervisor_id: userB.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "not_started", weight: 100, is_recurring: false })
-    const taskC = await c("tasks", { name: "H1 Task C (disabled executor)", plan_id: planC.id, category: "normal", host_dept_id: deptA.id, executor_id: disabledUser.id, supervisor_id: userA.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "not_started", weight: 100, is_recurring: false })
+    const taskA = await c("tasks", { name: "H1 Task A", plan_id: planA.id, category: "normal", host_dept_id: deptA.id, executor_id: userA.id, supervisor_id: userA.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "not_started", is_recurring: false })
+    const taskB = await c("tasks", { name: "H1 Task B", plan_id: planB.id, category: "normal", host_dept_id: deptB.id, executor_id: userB.id, supervisor_id: userB.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "not_started", is_recurring: false })
+    const taskC = await c("tasks", { name: "H1 Task C (disabled executor)", plan_id: planC.id, category: "normal", host_dept_id: deptA.id, executor_id: disabledUser.id, supervisor_id: userA.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "not_started", is_recurring: false })
 
     // M4: comments / proposals attached to seeded tasks — scoping runs through the related task
     const commentA = await c("comments", { task_id: taskA.id, user_id: userB.id, content: "H1 comment on taskA" })
@@ -228,7 +230,7 @@ async function main() {
 
     const forged = await expectOk(baseUrl, "POST", "/api/collections/tasks/records", {
       token: tokenA,
-      body: { name: "H1 forged completed", plan_id: planC.id, category: "normal", host_dept_id: deptA.id, executor_id: userA.id, supervisor_id: userA.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "completed", rating: 5, rated_by_id: userB.id, rated_at: "2026-01-02 00:00:00.000Z", completed_at: "2000-01-01 00:00:00.000Z", is_deleted: true, weight: 100, is_recurring: false },
+      body: { name: "H1 forged completed", plan_id: planC.id, category: "normal", host_dept_id: deptA.id, executor_id: userA.id, supervisor_id: userA.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "completed", rating: 5, rated_by_id: userB.id, rated_at: "2026-01-02 00:00:00.000Z", completed_at: "2000-01-01 00:00:00.000Z", is_deleted: true, is_recurring: false },
     })
     assert.strictEqual(forged.status, "not_started", "create guard must force status=not_started (got " + forged.status + ")")
     assert.strictEqual(forged.is_deleted, false, "create guard must force is_deleted=false")
@@ -246,7 +248,7 @@ async function main() {
     const tokenAdmin = await loginUser(baseUrl, adminUser.email)
     const adminTask = await expectOk(baseUrl, "POST", "/api/collections/tasks/records", {
       token: tokenAdmin,
-      body: { name: "H1 admin completed", plan_id: planC.id, category: "normal", host_dept_id: deptA.id, executor_id: userA.id, supervisor_id: userA.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "completed", rating: 5, weight: 100, is_recurring: false },
+      body: { name: "H1 admin completed", plan_id: planC.id, category: "normal", host_dept_id: deptA.id, executor_id: userA.id, supervisor_id: userA.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "completed", rating: 5, is_recurring: false },
     })
     assert.strictEqual(adminTask.status, "completed", "can_manage keeps full control on create")
     assert.strictEqual(adminTask.rating, 5, "can_manage keeps rating on create")
@@ -254,7 +256,16 @@ async function main() {
     const adminKpi = (await list("kpi_scores", adminToken)).filter((k) => k.task_id === adminTask.id)
     assert.strictEqual(adminKpi.length, 1, "can_manage-created completed task DOES get a KPI score (contrast to H1)")
     const kpiAdmin = adminKpi[0] // KPI of the planC task — used by the M4 scope assertions below
-    ok("can_manage bypasses the strip — completed task + KPI score kept (control, completed_at still server-stamped)")
+    // KPI formula parity: the score must come from the SHARED _kpi-formula.cjs
+    // module (require(__hooks + "/_kpi-formula.cjs")) — normal task, rating 5,
+    // completed_at stamped NOW vs the 2026-06-30 deadline -> >5 days late ->
+    // schedule 0% -> final = 10 * 0.7 * (5/5) = 7.0
+    assert.strictEqual(kpiAdmin.base_score, 10, "shared formula: base 10 for normal task")
+    assert.strictEqual(kpiAdmin.difficulty_coeff, 1.0, "shared formula: difficulty 1.0 (no partner dept)")
+    assert.strictEqual(kpiAdmin.progress_score, 0, "shared formula: >5 days late -> schedule 0%")
+    assert.strictEqual(kpiAdmin.result_rating, 5, "shared formula: rating preserved")
+    assert.strictEqual(kpiAdmin.final_score, 7.0, "shared formula: 10*0.7*1.0 = 7.0")
+    ok("KPI score computed by the shared _kpi-formula.cjs module (backend path parity)")
 
     // ================================================================ H2
     console.log("\nH2 — fail-closed scope: user without a loadable role is narrowed to personal:")
@@ -350,7 +361,7 @@ async function main() {
 
     const createDisabled = await http(baseUrl, "POST", "/api/collections/tasks/records", {
       token: tokenDisabled,
-      body: { name: "H1 disabled create", plan_id: planC.id, category: "normal", host_dept_id: deptA.id, executor_id: disabledUser.id, supervisor_id: userA.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "not_started", weight: 100, is_recurring: false },
+      body: { name: "H1 disabled create", plan_id: planC.id, category: "normal", host_dept_id: deptA.id, executor_id: disabledUser.id, supervisor_id: userA.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "not_started", is_recurring: false },
     })
     assert.strictEqual(createDisabled.status, 403, "disabled create must be 403 (rule passes, guard throws) — got " + createDisabled.status)
     ok("disabled account blocked on create (rule passes, ensureEnabled throws)")
@@ -497,7 +508,7 @@ async function main() {
     ok("supervisor completing a task: backdated completed_at ignored, server stamp used (M8)")
 
     // can_manage PATCH: the bypass must not become a backdating loophole
-    const taskB2 = await c("tasks", { name: "H1 Task B2", plan_id: planB.id, category: "normal", host_dept_id: deptB.id, executor_id: userB.id, supervisor_id: userB.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "in_progress", weight: 100, is_recurring: false })
+    const taskB2 = await c("tasks", { name: "H1 Task B2", plan_id: planB.id, category: "normal", host_dept_id: deptB.id, executor_id: userB.id, supervisor_id: userB.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "in_progress", is_recurring: false })
     const mgrDone = await expectOk(baseUrl, "PATCH", `/api/collections/tasks/records/${taskB2.id}`, {
       token: tokenAdmin,
       body: { status: "completed", completed_at: "2000-01-01 00:00:00.000Z" },

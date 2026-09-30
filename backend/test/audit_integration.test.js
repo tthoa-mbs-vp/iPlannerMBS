@@ -67,13 +67,13 @@ async function waitHealth(baseUrl, child) {
 
 async function main() {
   assert(fs.existsSync(EXE), `pocketbase executable not found: ${EXE}`)
-  assert(fs.existsSync(path.join(ROOT, "pb_data", "data.db")), "pb_data/data.db missing")
 
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "pb-audit-"))
   const dataDir = path.join(tmp, "data")
   const hooksDir = path.join(tmp, "hooks")
   const logFile = path.join(tmp, "server.log")
-  fs.cpSync(path.join(ROOT, "pb_data"), dataDir, { recursive: true })
+  // FRESH data dir — the migration chain self-bootstraps the full schema
+  fs.mkdirSync(dataDir, { recursive: true })
   fs.cpSync(HOOKS, hooksDir, { recursive: true })
 
   execFileSync(EXE, ["superuser", "upsert", ADMIN_EMAIL, ADMIN_PASS, `--dir=${dataDir}`], { stdio: "pipe" })
@@ -116,7 +116,7 @@ async function main() {
 
     const task = await expectOk(baseUrl, "POST", "/api/collections/tasks/records", {
       token: userToken,
-      body: { name: "Audit Task Alpha", category: "normal", host_dept_id: dept.id, executor_id: userA.id, supervisor_id: userA.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "completed", rating: 5, weight: 100, is_recurring: false },
+      body: { name: "Audit Task Alpha", category: "normal", host_dept_id: dept.id, executor_id: userA.id, supervisor_id: userA.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "completed", rating: 5, is_recurring: false },
     })
     // H1 guard: client cannot create an already-completed task
     assert.strictEqual(task.status, "not_started", "guard must force not_started on create")
@@ -183,7 +183,7 @@ async function main() {
     // (b) guard-rejected: userA tries to rate their own task (A10 self-rating ban)
     const task2 = await expectOk(baseUrl, "POST", "/api/collections/tasks/records", {
       token: userToken,
-      body: { name: "Audit Task Beta", category: "normal", host_dept_id: dept.id, executor_id: userA.id, supervisor_id: userA.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "not_started", weight: 100, is_recurring: false },
+      body: { name: "Audit Task Beta", category: "normal", host_dept_id: dept.id, executor_id: userA.id, supervisor_id: userA.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "not_started", is_recurring: false },
     })
     const r2 = await http(baseUrl, "PATCH", `/api/collections/tasks/records/${task2.id}`, { token: userToken, body: { rating: 5, rated_by_id: userA.id, rated_at: new Date().toISOString() } })
     assert.strictEqual(r2.status, 403, "self-rating must be rejected by guards")

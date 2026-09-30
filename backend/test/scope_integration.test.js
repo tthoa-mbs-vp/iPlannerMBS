@@ -15,9 +15,9 @@
 //      proposals scoping) works.
 //
 // How it works:
-//   - copies the real pb_data/ (schema + applied migrations) into a temp dir — the base
-//     collections (departments, roles, plans, ...) were created via the admin UI, so a
-//     fresh pb_data cannot run these migrations; the copy is authoritative and untouched.
+//   - boots PocketBase into a FRESH temp data dir; the schema is created by the repo's
+//     own migration chain (created_* + updated_*), exercising the same bootstrap a new
+//     deployment/CI instance goes through — no copy of a developer database needed.
 //   - copies the real pb_hooks/ (+ an optional probe file) into a temp hooks dir
 //   - creates a superuser with known credentials via `superuser upsert`
 //   - boots `pocketbase serve`, seeds an isolated test dataset, and asserts via HTTP.
@@ -121,7 +121,8 @@ async function stopServer(child) {
 async function bootstrap(tmp, port, withProbe) {
   const dataDir = path.join(tmp, "data")
   const hooksDir = path.join(tmp, "hooks")
-  fs.cpSync(path.join(ROOT, "pb_data"), dataDir, { recursive: true })
+  // FRESH data dir — the migration chain self-bootstraps the full schema
+  fs.mkdirSync(dataDir, { recursive: true })
   fs.cpSync(HOOKS, hooksDir, { recursive: true })
   if (withProbe) fs.writeFileSync(path.join(hooksDir, "zz_probe.pb.js"), PROBE_SRC)
 
@@ -157,8 +158,8 @@ async function seed(baseUrl, adminToken) {
   const planA = await c("plans", { name: "Plan A (dept A)", leader_id: userA.id, host_dept_id: deptA.id, partner_dept_ids: [], start_date: "2026-01-01 00:00:00.000Z", end_date: "2026-12-31 00:00:00.000Z", status: "not_started", is_sudden: false, is_high_impact: false })
   const planB = await c("plans", { name: "Plan B (dept B)", leader_id: userB.id, host_dept_id: deptB.id, partner_dept_ids: [], start_date: "2026-01-01 00:00:00.000Z", end_date: "2026-12-31 00:00:00.000Z", status: "not_started", is_sudden: false, is_high_impact: false })
 
-  const taskA = await c("tasks", { name: "Task A1", plan_id: planA.id, category: "normal", host_dept_id: deptA.id, executor_id: userA.id, supervisor_id: userA.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "not_started", weight: 100, is_recurring: false })
-  const taskB = await c("tasks", { name: "Task B1", plan_id: planB.id, category: "normal", host_dept_id: deptB.id, executor_id: userB.id, supervisor_id: userB.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "not_started", weight: 100, is_recurring: false })
+  const taskA = await c("tasks", { name: "Task A1", plan_id: planA.id, category: "normal", host_dept_id: deptA.id, executor_id: userA.id, supervisor_id: userA.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "not_started", is_recurring: false })
+  const taskB = await c("tasks", { name: "Task B1", plan_id: planB.id, category: "normal", host_dept_id: deptB.id, executor_id: userB.id, supervisor_id: userB.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "not_started", is_recurring: false })
 
   await c("kpi_scores", { task_id: taskA.id, base_score: 10, difficulty_coeff: 1, progress_score: 100, result_rating: 5, final_score: 10 })
   await c("kpi_scores", { task_id: taskB.id, base_score: 10, difficulty_coeff: 1, progress_score: 100, result_rating: 4, final_score: 8 })
@@ -189,7 +190,6 @@ function ok(name) { passed++; console.log("  ✓ " + name) }
 
 async function main() {
   assert(fs.existsSync(EXE), `pocketbase executable not found: ${EXE}`)
-  assert(fs.existsSync(path.join(ROOT, "pb_data", "data.db")), "pb_data/data.db missing — the test copies the real schema")
 
   let servers = []
   const tmps = []

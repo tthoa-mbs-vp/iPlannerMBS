@@ -90,7 +90,6 @@ export interface User {
   id: string;
   email: string;
   name?: string;
-  username?: string;
   avatar?: string;
   department_id?: string;
   role_id?: string;
@@ -161,7 +160,6 @@ export interface Task {
   start_date: string;
   deadline: string;
   status: TaskStatus;
-  weight: number;
   is_recurring: boolean;
   recurring_type?: RecurringType;
   recurring_value?: number;
@@ -308,6 +306,7 @@ export interface AttendanceLog {
   method: AttendanceMethod;
   location_gps?: string;
   device_info?: string;
+  ip_address?: string;
   status: AttendanceStatus;
   notes?: string;
   created: string;
@@ -404,7 +403,6 @@ export interface ArchivedTask {
   due_date?: string;
   completion_date?: string;
   progress?: number;
-  weight?: number;
   archived_at: string;
   created: string;
   updated: string;

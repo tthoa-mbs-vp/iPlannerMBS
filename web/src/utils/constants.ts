@@ -1,4 +1,4 @@
-import type { TaskStatus, PlanStatus, LeaveStatus, AttendanceStatus } from "@shared/types";
+import type { TaskStatus, PlanStatus, LeaveStatus, LeaveType, LeavePeriod, AttendanceStatus } from "@shared/types";
 
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
   not_started: "Chưa thực hiện",
@@ -62,6 +62,20 @@ export const PLAN_STATUS_STYLES: Record<PlanStatus, string> = {
   completed: "bg-gradient-to-r from-emerald-50 to-teal-100 text-emerald-700 border border-emerald-200/80",
   paused: "bg-gradient-to-r from-amber-50 to-yellow-100 text-amber-700 border border-amber-200/80",
   cancelled: "bg-gradient-to-r from-rose-50 to-red-100 text-rose-700 border border-rose-200/80",
+};
+
+export const LEAVE_TYPE_LABELS: Record<LeaveType, string> = {
+  annual: "Nghỉ phép năm",
+  sick: "Nghỉ ốm / BHXH",
+  unpaid: "Nghỉ không lương",
+  maternity: "Nghỉ thai sản",
+  special: "Nghỉ việc riêng",
+};
+
+export const PERIOD_LABELS: Record<LeavePeriod, string> = {
+  full: "Cả ngày",
+  morning: "Sáng",
+  afternoon: "Chiều",
 };
 
 export const LEAVE_STATUS_LABELS: Record<LeaveStatus, string> = {

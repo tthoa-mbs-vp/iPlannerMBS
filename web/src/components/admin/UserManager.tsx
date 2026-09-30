@@ -10,6 +10,7 @@ import ExportButton from "../shared/ExportButton";
 const ImportModal = lazy(() => import("./ImportModal"));
 import { exportToExcel, exportToCSV, exportToJSON, USER_EXPORT_COLUMNS } from "../../utils/importExport";
 import type { User } from "@shared/types";
+import { validatePassword } from "@shared/validators";
 import { btn } from "../../utils/buttonClasses";
 import Spinner from "../shared/Spinner";
 import EmptyState from "../shared/EmptyState";
@@ -87,7 +88,8 @@ export default function UserManager() {
     try {
       if (editingId === "new") {
         if (!editEmail || !editPassword) { setError("Vui lòng nhập email và mật khẩu"); setIsSaving(false); return; }
-        if (editPassword.length < 8) { setError("Mật khẩu phải từ 8 ký tự"); setIsSaving(false); return; }
+        const pwError = validatePassword(editPassword);
+        if (pwError) { setError(pwError); setIsSaving(false); return; }
         await pb.collection("users").create({
           email: editEmail,
           name: editName || undefined,
@@ -139,7 +141,9 @@ export default function UserManager() {
     if (!adminCreds || !adminEmail || !adminPassword) return;
     const { user, action } = adminCreds;
     if (action === "reset_password") {
-      if (!resetPassword || resetPassword.length < 8) { setResetPasswordError("Mật khẩu phải từ 8 ký tự"); return; }
+      if (!resetPassword) { setResetPasswordError("Vui lòng nhập mật khẩu mới"); return; }
+      const pwError = validatePassword(resetPassword);
+      if (pwError) { setResetPasswordError(pwError); return; }
       if (resetPassword !== resetPasswordConfirm) { setResetPasswordError("Mật khẩu không khớp"); return; }
     }
     setAdminSaving(true);

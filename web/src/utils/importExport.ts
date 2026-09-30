@@ -3,16 +3,19 @@ export interface ColumnDef {
   label: string;
 }
 
+/** Generic row used by export helpers. */
+type RowData = Record<string, unknown>;
+
 interface ExcelOptions {
   title?: string;
   highlightHeader?: boolean;
   sheetName?: string;
-  groupBy?: (row: Record<string, any>) => string;
+  groupBy?: (row: RowData) => string;
 }
 
-function toRows<T extends Record<string, any>>(data: T[], columns: ColumnDef[]): Record<string, any>[] {
+function toRows<T extends RowData>(data: T[], columns: ColumnDef[]): RowData[] {
   return data.map((item) => {
-    const row: Record<string, any> = {};
+    const row: RowData = {};
     for (const col of columns) {
       row[col.label] = item[col.key] ?? "";
     }
@@ -31,7 +34,7 @@ function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export async function exportToExcel<T extends Record<string, any>>(
+export async function exportToExcel<T extends RowData>(
   data: T[],
   columns: ColumnDef[],
   filename: string,
@@ -41,7 +44,7 @@ export async function exportToExcel<T extends Record<string, any>>(
   const labels = columns.map((c) => c.label);
   const rows = toRows(data, columns);
 
-  const aoa: any[][] = [];
+  const aoa: (string | number | boolean | null)[][] = [];
   if (options.title) aoa.push([options.title]);
   aoa.push(labels);
 
@@ -57,10 +60,10 @@ export async function exportToExcel<T extends Record<string, any>>(
     for (const [name, items] of sorted) {
       groupHeaderRows.push(aoa.length);
       aoa.push([name]);
-      items.forEach((item) => aoa.push(labels.map((l) => item[l] ?? "")));
+      items.forEach((item) => aoa.push(labels.map((l) => String(item[l] ?? ""))));
     }
   } else {
-    rows.forEach((r) => aoa.push(labels.map((l) => r[l] ?? "")));
+    rows.forEach((r) => aoa.push(labels.map((l) => String(r[l] ?? ""))));
   }
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
@@ -123,7 +126,7 @@ export async function exportToExcel<T extends Record<string, any>>(
   XLSX.writeFile(wb, `${filename}.xlsx`);
 }
 
-export async function exportToCSV<T extends Record<string, any>>(
+export async function exportToCSV<T extends RowData>(
   data: T[],
   columns: ColumnDef[],
   filename: string
@@ -137,7 +140,7 @@ export async function exportToCSV<T extends Record<string, any>>(
   downloadBlob(new Blob([bom + csv], { type: "text/csv;charset=utf-8" }), `${filename}.csv`);
 }
 
-export function exportToJSON<T extends Record<string, any>>(
+export function exportToJSON<T extends RowData>(
   data: T[],
   columns: ColumnDef[],
   filename: string
@@ -167,7 +170,6 @@ export const TASK_EXPORT_COLUMNS: ColumnDef[] = [
   { key: "start_date", label: "Ngày bắt đầu" },
   { key: "deadline", label: "Hạn hoàn thành" },
   { key: "status", label: "Trạng thái" },
-  { key: "weight", label: "Trọng số (%)" },
   { key: "is_recurring", label: "Lặp lại" },
   { key: "is_ad_hoc", label: "Đột xuất" },
   { key: "is_high_impact", label: "Trọng điểm" },

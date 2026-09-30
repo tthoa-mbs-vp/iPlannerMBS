@@ -3,15 +3,17 @@ migrate((app) => {
   const collection = app.findCollectionByNameOrId("pbc_2602490748")
 
   // update field
+  if (!collection.fields.getByName("is_deleted")) {
   collection.fields.addAt(16, new Field({
-    "hidden": false,
-    "id": "bool3977085845",
-    "name": "is_deleted",
-    "presentable": false,
-    "required": false,
-    "system": false,
-    "type": "bool"
-  }))
+      "hidden": false,
+      "id": "bool3977085845",
+      "name": "is_deleted",
+      "presentable": false,
+      "required": false,
+      "system": false,
+      "type": "bool"
+    }))
+}
 
   return app.save(collection)
 }, (app) => {

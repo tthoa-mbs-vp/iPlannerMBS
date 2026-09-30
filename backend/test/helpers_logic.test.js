@@ -1,5 +1,5 @@
 // Unit tests for the core business logic in backend/pb_hooks/helpers.js:
-//   - recalcPlanProgress (weighted plan progress + status transitions)
+//   - recalcPlanProgress (simple-average plan progress + status transitions)
 //   - upsertKpi / the KPI formula (schedule lateness, rating, difficulty, ad-hoc base)
 //   - recomputeLeaveBalance (approved days vs 12-day quota)
 //   - isPrivateIp / ipInList (exact, "*", CIDR)
@@ -75,7 +75,7 @@ function planRec(overrides) {
 }
 function taskRec(overrides) {
   return new MockRecord("tasks", Object.assign({
-    id: "t1", plan_id: "plan1", status: "not_started", weight: 100, is_deleted: false,
+    id: "t1", plan_id: "plan1", status: "not_started", is_deleted: false,
   }, overrides))
 }
 function kpiRec(overrides) {
@@ -108,21 +108,21 @@ console.log("recalcPlanProgress:")
 
   reset()
   state.plan = planRec()
-  state.tasks = [taskRec({ status: "completed", weight: 70 }), taskRec({ id: "t2", status: "in_progress", weight: 30 })]
+  state.tasks = [taskRec({ status: "completed" }), taskRec({ id: "t2", status: "in_progress" })]
   H.recalcPlanProgress("plan1")
-  assert.strictEqual(state.plan._data.progress, 85, "(70*100 + 30*50)/100 = 85")
+  assert.strictEqual(state.plan._data.progress, 75, "(100 + 50)/2 = 75")
   assert.strictEqual(state.plan._data.status, "in_progress", "started but not all done -> in_progress")
-  ok("weighted mix -> 85, plan in_progress")
+  ok("simple average: completed + in_progress -> 75, plan in_progress")
 
   reset()
   state.plan = planRec()
   state.tasks = [
-    taskRec({ status: "pending_approval", weight: 50 }),
-    taskRec({ id: "t2", status: "completed", weight: 50 }),
+    taskRec({ status: "pending_approval" }),
+    taskRec({ id: "t2", status: "completed" }),
   ]
   H.recalcPlanProgress("plan1")
-  assert.strictEqual(state.plan._data.progress, Math.round((50 * 75 + 50 * 100) / 100), "pending_approval counts 75")
-  ok("pending_approval maps to 75")
+  assert.strictEqual(state.plan._data.progress, 88, "(75 + 100)/2 = 87.5 -> 88")
+  ok("pending_approval maps to 75 (avg -> 88)")
 
   reset()
   state.plan = planRec()
@@ -133,10 +133,14 @@ console.log("recalcPlanProgress:")
 
   reset()
   state.plan = planRec()
-  state.tasks = [taskRec({ status: "in_progress", weight: 0 })]
+  state.tasks = [
+    taskRec({ status: "in_progress" }),
+    taskRec({ id: "t2", status: "in_progress" }),
+    taskRec({ id: "t3", status: "completed" }),
+  ]
   H.recalcPlanProgress("plan1")
-  assert.strictEqual(state.plan._data.progress, 0, "zero total weight -> 0 (no division blow-up)")
-  ok("zero weight -> progress 0")
+  assert.strictEqual(state.plan._data.progress, 67, "(50+50+100)/3 = 66.7 -> 67")
+  ok("three tasks avg -> 67")
 
   reset()
   state.plan = planRec({ status: "cancelled" })
@@ -145,6 +149,29 @@ console.log("recalcPlanProgress:")
   assert.strictEqual(state.plan._data.progress, 100, "progress still recomputed for cancelled plans")
   assert.strictEqual(state.plan._data.status, "cancelled", "cancelled plan never flips back to completed")
   ok("cancelled plan keeps its status")
+
+  reset()
+  state.plan = planRec({ status: "paused" })
+  state.tasks = [taskRec({ status: "completed" }), taskRec({ id: "t2", status: "completed" })]
+  H.recalcPlanProgress("plan1")
+  assert.strictEqual(state.plan._data.progress, 100, "progress recomputed for paused plans")
+  assert.strictEqual(state.plan._data.status, "paused", "paused plan is never auto-completed")
+  ok("paused plan keeps its status even when all tasks are done")
+
+  reset()
+  state.plan = planRec({ status: "completed" })
+  state.tasks = [taskRec({ status: "completed" }), taskRec({ id: "t2", status: "in_progress" })]
+  H.recalcPlanProgress("plan1")
+  assert.strictEqual(state.plan._data.progress, 75, "completed plan with a reopened task -> 75")
+  assert.strictEqual(state.plan._data.status, "in_progress", "completed plan reverts to in_progress while tasks remain")
+  ok("completed plan reverts to in_progress when a task is reopened")
+
+  reset()
+  state.plan = planRec({ status: "completed" })
+  state.tasks = [taskRec({ status: "completed" }), taskRec({ id: "t2", status: "completed" })]
+  H.recalcPlanProgress("plan1")
+  assert.strictEqual(state.plan._data.status, "completed", "completed plan stays completed when all tasks are done")
+  ok("completed plan stays completed when all tasks are done")
 
   reset()
   state.plan = planRec()

@@ -268,7 +268,7 @@ sequenceDiagram
 
 ```
 Tạo Plan (leader, host dept, partner depts, dates, is_sudden/is_high_impact)
-   └─ Tạo Task (executor, supervisor, collaborators, weight, category, deadline)
+   └─ Tạo Task (executor, supervisor, collaborators, category, deadline)
         │  [hook afterCreate] recalcPlanProgress(plan) → plan.progress, plan.status
         │  [hook afterCreate] notifyTask(participants) ; upsertKpi
         ▼
@@ -277,8 +277,9 @@ Task chuyển trạng thái (guard chặn field ngoài phạm vi)
   supervisor: approve/reject rating + completed_at
         │  [hook afterUpdate] recalcPlanProgress ; upsertKpi (chỉ khi completed)
         ▼
-plan.progress = Σ(weight × progress%) / Σweight      (completed=100, pending=75, in_progress=50)
-plan.status: tất cả completed → "completed"; có task chạy → "in_progress"
+plan.progress = trung bình cộng % tiến độ các task (completed=100, pending=75, in_progress=50)
+plan.status: tất cả completed → "completed"; có task chạy → "in_progress";
+  completed + còn task chưa xong → quay lại "in_progress"; paused/cancelled không bao giờ bị tự ghi đè
 KPI: base(10/12 đột xuất) × (0.3×schedule + 0.7×rating) × hệ số khó (1.0/1.1/1.2)
 ```
 
@@ -449,7 +450,7 @@ docker-compose.yml
 │     ports: 127.0.0.1:8090:8090   ← chỉ localhost
 │     volumes: pb_data, pb_hooks, pb_migrations, pb_public
 │     env: PB_TRUST_PROXY (mặc định false)
-└── web (node:24-alpine, dev: npm install && vite --host)
+└── web (node:24-alpine, dev: npm ci && vite --host)
       ports: 5173:5173  · env: VITE_PB_UPSTREAM=http://pocketbase:8090
 
 Production (gợi ý từ deploy/nginx.conf.example):
@@ -458,4 +459,57 @@ Production (gợi ý từ deploy/nginx.conf.example):
 
 Makefile: up · down · restart · logs · status · pb-shell · web-shell
 Web CI: npm run ci = typecheck + lint + test + build (vitest, ~20 test files)
+CI/CD: .github/workflows/ci.yml
+  ├─ web: npm ci → npm run ci
+  └─ backend: tải PocketBase 0.39.10 → node --check pb_hooks + pb_migrations →
+     unit tests → 3 integration tests trên instance FRESH-BOOT (migrations tự dựng schema)
 ```
+
+### 7.3 Schema bootstrap & KPI single-source (2026-08)
+
+**Instance mới tự bootstrap từ migrations** — `backend/pb_migrations/` giờ là chuỗi đầy đủ:
+
+- `1784000001..1784000010_created_*` — **sinh tự động** bởi `web/scripts/gen-created-migrations.mjs`
+  từ `web/scripts/pb-schema.json` (snapshot chuẩn, tái xuất từ instance boot-by-migrations).
+  Dùng đúng collection id mà các `updated_*` tham chiếu (`pbc_3865025440` …) và đổi id trong mọi
+  relation field tương ứng. `users` là collection auth hệ thống (tự sinh khi boot) nên file tương ứng
+  là **sync**: thêm các field tuỳ biến (`department_id`, `role_id`, `reminder_days`, `disabled`).
+- Các relation tới collection chưa tồn tại lúc tạo được **hoãn** sang migration sau target:
+  `plans.group_id` + `users.group_ids` (sau `professional_groups` 1786900000),
+  `comments.quote_id` (tự bản thân comments — file 1789000000 thêm sau).
+- **23 migration `updated_*` cũ được guard idempotent** (skip add nếu field đã tồn tại / skip
+  remove nếu chưa có) để chạy được trên schema đã đầy đủ; 2 file migration dev-leftover
+  (`deleted_t1`, `created_probe_col`) đã **xoá hẳn** (no-op với fresh boot, không còn lý do tồn tại).
+  Instance cũ boot bình thường: các file mới no-op (collection đã tồn tại).
+- Khi sửa schema: cập nhật `DATA_DICTIONARY.md` → tái sinh snapshot trên instance thật →
+  chạy `node web/scripts/gen-created-migrations.mjs` (idempotent) → thêm migration `updated_*`
+  cho các deployment hiện hữu.
+
+**KPI formula là single-source**: `backend/pb_hooks/_kpi-formula.cjs` (hàm thuần, không phụ thuộc
+PB/React). Backend nạp qua `require(__hooks + "/_kpi-formula.cjs")` (helpers.js `_computeKpi`), web
+nạp qua `web/src/utils/kpi.ts` (`calculateKpi`) — Vite bundle `.cjs` qua interop, kiểu khai báo tại
+`_kpi-formula.d.cts`. Parity được giữ bằng 2 bộ test vector trùng giá trị
+(`backend/test/helpers_logic.test.js` + `web/src/test/kpi.test.ts`) và 1 assertion trong
+`harden_integration.test.js` xác nhận điểm do hook tính đúng công thức chung.
+
+### 7.1 Biến môi trường (web)
+
+> Không có file `web/.env.example` trong repo — file `web/.env` đã bị commit nhầm và
+> sau đó được **untrack** (2026-08): mọi file `web/.env*` đều nằm trong `.gitignore`
+> (trừ khi được thêm lại có chủ đích). Bảng dưới là tài liệu tham chiếu chính thức
+> cho các biến; tạo `web/.env` cục bộ khi cần (bản mẫu: `docker-compose.yml` + `vite.config.ts`).
+
+| Biến | Mặc định | Mô tả |
+|---|---|---|
+| `VITE_PB_URL` | `"/"` | Base URL cho PocketBase JS SDK (same-origin qua proxy `/api`). Chỉ cần đặt khi API ở origin khác (ví dụ PocketBase hosted). |
+| `VITE_PB_UPSTREAM` | `http://localhost:8090` | Target của Vite proxy `/api` (đọc lúc dev-server start — xem `vite.config.ts`). |
+| `VITE_USE_POLLING` | — | `true` để bật fs-watch polling (docker volume mount, Windows). |
+
+### 7.2 Biến môi trường (backend / scripts, dev)
+
+| Biến | Mặc định | Mô tả |
+|---|---|---|
+| `PB_URL` | `http://localhost:8090` | Đích cho `web/scripts/*.mjs` (setup/sync/seed). |
+| `PB_ADMIN_EMAIL` / `PB_ADMIN_PASSWORD` | — | Superuser + tài khoản admin (bắt buộc cho `setup-pb.mjs`, `bootstrap-schema.mjs`, `sync-schema.mjs`, `seed-data.mjs`). |
+| `PB_TRUST_PROXY` | `false` | `true` chỉ khi đứng sau reverse proxy overwrite `X-Forwarded-For` (chấm công lấy IP thật). |
+| `TZ` | — | Container phải chạy theo giờ công ty (`Asia/Ho_Chi_Minh`) để status on-time/late đúng. |

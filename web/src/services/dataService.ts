@@ -1,16 +1,19 @@
 import { pb } from "../api/client";
 
+/** PocketBase record — untyped API response. */
+type PBRecord = Record<string, unknown>;
+
 const COLLECTION_FIELDS: Record<string, string[]> = {
-  departments: ["id", "name", "description", "created", "updated"],
-  roles: ["id", "name", "description", "code", "level", "view_scope", "can_add_plans", "can_edit_plans", "can_delete_plans", "can_add_tasks", "can_edit_tasks", "can_delete_tasks", "can_manage", "created", "updated"],
-  users: ["id", "email", "name", "role_id", "department_id", "reminder_days", "disabled", "verified", "created", "updated"],
-  plans: ["id", "name", "description", "leader_id", "host_dept_id", "partner_dept_ids", "start_date", "end_date", "status", "is_sudden", "is_high_impact", "is_deleted", "progress", "created", "updated"],
-  tasks: ["id", "name", "description", "plan_id", "category", "host_dept_id", "executor_id", "supervisor_id", "collaborator_ids", "status", "start_date", "deadline", "weight", "is_recurring", "recurring_type", "recurring_value", "is_deleted", "is_ad_hoc", "is_high_impact", "coordinating_dept_id", "completed_at", "rating", "rated_by_id", "rated_at", "created", "updated"],
+  departments: ["id", "code", "name", "is_counted", "leader_id", "created", "updated"],
+  roles: ["id", "name", "description", "code", "level", "view_scope", "can_add_plans", "can_edit_plans", "can_delete_plans", "can_add_tasks", "can_edit_tasks", "can_delete_tasks", "can_manage", "can_approve_leave", "approval_scope", "can_view_salary", "created", "updated"],
+  users: ["id", "email", "name", "avatar", "role_id", "department_id", "group_ids", "reminder_days", "disabled", "verified", "created", "updated"],
+  plans: ["id", "name", "description", "leader_id", "host_dept_id", "partner_dept_ids", "group_id", "start_date", "end_date", "status", "is_sudden", "is_high_impact", "is_deleted", "progress", "created", "updated"],
+  tasks: ["id", "name", "description", "plan_id", "category", "host_dept_id", "executor_id", "supervisor_id", "collaborator_ids", "status", "start_date", "deadline", "is_recurring", "recurring_type", "recurring_value", "is_deleted", "is_ad_hoc", "is_high_impact", "coordinating_dept_id", "completed_at", "rating", "rated_by_id", "rated_at", "created", "updated"],
   proposals: ["id", "task_id", "type", "reason", "status", "requester_id", "approver_id", "new_deadline", "created", "updated"],
-  comments: ["id", "task_id", "user_id", "content", "created", "updated"],
-  kpi_scores: ["id", "task_id", "base_score", "difficulty_coeff", "progress_score", "result_rating", "final_score", "created", "updated"],
+  comments: ["id", "task_id", "user_id", "content", "files", "quote_id", "created", "updated"],
+  kpi_scores: ["id", "task_id", "base_score", "difficulty_coeff", "progress_score", "result_rating", "final_score", "max_converted_score", "created", "updated"],
   professional_groups: ["id", "code", "name", "description", "department_id", "created", "updated"],
-  archived_tasks: ["id", "original_id", "name", "description", "plan_id", "executor_id", "status", "priority", "start_date", "due_date", "completion_date", "progress", "weight", "archived_at", "created"],
+  archived_tasks: ["id", "original_id", "name", "description", "plan_id", "executor_id", "supervisor_id", "approver_id", "status", "priority", "start_date", "due_date", "completion_date", "progress", "archived_at", "created"],
   archived_plans: ["id", "original_id", "name", "description", "leader_id", "host_dept_id", "partner_dept_ids", "group_id", "start_date", "end_date", "status", "is_sudden", "is_high_impact", "progress", "archived_at", "created"],
 };
 
@@ -38,7 +41,7 @@ const COLLECTION_PASTE_HINTS: Record<string, string[]> = {
   roles: ["Mã chức vụ", "Tên chức vụ", "Cấp bậc", "Phạm vi xem", "Quản trị"],
   users: ["Email", "Mật khẩu", "Họ tên", "Mã phòng ban", "Mã chức vụ", "Nhắc hạn (ngày)"],
   plans: ["Tên kế hoạch", "Mô tả", "Ngày bắt đầu", "Ngày kết thúc", "Trạng thái", "Tiến độ (%)"],
-  tasks: ["Tên nhiệm vụ", "Mô tả", "Phân loại", "Ngày bắt đầu", "Hạn hoàn thành", "Trạng thái", "Trọng số (%)"],
+  tasks: ["Tên nhiệm vụ", "Mô tả", "Phân loại", "Ngày bắt đầu", "Hạn hoàn thành", "Trạng thái"],
   proposals: ["Lý do", "Hạn mới"],
   comments: ["Nội dung"],
   kpi_scores: ["Điểm cơ bản", "Hệ số khó"],
@@ -50,16 +53,16 @@ export const EXPORT_COLLECTIONS = Object.keys(COLLECTION_FIELDS).map((key) => ({
   label: COLLECTION_LABELS[key],
 }));
 
-function flattenRecord(record: Record<string, any>): Record<string, any> {
-  const flat: Record<string, any> = {};
+function flattenRecord(record: PBRecord): PBRecord {
+  const flat: PBRecord = {};
   for (const key of Object.keys(record)) {
     const val = record[key];
     if (key === "expand" || key === "@expand") continue;
     if (key === "collectionId" || key === "collectionName") continue;
     if (Array.isArray(val)) {
       flat[key] = val.join(", ");
-    } else if (val && typeof val === "object" && val.id) {
-      flat[key] = val.id;
+    } else if (val && typeof val === "object" && "id" in val) {
+      flat[key] = String((val as { id: unknown }).id);
     } else {
       flat[key] = val ?? "";
     }
@@ -123,25 +126,26 @@ export interface ImportResult {
   errors: { row: number; message: string }[];
 }
 
-function parseFieldErrors(err: any): string {
-  if (err?.data && typeof err.data === "object") {
+function parseFieldErrors(err: unknown): string {
+  const e = err as { data?: Record<string, { message?: string } | unknown>; message?: string } | null;
+  if (e?.data && typeof e.data === "object") {
     const fieldErrors: string[] = [];
-    for (const [field, info] of Object.entries(err.data)) {
-      const msg = (info as any)?.message || "";
+    for (const [field, info] of Object.entries(e.data)) {
+      const msg = (info && typeof info === "object" && "message" in info) ? String((info as { message?: string }).message || "") : "";
       const label = FIELD_TO_LABEL[field] || field;
       if (msg) fieldErrors.push(`[${label}] ${msg}`);
     }
     if (fieldErrors.length > 0) return fieldErrors.join("; ");
   }
-  return err?.message || "Lỗi không xác định";
+  return e?.message || "Lỗi không xác định";
 }
 
 function sanitizeRow(
-  row: Record<string, any>,
+  row: PBRecord,
   allowedFields: string[],
   collectionName?: string,
-): { clean: Record<string, any> } | { error: string } {
-  const clean: Record<string, any> = {};
+): { clean: PBRecord } | { error: string } {
+  const clean: PBRecord = {};
   for (let key of Object.keys(row)) {
     const originalKey = key;
     if (!allowedFields.includes(key)) {
@@ -169,7 +173,7 @@ function sanitizeRow(
 }
 
 async function importRecords(
-  records: Record<string, any>[],
+  records: PBRecord[],
   collectionName: string,
 ): Promise<ImportResult> {
   const result: ImportResult = { collection: collectionName, total: records.length, success: 0, errors: [] };
@@ -199,7 +203,7 @@ async function importRecords(
     }
   }
 
-  type SanitizedEntry = { clean: Record<string, any>; rowIndex: number } | { error: string; rowIndex: number };
+  type SanitizedEntry = { clean: PBRecord; rowIndex: number } | { error: string; rowIndex: number };
   const sanitized: SanitizedEntry[] = [];
   for (let i = 0; i < records.length; i++) {
     const row = records[i];
@@ -245,7 +249,7 @@ export async function importFromFile(
   collectionName: string,
 ): Promise<ImportResult> {
   const ext = file.name.split(".").pop()?.toLowerCase();
-  let records: Record<string, any>[] = [];
+  let records: PBRecord[] = [];
 
   if (ext === "json") {
     const text = await file.text();
@@ -286,7 +290,7 @@ export async function importFromPasteData(
 
   for (let i = 1; i < lines.length; i++) {
     const vals = lines[i].split(sep).map((v) => v.trim());
-    const row: Record<string, any> = {};
+    const row: PBRecord = {};
     for (let j = 0; j < headers.length; j++) {
       row[headers[j]] = vals[j] ?? "";
     }
@@ -328,7 +332,6 @@ const LABEL_TO_FIELD: Record<string, string> = {
   "Tên nhiệm vụ": "name",
   "Phân loại": "category",
   "Hạn hoàn thành": "deadline",
-  "Trọng số (%)": "weight",
   "Lặp lại": "is_recurring",
   "Mã phòng": "code",
   "Tên phòng": "name",

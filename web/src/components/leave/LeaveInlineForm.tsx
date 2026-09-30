@@ -1,20 +1,12 @@
 import { useState } from "react";
 import { X, Check, Loader2, Clock } from "lucide-react";
 import type { LeaveType, LeavePeriod } from "@shared/types";
+import { LEAVE_TYPE_LABELS, PERIOD_LABELS } from "../../utils/constants";
 
-const LEAVE_TYPE_LABELS: Record<LeaveType, string> = {
-  annual: "Nghỉ phép năm",
-  sick: "Nghỉ ốm / BHXH",
-  unpaid: "Nghỉ không lương",
-  maternity: "Nghỉ thai sản",
-  special: "Nghỉ việc riêng",
-};
-
-const PERIOD_OPTIONS: { value: LeavePeriod; label: string }[] = [
-  { value: "full", label: "Cả ngày" },
-  { value: "morning", label: "Sáng" },
-  { value: "afternoon", label: "Chiều" },
-];
+const PERIOD_OPTIONS: { value: LeavePeriod; label: string }[] = (Object.keys(PERIOD_LABELS) as LeavePeriod[]).map((value) => ({
+  value,
+  label: PERIOD_LABELS[value],
+}));
 
 interface Props {
   initialValues?: {

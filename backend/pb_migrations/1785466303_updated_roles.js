@@ -3,10 +3,14 @@ migrate((app) => {
   const collection = app.findCollectionByNameOrId("pbc_2105053228")
 
   // remove field
+  if (collection.fields.getById("bool_appr_leave")) {
   collection.fields.removeById("bool_appr_leave")
+}
 
   // remove field
+  if (collection.fields.getById("select_appr_scope")) {
   collection.fields.removeById("select_appr_scope")
+}
 
   return app.save(collection)
 }, (app) => {

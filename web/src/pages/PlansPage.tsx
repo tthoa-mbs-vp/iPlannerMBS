@@ -23,98 +23,21 @@ import TaskFiltersDropdown from "../components/plans/TaskFiltersDropdown";
 import Pagination from "../components/shared/Pagination";
 const ImportModal = lazy(() => import("../components/admin/ImportModal"));
 import { exportToExcel, exportToCSV, exportToJSON, PLAN_EXPORT_COLUMNS, TASK_EXPORT_COLUMNS } from "../utils/importExport";
-import { exportHtmlToPdf } from "../utils/exportPdf";import type { Task, Department, Plan, TaskStatus, PlanStatus } from "@shared/types";
-import { PLAN_STATUS_LABELS, PLAN_STATUS_STYLES, TASK_STATUS_LABELS } from "../utils/constants";
+import { exportToPdfPlans, exportToPdfTasks } from "../utils/pdfExports";
+import type { Task, Department, Plan, PlanStatus } from "@shared/types";
+import { PLAN_STATUS_LABELS, PLAN_STATUS_STYLES } from "../utils/constants";
 import { planInUserGroups, taskInUserGroups, userGroupIds } from "../utils/groupScope";
 import { useDebounce } from "../hooks/useDebounce";
 import { usePersistedState } from "../hooks/usePersistedState";
 
-function fmtPlanDate(iso?: string): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("vi-VN");
-}
 
-function yesNo(v: any): string {
-  return v ? "Có" : "Không";
-}
-
-async function exportToPdfPlans(plans: Plan[], landscape = false) {
-  const rows = plans.map((p) => [
-    p.name,
-    p.expand?.host_dept_id?.name || "",
-    fmtPlanDate(p.start_date),
-    fmtPlanDate(p.end_date),
-    PLAN_STATUS_LABELS[p.status as PlanStatus] || p.status,
-    `${p.progress}%`,
-    yesNo(p.is_sudden),
-    yesNo(p.is_high_impact),
-  ]);
-  await exportHtmlToPdf({
-    title: "DANH SÁCH KẾ HOẠCH",
-    meta: `Tổng số: ${rows.length}`,
-    landscape,
-    summary: [{ label: "Tổng kế hoạch", value: rows.length }],
-    columns: [
-      { label: "Tên kế hoạch" },
-      { label: "Phòng chủ trì" },
-      { label: "Ngày bắt đầu", align: "center" },
-      { label: "Ngày kết thúc", align: "center" },
-      { label: "Trạng thái", align: "center" },
-      { label: "Tiến độ (%)", align: "center" },
-      { label: "Đột xuất", align: "center" },
-      { label: "Trọng điểm", align: "center" },
-    ],
-    rows,
-    filename: "ke-hoach",
-  });
-}
-
-async function exportToPdfTasks(tasks: Task[], landscape = false) {
-  const rows = tasks.map((t) => [
-    t.name,
-    t.expand?.plan_id?.name || "",
-    t.expand?.executor_id?.name || "",
-    t.category || "",
-    fmtPlanDate(t.start_date),
-    fmtPlanDate(t.deadline),
-    TASK_STATUS_LABELS[t.status as TaskStatus] || t.status,
-    t.weight,
-    yesNo(t.is_recurring),
-    yesNo(t.is_ad_hoc),
-    yesNo(t.is_high_impact),
-    t.rating ?? "",
-  ]);
-  await exportHtmlToPdf({
-    title: "DANH SÁCH NHIỆM VỤ",
-    meta: `Tổng số: ${rows.length}`,
-    landscape,
-    summary: [{ label: "Tổng nhiệm vụ", value: rows.length }],
-    columns: [
-      { label: "Tên nhiệm vụ" },
-      { label: "Kế hoạch" },
-      { label: "Người thực hiện" },
-      { label: "Phân loại" },
-      { label: "Ngày bắt đầu", align: "center" },
-      { label: "Hạn hoàn thành", align: "center" },
-      { label: "Trạng thái", align: "center" },
-      { label: "Trọng số (%)", align: "center" },
-      { label: "Lặp lại", align: "center" },
-      { label: "Đột xuất", align: "center" },
-      { label: "Trọng điểm", align: "center" },
-      { label: "Xếp loại", align: "center" },
-    ],
-    rows,
-    filename: "nhiem-vu",
-  });
-}
 
 export default function PlansPage() {  const navigate = useNavigate();
   const [search, setSearch] = usePersistedState("plans_search", "");
   const debouncedSearch = useDebounce(search, 300);
   const [showImport, setShowImport] = useState(false);
   const [showPlanForm, setShowPlanForm] = useState(false);
-  const [editingPlan, setEditingPlan] = useState<any>(null);
+  const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [selectedVirtualDept, setSelectedVirtualDept] = useState<string | null>(null);
@@ -196,7 +119,7 @@ export default function PlansPage() {  const navigate = useNavigate();
     else if (viewScope === "personal") {
       if (!personalTasks || personalTasks.length === 0) list = allPlans.filter((p) => p.leader_id === user?.id);
       else {
-        const planIds = new Set(personalTasks.map((t: any) => t.plan_id).filter(Boolean));
+        const planIds = new Set(personalTasks.map((t) => t.plan_id).filter(Boolean));
         list = allPlans.filter((p) => planIds.has(p.id) || p.leader_id === user?.id);
       }
     } else {
@@ -537,7 +460,7 @@ export default function PlansPage() {  const navigate = useNavigate();
               {showPlanForm && !editingPlan && (
                 <PlanInlineForm
                   onSubmit={async (data) => {
-                    await createPlan.mutateAsync({ ...data, status: "not_started" as any, progress: 0 });
+                    await createPlan.mutateAsync({ ...data, status: "not_started" as PlanStatus, progress: 0 });
                     setShowPlanForm(false);
                   }}
                   onCancel={() => setShowPlanForm(false)}
@@ -602,7 +525,7 @@ export default function PlansPage() {  const navigate = useNavigate();
                   <div className="flex items-center gap-2 text-[10px] text-slate-400 mb-1.5 min-w-0 overflow-hidden dark:text-slate-500">
                     <span className="font-bold text-slate-600 shrink-0 dark:text-slate-300">{plan.expand?.host_dept_id?.name || "—"}</span>
                     {plan.expand?.partner_dept_ids && plan.expand.partner_dept_ids.length > 0 && (
-                      <span className="text-slate-300 truncate min-w-0 dark:text-slate-500" title={plan.expand.partner_dept_ids.map((d: any) => d.name).join(", ")}>· {plan.expand.partner_dept_ids.map((d: any) => d.name).join(", ")}</span>
+                      <span className="text-slate-300 truncate min-w-0 dark:text-slate-500" title={plan.expand.partner_dept_ids.map((d) => d.name).join(", ")}>· {plan.expand.partner_dept_ids.map((d) => d.name).join(", ")}</span>
                     )}
                     <span className="text-slate-300 shrink-0 dark:text-slate-500">·</span>
                     <span className="shrink-0 truncate">{new Date(plan.start_date).toLocaleDateString("vi-VN")} → {new Date(plan.end_date).toLocaleDateString("vi-VN")}</span>
@@ -809,7 +732,6 @@ export default function PlansPage() {  const navigate = useNavigate();
                     <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">Người thực hiện</th>
                     <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">Người giám sát</th>
                     <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">Hạn</th>
-                    <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">Trọng số</th>
                   </tr>
                 </thead>
               <tbody>

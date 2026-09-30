@@ -3,27 +3,13 @@ import { useAuthStore } from "../stores/authStore";
 import { usePageTitleStore } from "../stores/pageTitleStore";
 import { useLeaveRequests, useLeaveBalance, useCreateLeaveRequest, useUpdateLeaveRequest, useUpdateLeaveStatus, useDeleteLeaveRequest } from "../hooks/useLeaveRequests";
 import { Calendar, Plus, CheckCircle, XCircle, Clock, Pencil, Users, User as UserIcon, Trash2 } from "lucide-react";
-import type { LeaveType, User, LeaveRequest, LeavePeriod, LeaveStatus } from "@shared/types";
-import { LEAVE_STATUS_LABELS, LEAVE_STATUS_STYLES } from "../utils/constants";
+import type { User, LeaveRequest, LeaveStatus, LeaveType, LeavePeriod } from "@shared/types";
+import { LEAVE_STATUS_LABELS, LEAVE_STATUS_STYLES, LEAVE_TYPE_LABELS, PERIOD_LABELS } from "../utils/constants";
 import LeaveInlineForm from "../components/leave/LeaveInlineForm";
 import TabBar, { type Tab } from "../components/shared/TabBar";
 import EmptyState from "../components/shared/EmptyState";
 import ErrorState from "../components/shared/ErrorState";
 import { SkeletonTable } from "../components/shared/Skeleton";
-
-const LEAVE_TYPE_LABELS: Record<LeaveType, string> = {
-  annual: "Nghỉ phép năm",
-  sick: "Nghỉ ốm / BHXH",
-  unpaid: "Nghỉ không lương",
-  maternity: "Nghỉ thai sản",
-  special: "Nghỉ việc riêng",
-};
-
-const PERIOD_LABELS: Record<LeavePeriod, string> = {
-  full: "Cả ngày",
-  morning: "Sáng",
-  afternoon: "Chiều",
-};
 
 function formatDays(days: number): string {
   return Number.isInteger(days) ? String(days) : days.toFixed(1);
@@ -243,7 +229,7 @@ export default function LeavePage() {
                       />
                     </tr>
                   ) : (
-                    <tr key={req.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                    <tr key={req.id} className="even:bg-slate-50/70 hover:bg-slate-50/50 dark:even:bg-slate-800/40 dark:hover:bg-slate-800/50">
                       <td className="px-6 py-4 font-medium text-slate-800 dark:text-slate-100">
                         {req.expand?.user_id?.name || req.expand?.user_id?.email || "Cá nhân"}
                       </td>

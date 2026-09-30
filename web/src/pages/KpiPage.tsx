@@ -260,12 +260,11 @@ export default function KpiPage() {
         (k) => k.expand?.task_id?.executor_id === u.id,
       ) || [];
       const userCompleted = filteredCompletedTasks.filter((t) => t.executor_id === u.id);
-      const totalWeight = userCompleted.reduce((sum, t) => sum + (t.weight || 0), 0);
       const avgScore = userScores.length > 0
         ? userScores.reduce((s, k) => s + (k.final_score || 0), 0) / userScores.length
         : 0;
-      return { user: u, taskCount: userCompleted.length, totalWeight, avgScore };
-    }).sort((a, b) => b.totalWeight - a.totalWeight) || [];
+      return { user: u, taskCount: userCompleted.length, avgScore };
+    }).sort((a, b) => b.taskCount - a.taskCount) || [];
   }, [users, filteredKpiScores, filteredCompletedTasks]);
 
   const userKpiTotalPages = Math.max(1, Math.ceil(userKpi.length / userKpiPageSize));
@@ -402,7 +401,7 @@ export default function KpiPage() {
     exportToExcel(buildExportRows(allTaskKpi), KPI_EXPORT_COLUMNS, "bao-cao-kpi", {
       title: "BÁO CÁO ĐIỂM KPI",
       highlightHeader: true,
-      groupBy: (row) => row.executor || "Chưa phân công",
+      groupBy: (row) => String(row.executor || "Chưa phân công"),
     });
   };
 
@@ -410,7 +409,7 @@ export default function KpiPage() {
     exportToExcel(buildExportRows(myTaskKpi), KPI_EXPORT_COLUMNS, "bao-cao-kpi-cua-toi", {
       title: "BÁO CÁO KPI CỦA TÔI",
       highlightHeader: true,
-      groupBy: (row) => row.executor || "Chưa phân công",
+      groupBy: (row) => String(row.executor || "Chưa phân công"),
     });
   };
 
@@ -650,19 +649,17 @@ export default function KpiPage() {
               <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60">
                 <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Người dùng</th>
                 <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">NV hoàn thành</th>
-                <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Tổng trọng số</th>
                 <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Điểm TB</th>
                 <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Xếp loại</th>
               </tr>
             </thead>
             <tbody>
-              {paginatedUserKpi.map(({ user, taskCount, totalWeight, avgScore }) => {
+              {paginatedUserKpi.map(({ user, taskCount, avgScore }) => {
                 const rating = getRating(avgScore);
                 return (
                   <tr key={user.id} className="even:bg-slate-100 dark:even:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
                     <td className="px-4 py-3 text-sm font-medium text-slate-800 dark:text-slate-100">{user.name || user.email}</td>
                     <td className="px-4 py-3 text-center text-sm text-slate-600 dark:text-slate-400">{taskCount}</td>
-                    <td className="px-4 py-3 text-center text-sm font-semibold text-indigo-600 dark:text-indigo-300">{totalWeight}</td>
                     <td className="px-4 py-3 text-center text-sm font-semibold text-emerald-600 dark:text-emerald-400">{avgScore.toFixed(1)}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${getRatingBadgeStyle(rating)}`}>

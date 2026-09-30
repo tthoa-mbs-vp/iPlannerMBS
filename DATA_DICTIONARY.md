@@ -171,7 +171,6 @@
 | `due_date` | Date | — | — |
 | `completion_date` | Date | — | — |
 | `progress` | Number | — | — |
-| `weight` | Number | — | — |
 | `archived_at` | Date | ✅ | — |
 
 ---
@@ -817,7 +816,6 @@
 | `start_date` | Date | ✅ | — |
 | `deadline` | Date | ✅ | — |
 | `status` | Select | ✅ | giá trị: not_started · in_progress · pending_approval · completed · proposed_extension · proposed_cancellation · cancelled |
-| `weight` | Number | — | — |
 | `is_recurring` | Bool | — | — |
 | `recurring_type` | Select | — | giá trị: monthly · weekly |
 | `recurring_value` | Number | — | — |
@@ -859,7 +857,7 @@
 | `emailVisibility` | Bool | — | — |
 | `verified` | Bool | — | — |
 | `name` | Text | — | max 255 ký tự |
-| `avatar` | File | — | MIME: image/jpeg, image/png, image/svg+xml, image/gif, image/webp |
+| `avatar` | File | — | MIME: image/jpeg, image/png, image/gif, image/webp (không chấp nhận SVG — tránh stored-XSS) |
 | `created` | Autodate | — | tự set khi tạo |
 | `updated` | Autodate | — | tự set khi tạo + tự set khi sửa |
 | `department_id` | Relation | — | → departments; một |

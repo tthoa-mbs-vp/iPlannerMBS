@@ -43,6 +43,11 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
+    // Cho phép dev server + vitest đọc module dùng chung ngoài project root
+    // (backend/pb_hooks/_kpi-formula.cjs — nguồn duy nhất của công thức KPI).
+    fs: {
+      allow: [path.resolve(__dirname, "..")],
+    },
     proxy: {
       "/api": {
         target: process.env.VITE_PB_UPSTREAM || "http://localhost:8090",

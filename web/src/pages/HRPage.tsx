@@ -247,7 +247,7 @@ export default function HRPage() {
                   const avatar = getUserAvatar(u);
                   return (
                     <tr key={u.id} onClick={() => navigate(`/hr/${u.id}`)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate(`/hr/${u.id}`); } }} tabIndex={0} aria-label={`Xem chi tiết ${u.name || u.email}`}
-                      className="cursor-pointer border-b border-slate-100 transition-all duration-150 hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-violet-50/50 dark:border-slate-800 dark:hover:from-indigo-950/20 dark:hover:to-violet-950/20">
+                      className="cursor-pointer border-b border-slate-100 transition-all duration-150 even:bg-slate-50/80 hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-violet-50/50 dark:border-slate-800 dark:even:bg-slate-800/40 dark:hover:from-indigo-950/20 dark:hover:to-violet-950/20">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           {avatar ? (

@@ -159,7 +159,6 @@ export default function MKpiPage() {
           (k) => k.expand?.task_id?.executor_id === u.id
         );
         const userCompleted = filteredCompletedTasks.filter((t) => t.executor_id === u.id);
-        const totalWeight = userCompleted.reduce((sum, t) => sum + (t.weight || 0), 0);
         const avgScore =
           userScores.length > 0
             ? userScores.reduce((s, k) => s + (k.final_score || 0), 0) / userScores.length
@@ -167,12 +166,11 @@ export default function MKpiPage() {
         return {
           user: u,
           taskCount: userCompleted.length,
-          totalWeight,
           avgScore,
         };
       })
-      .filter((x) => x.taskCount > 0 || x.totalWeight > 0)
-      .sort((a, b) => b.totalWeight - a.totalWeight);
+      .filter((x) => x.taskCount > 0)
+      .sort((a, b) => b.taskCount - a.taskCount);
   }, [users, filteredKpiScores, filteredCompletedTasks]);
 
   const renderKpiRow = (k: KpiScore) => {
@@ -346,7 +344,7 @@ export default function MKpiPage() {
               {userKpi.length === 0 ? (
                 <div className="py-8 text-center text-sm text-slate-400">Chưa có dữ liệu KPI</div>
               ) : (
-                userKpi.map(({ user: u, taskCount, totalWeight, avgScore }, idx) => {
+                userKpi.map(({ user: u, taskCount, avgScore }, idx) => {
                   const rating = getRating(avgScore);
                   return (
                     <div key={u.id} className="flex items-center gap-3 border-b border-slate-50 px-4 py-3 last:border-0">
@@ -356,7 +354,7 @@ export default function MKpiPage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-slate-700">{u.name || u.email}</p>
                         <p className="text-[11px] text-slate-400">
-                          {taskCount} NV · Trọng số {totalWeight}
+                          {taskCount} nhiệm vụ hoàn thành
                         </p>
                       </div>
                       <div className="shrink-0 text-right">

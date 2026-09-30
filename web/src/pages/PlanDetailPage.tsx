@@ -29,7 +29,6 @@ import {
   Clock,
   Tag,
   ListChecks,
-  Target,
   Pencil,
   Trash2,
   AlertTriangle,
@@ -508,7 +507,6 @@ export default function PlanDetailPage() {
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">{task.weight}%</span>
                           {selectedTaskId === task.id && <ChevronRight className="h-3.5 w-3.5 text-purple-400 dark:text-purple-300" />}
                         </div>
                       </div>
@@ -606,11 +604,6 @@ export default function PlanDetailPage() {
                             <span className="font-medium">
                               {new Date(selectedTask.start_date).toLocaleDateString("vi-VN")} → {new Date(selectedTask.deadline).toLocaleDateString("vi-VN")}
                             </span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                            <Target className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-                            <span className="text-xs text-slate-400 dark:text-slate-500">Trọng số:</span>
-                            <span className="font-bold text-indigo-600 dark:text-indigo-400">{selectedTask.weight}%</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                             <Tag className="h-4 w-4 text-slate-400 dark:text-slate-500" />

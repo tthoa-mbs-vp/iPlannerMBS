@@ -200,7 +200,6 @@ function runTaskArchive(months, dryRun) {
       // Preserve real progress; trashed tasks keep their actual value (not forced to 0).
       var tStatus = t.getString("status")
       archTask.set("progress", tStatus === "completed" ? 100 : (tStatus === "cancelled" ? 0 : t.getFloat("progress")))
-      archTask.set("weight", t.getFloat("weight"))
       archTask.set("archived_at", nowIso)
       $app.save(archTask)
 
@@ -320,7 +319,6 @@ function _restoreTask(archTask, planId) {
   newTask.set("deadline", archTask.getString("due_date"))
   newTask.set("completed_at", archTask.getString("completion_date"))
   newTask.set("progress", archTask.getFloat("progress"))
-  newTask.set("weight", archTask.getFloat("weight"))
   $app.save(newTask)
 
   // Move comments back (created timestamp cannot be preserved - autodate overwrites it)

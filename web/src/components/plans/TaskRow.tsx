@@ -51,7 +51,6 @@ const TaskRow = memo(function TaskRow({ task, isSelected, onToggle, onOpen }: Ta
           {isOverdue && " ⚠"}
         </div>
       </td>
-      <td className="px-4 py-3 text-sm font-bold text-indigo-600 whitespace-nowrap">{task.weight}%</td>
     </tr>
   );
 });

@@ -10,11 +10,17 @@ dist/
 # Backend
 backend/pb_data/
 backend/pocketbase.exe
+backend/pocketbase
+backend/bin/
 # Note: pb_migrations/ is NOT ignored — migrations must be tracked for reproducibility
 
 # Web
 web/dist/
 web/tsconfig.tsbuildinfo
+# Never commit real env files — use web/.env.example as the documented template.
+web/.env
+web/.env.*
+!web/.env.example
 
 # Mobile
 mobile/.expo/

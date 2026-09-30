@@ -109,7 +109,7 @@ MBS-Planner/
 | Ngày | Công việc | Đầu ra |
 |------|-----------|--------|
 | 23 | Plan Create/Edit form (leader, dept, partner depts, dates) | Form validation |
-| 24 | Task Create/Edit form (executor, supervisor, collaborators, weight) | Form + multi-select users |
+| 24 | Task Create/Edit form (executor, supervisor, collaborators) | Form + multi-select users |
 | 25 | Status transition logic (frontend validate + backend hook) | State machine |
 | 26 | Plan progress auto-calc hook (PB: calculate plan.progress) | Backend hook |
 | 27 | Plan.status auto-update hook (in_progress khi có task đầu tiên) | Backend hook |

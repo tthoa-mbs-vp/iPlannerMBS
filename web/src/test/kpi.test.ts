@@ -16,7 +16,6 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     start_date: new Date(now - 86400000 * 14).toISOString(),
     deadline: new Date(now - 86400000).toISOString(),
     status: "completed",
-    weight: 50,
     is_recurring: false,
     is_deleted: false,
     created: new Date(now).toISOString(),
