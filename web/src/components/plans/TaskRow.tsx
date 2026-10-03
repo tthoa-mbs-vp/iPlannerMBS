@@ -18,7 +18,7 @@ const TaskRow = memo(function TaskRow({ task, isSelected, onToggle, onOpen }: Ta
       className="even:bg-slate-100 hover:bg-purple-50/30 transition-colors cursor-pointer dark:even:bg-slate-800/60 dark:hover:bg-purple-950/20"
     >
       <td className="px-2 py-3 w-10 align-middle">
-        <input type="checkbox" checked={isSelected} onClick={() => onToggle(task.id)}
+        <input type="checkbox" checked={isSelected} onChange={() => onToggle(task.id)}
           className="h-4 w-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500 dark:border-slate-600 dark:bg-slate-800" />
       </td>
       <td className="px-4 py-3">

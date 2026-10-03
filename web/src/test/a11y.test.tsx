@@ -10,7 +10,37 @@ import { usePageTitleStore } from "../stores/pageTitleStore";
  * Regression cho pass a11y (docs/review-2026-08.md §3.4):
  *  1. index.html không được khoá zoom (WCAG 1.4.4).
  *  2. Mọi nút icon-only trong Header phải có accessible name.
+ *  3. Không có input controlled (`checked`) thiếu `onChange` — React cảnh báo
+ *     "read-only field" và người dùng không đổi được trạng thái bằng bàn phím.
  */
+
+/**
+ * Thu thập thẻ `<input>` với phần thân nằm trong ngoặc nhọn: dấu `>` đầu tiên
+ * có thể thuộc arrow function (`=>`) nên không thể cắt bằng regex thường.
+ */
+function inputTags(src: string): { tag: string; index: number }[] {
+  const out: { tag: string; index: number }[] = [];
+  const re = /<input\b/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(src))) {
+    let i = m.index + m[0].length;
+    let depth = 0;
+    let end = -1;
+    for (; i < src.length; i++) {
+      const c = src[i];
+      if (c === "{") depth++;
+      else if (c === "}") depth--;
+      else if (c === ">" && depth === 0) {
+        end = i + 1;
+        break;
+      }
+    }
+    if (end === -1) continue;
+    out.push({ tag: src.slice(m.index, end), index: m.index });
+    re.lastIndex = end;
+  }
+  return out;
+}
 
 const mockUserState = {
   user: {
@@ -132,6 +162,28 @@ describe("a11y — nút icon-only trong các bảng quản trị", () => {
         if (inner.includes("{")) return false;
         return inner.replace(/<[A-Za-z][^>]*\/>/g, "").trim() === "";
       });
+    expect(offenders).toEqual([]);
+  });
+});
+
+describe("a11y — input controlled không có onChange", () => {
+  const files = [
+    "../components/plans/TaskRow.tsx",
+    "../pages/PlansPage.tsx",
+    "../pages/TaskDetailPage.tsx",
+    "../pages/PlanDetailPage.tsx",
+    "../components/admin/RoleManager.tsx",
+    "../components/admin/UserManager.tsx",
+    "../components/admin/DepartmentManager.tsx",
+    "../components/attendance/WifiConfigModal.tsx",
+  ];
+
+  it.each(files)("%s không có `checked` mà thiếu onChange/readOnly", (rel) => {
+    const src = readFileSync(resolve(__dirname, rel), "utf-8");
+    const offenders = inputTags(src)
+      .filter(({ tag }) => /\bchecked=/.test(tag))
+      .filter(({ tag }) => !/onChange|readOnly|defaultChecked/.test(tag))
+      .map(({ tag }) => tag.replace(/\s+/g, " ").slice(0, 90));
     expect(offenders).toEqual([]);
   });
 });

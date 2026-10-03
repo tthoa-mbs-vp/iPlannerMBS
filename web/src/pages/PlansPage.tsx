@@ -323,7 +323,7 @@ export default function PlansPage() {  const navigate = useNavigate();
     if (selectedPlanId === id) { setSelectedPlanId(null); setSelectedVirtualDept(null); }
   };
 
-  const togglePlanSelect = (id: string, e: React.MouseEvent) => {
+  const togglePlanSelect = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
     e.stopPropagation();
     setSelectedPlanIds((prev) => {
       const next = new Set(prev);
@@ -512,7 +512,7 @@ export default function PlansPage() {  const navigate = useNavigate();
                   }`}>
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2 min-w-0">
-                      <input type="checkbox" checked={selectedPlanIds.has(plan.id)} onClick={(e) => togglePlanSelect(plan.id, e)}
+                      <input type="checkbox" checked={selectedPlanIds.has(plan.id)} onChange={(e) => togglePlanSelect(plan.id, e)}
                         className="h-4 w-4 shrink-0 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-800 text-indigo-600 focus:ring-indigo-500" />
                       <span className="text-sm font-semibold text-slate-800 truncate dark:text-slate-100" title={plan.name}>{plan.name}</span>
                     </div>
