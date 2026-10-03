@@ -52,6 +52,31 @@ export type RoleLevel = "leadership" | "management" | "employee";
 export type ViewScope = "all" | "department" | "group" | "personal";
 export type ApprovalScope = "all" | "department" | "group";
 
+/**
+ * Cấp bậc chức vụ trong tổ chức: **số nhỏ hơn = cấp cao hơn**.
+ *
+ *   1 = Giám đốc · 2 = Phó Giám đốc · 3 = Trưởng phòng · … · N = thấp nhất
+ *
+ * Khác với `level` chỉ có 3 nhóm thô (leadership/management/employee), `rank`
+ * phân biệt được các chức vụ trong cùng một nhóm. Trường này thuần mang tính
+ * thứ tự/hiển thị — mọi quyền hạn vẫn do `level` + các cờ can_* quyết định.
+ */
+export type RoleRank = number;
+
+/**
+ * Sắp xếp chức vụ theo cấp bậc (số nhỏ trước).
+ * Chức vụ chưa gán `rank` (`undefined`/`0`) đẩy xuống cuối danh sách.
+ */
+export function compareRoleRank(a: RoleRank | undefined, b: RoleRank | undefined): number {
+  const norm = (v: RoleRank | undefined) => (v && v > 0 ? v : Number.MAX_SAFE_INTEGER);
+  return norm(a) - norm(b);
+}
+
+/** `true` khi chức vụ `a` cao hơn chức vụ `b`. Hai chức vụ chưa gán rank thì bằng nhau. */
+export function isHigherRank(a: RoleRank | undefined, b: RoleRank | undefined): boolean {
+  return compareRoleRank(a, b) < 0;
+}
+
 export interface ProfessionalGroup {
   id: string;
   code: string;
@@ -71,6 +96,8 @@ export interface Role {
   name: string;
   description?: string;
   level: RoleLevel;
+  /** Cấp bậc chức vụ, 1 = cao nhất. Xem `RoleRank`. */
+  rank?: RoleRank;
   view_scope: ViewScope;
   can_add_plans: boolean;
   can_edit_plans: boolean;

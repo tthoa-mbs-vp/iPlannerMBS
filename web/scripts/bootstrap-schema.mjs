@@ -69,6 +69,7 @@ const collections = [
     fields: [
       text("text_role_code", "code", { required: true }), text("text_role_name", "name", { required: true }),
       select("select_role_level", "level", ["leadership", "management", "employee"]),
+      number("number_role_rank", "rank", { min: 1, onlyInt: true }),
       select("select_role_scope", "view_scope", ["all", "department", "group", "personal"]),
       bool("bool_role_add_plans", "can_add_plans"), bool("bool_role_edit_plans", "can_edit_plans"), bool("bool_role_del_plans", "can_delete_plans"),
       bool("bool_role_add_tasks", "can_add_tasks"), bool("bool_role_edit_tasks", "can_edit_tasks"), bool("bool_role_del_tasks", "can_delete_tasks"),

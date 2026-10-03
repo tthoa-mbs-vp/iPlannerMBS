@@ -110,7 +110,7 @@ function _ipInList(ip, list) {
 
 // ---- role helpers (guards/users/scope/leave/kpi) ----
 function _roleInfo(actor) {
-  var info = { canManage: false, canEditTasks: false, canDeleteTasks: false, canApproveLeave: false, canViewSalary: false, isSuper: false, roleLevel: "", approvalScope: "" }
+  var info = { canManage: false, canEditTasks: false, canDeleteTasks: false, canApproveLeave: false, canViewSalary: false, isSuper: false, roleLevel: "", roleRank: 0, approvalScope: "" }
   if (!actor) return info
   try {
     info.isSuper = actor.isSuperuser && actor.isSuperuser()
@@ -128,6 +128,7 @@ function _roleInfo(actor) {
       info.canApproveLeave = role.getBool("can_approve_leave")
       info.canViewSalary = role.getBool("can_view_salary")
       info.roleLevel = role.getString("level")
+      info.roleRank = role.getInt("rank") || 0
       info.approvalScope = role.getString("approval_scope")
     }
   } catch (ex) { /* role missing -> deny by default */ }

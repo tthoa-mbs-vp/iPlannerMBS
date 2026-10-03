@@ -6,6 +6,7 @@ const ImportModal = lazy(() => import("./ImportModal"));
 import { exportToExcel, exportToCSV, exportToJSON, ROLE_EXPORT_COLUMNS } from "../../utils/importExport";
 import { errorMessage } from "../../utils/errors";
 import type { Role, RoleLevel, ViewScope, ApprovalScope } from "@shared/types";
+import { compareRoleRank } from "@shared/types";
 import { btn } from "../../utils/buttonClasses";
 import Spinner from "../shared/Spinner";
 import ManagerHeader from "../shared/ManagerHeader";
@@ -15,6 +16,9 @@ const LEVEL_OPTIONS = [
   { value: "management", label: "Quản lý" },
   { value: "employee", label: "Nhân viên" },
 ];
+
+/** Gợi ý nhanh tên chức vụ theo cấp bậc — chỉ để giải nghĩa cho admin, không gửi lên server. */
+const RANK_HINT = "1 = cao nhất (Giám đốc) · 2 = Phó · 3 = Trưởng phòng · …";
 
 const SCOPE_OPTIONS = [
   { value: "all", label: "Toàn bộ" },
@@ -61,6 +65,7 @@ export default function RoleManager() {
   const [editName, setEditName] = useState("");
   const [editDesc, setEditDesc] = useState("");
   const [editLevel, setEditLevel] = useState("employee");
+  const [editRank, setEditRank] = useState("4");
   const [editScope, setEditScope] = useState("personal");
   const [editApprovalScope, setEditApprovalScope] = useState("department");
   const [editPerms, setEditPerms] = useState({
@@ -74,14 +79,14 @@ export default function RoleManager() {
 
   const startNew = () => {
     setEditingId("new");
-    setEditCode(""); setEditName(""); setEditDesc(""); setEditLevel("employee"); setEditScope("personal"); setEditApprovalScope("department");
+    setEditCode(""); setEditName(""); setEditDesc(""); setEditLevel("employee"); setEditRank("4"); setEditScope("personal"); setEditApprovalScope("department");
     setEditPerms({ can_add_plans: false, can_edit_plans: false, can_delete_plans: false, can_add_tasks: false, can_edit_tasks: false, can_delete_tasks: false, can_manage: false, can_approve_leave: false, can_view_salary: false });
     setError("");
   };
 
   const startEdit = (r: Role) => {
     setEditingId(r.id);
-    setEditCode(r.code); setEditName(r.name); setEditDesc(r.description || ""); setEditLevel(r.level); setEditScope(r.view_scope); setEditApprovalScope(r.approval_scope || "department");
+    setEditCode(r.code); setEditName(r.name); setEditDesc(r.description || ""); setEditLevel(r.level); setEditRank(r.rank ? String(r.rank) : ""); setEditScope(r.view_scope); setEditApprovalScope(r.approval_scope || "department");
     setEditPerms({
       can_add_plans: r.can_add_plans, can_edit_plans: r.can_edit_plans, can_delete_plans: r.can_delete_plans,
       can_add_tasks: r.can_add_tasks, can_edit_tasks: r.can_edit_tasks, can_delete_tasks: r.can_delete_tasks,
@@ -97,7 +102,13 @@ export default function RoleManager() {
   const handleSave = async () => {
     if (!editCode || !editName) { setError("Vui lòng nhập mã và tên"); return; }
     setError("");
-    const data = { code: editCode, name: editName, description: editDesc || undefined, level: editLevel as RoleLevel, view_scope: editScope as ViewScope, approval_scope: editPerms.can_approve_leave ? (editApprovalScope as ApprovalScope) : undefined, ...editPerms };
+    // rank rỗng -> không gửi field, để giữ nguyên giá trị server đã backfill.
+    const rankNum = editRank.trim() === "" ? null : Number(editRank);
+    if (rankNum !== null && (!Number.isInteger(rankNum) || rankNum < 1)) {
+      setError("Cấp bậc phải là số nguyên từ 1 trở lên (1 = cao nhất)");
+      return;
+    }
+    const data = { code: editCode, name: editName, description: editDesc || undefined, level: editLevel as RoleLevel, rank: rankNum ?? undefined, view_scope: editScope as ViewScope, approval_scope: editPerms.can_approve_leave ? (editApprovalScope as ApprovalScope) : undefined, ...editPerms };
     try {
       if (editingId === "new") await createRole.mutateAsync(data);
       else if (editingId) await updateRole.mutateAsync({ id: editingId, data });
@@ -111,14 +122,20 @@ export default function RoleManager() {
 
   const isSaving = createRole.isPending || updateRole.isPending;
 
+  // Luôn sắp xếp theo cấp bậc (nhỏ -> lớn, tức cao -> thấp) để danh sách đọc
+  // được như một sơ đồ tổ chức. Chức vụ chưa gán rank đẩy xuống cuối.
   const filteredRoles = useMemo(() => {
     if (!roles) return [];
     const q = search.trim().toLowerCase();
-    if (!q) return roles;
-    return roles.filter((r) =>
-      r.code.toLowerCase().includes(q) ||
-      r.name.toLowerCase().includes(q) ||
-      (r.description || "").toLowerCase().includes(q)
+    const matched = q
+      ? roles.filter((r) =>
+          r.code.toLowerCase().includes(q) ||
+          r.name.toLowerCase().includes(q) ||
+          (r.description || "").toLowerCase().includes(q)
+        )
+      : roles;
+    return [...matched].sort(
+      (a, b) => compareRoleRank(a.rank, b.rank) || a.name.localeCompare(b.name, "vi")
     );
   }, [roles, search]);
 
@@ -177,6 +194,7 @@ export default function RoleManager() {
               <tr className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/40 dark:to-orange-900/40">
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-amber-700 dark:text-amber-300">Mã</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-amber-700 dark:text-amber-300">Tên</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase text-amber-700 dark:text-amber-300" title={RANK_HINT}>Cấp bậc</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-amber-700 dark:text-amber-300">Mô tả</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-amber-700 dark:text-amber-300">Cấp</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-amber-700 dark:text-amber-300">Phạm vi</th>
@@ -189,6 +207,7 @@ export default function RoleManager() {
                 <InlineRoleRow
                   code={editCode} onCodeChange={setEditCode}
                   name={editName} onNameChange={setEditName}
+                  rank={editRank} onRankChange={setEditRank}
                   desc={editDesc} onDescChange={setEditDesc}
                   level={editLevel} onLevelChange={setEditLevel}
                   scope={editScope} onScopeChange={setEditScope}
@@ -202,6 +221,7 @@ export default function RoleManager() {
                     key={r.id}
                     code={editCode} onCodeChange={setEditCode}
                     name={editName} onNameChange={setEditName}
+                  rank={editRank} onRankChange={setEditRank}
                     desc={editDesc} onDescChange={setEditDesc}
                     level={editLevel} onLevelChange={setEditLevel}
                     scope={editScope} onScopeChange={setEditScope}
@@ -213,6 +233,7 @@ export default function RoleManager() {
                     <td className="px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200">{r.code}</td>
                     <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{r.name}</td>
                     <td className="px-4 py-3 text-sm text-slate-500 max-w-[200px] truncate dark:text-slate-300" title={r.description || "—"}>{r.description || <span className="text-slate-300 italic dark:text-slate-500">—</span>}</td>
+                    <td className="px-4 py-3 text-center text-sm font-semibold text-slate-700 dark:text-slate-200">{r.rank ?? <span className="text-slate-300 italic dark:text-slate-500" title="Chưa gán cấp bậc">—</span>}</td>
                     <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{LEVEL_OPTIONS.find(o => o.value === r.level)?.label}</td>
                     <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{SCOPE_OPTIONS.find(o => o.value === r.view_scope)?.label}</td>
                     <td className="px-4 py-3 text-sm">
@@ -260,13 +281,14 @@ export default function RoleManager() {
 }
 
 function InlineRoleRow({
-  code, onCodeChange, name, onNameChange, desc, onDescChange,
+  code, onCodeChange, name, onNameChange, rank, onRankChange, desc, onDescChange,
   level, onLevelChange, scope, onScopeChange,
   approvalScope, onApprovalScopeChange,
   perms, onPermsChange, error, isSaving, onSave, onCancel,
 }: {
   code: string; onCodeChange: (v: string) => void;
   name: string; onNameChange: (v: string) => void;
+  rank: string; onRankChange: (v: string) => void;
   desc: string; onDescChange: (v: string) => void;
   level: string; onLevelChange: (v: string) => void;
   scope: string; onScopeChange: (v: string) => void;
@@ -279,7 +301,7 @@ function InlineRoleRow({
     <>
       {error && (
         <tr className="border-b bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/40 dark:to-orange-900/40">
-          <td colSpan={7} className="px-4 pt-2 pb-0"><div className="rounded bg-red-50 p-2 text-xs text-red-600 dark:bg-red-900/40 dark:text-red-300">{error}</div></td>
+          <td colSpan={8} className="px-4 pt-2 pb-0"><div className="rounded bg-red-50 p-2 text-xs text-red-600 dark:bg-red-900/40 dark:text-red-300">{error}</div></td>
         </tr>
       )}
       <tr className="border-b bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/40 dark:to-orange-900/40">
@@ -292,6 +314,12 @@ function InlineRoleRow({
           <label className="mb-1 block text-xs font-medium text-amber-700 dark:text-amber-300">Tên *</label>
           <input value={name} onChange={(e) => onNameChange(e.target.value)}
             className="w-full rounded border border-amber-300 px-2 py-1 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-200 dark:placeholder:text-slate-500" />
+        </td>
+        <td className="px-4 py-2">
+          <label className="mb-1 block text-xs font-medium text-amber-700 dark:text-amber-300">Cấp bậc</label>
+          <input type="number" min={1} step={1} value={rank} placeholder="—" title={RANK_HINT}
+            onChange={(e) => onRankChange(e.target.value)}
+            className="w-full rounded border border-amber-300 px-2 py-1 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-200" />
         </td>
         <td className="px-4 py-2">
           <label className="mb-1 block text-xs font-medium text-amber-700 dark:text-amber-300">Mô tả</label>
@@ -344,8 +372,8 @@ function InlineRoleRow({
         <td className="px-4 py-2 text-right">
           <label className="mb-1 block text-xs font-medium text-amber-700 dark:text-amber-300">Thao tác</label>
           <div className="flex items-center justify-end gap-1 pt-1">
-            <button type="button" onClick={() => onSave()} disabled={isSaving} className={btn.save}><Check className="h-4 w-4" /></button>
-            <button type="button" onClick={onCancel} className={btn.cancel}><X className="h-4 w-4" /></button>
+            <button type="button" onClick={() => onSave()} disabled={isSaving} aria-label="Lưu" title="Lưu" className={btn.save}><Check className="h-4 w-4" /></button>
+            <button type="button" onClick={onCancel} aria-label="Huỷ" title="Huỷ" className={btn.cancel}><X className="h-4 w-4" /></button>
           </div>
         </td>
       </tr>

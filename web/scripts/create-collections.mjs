@@ -11,7 +11,12 @@ console.log("Authenticated");
 // PB 0.39: all field options are TOP-LEVEL on the field object, not nested in `options`
 const U = "_pb_users_auth_";
 const txt = (name, required) => ({ name, type: "text", required: !!required });
-const num = (name, required) => ({ name, type: "number", required: !!required });
+// `required` accepts a boolean (legacy call sites) or an options object.
+const num = (name, required) => {
+  const opts = typeof required === "object" && required !== null ? required : { required: !!required };
+  const { required: isRequired = false, min = null, max = null, onlyInt = false } = opts;
+  return { name, type: "number", required: !!isRequired, min, max, onlyInt };
+};
 const bool_ = (name, required) => ({ name, type: "bool", required: !!required });
 const dt = (name, required) => ({ name, type: "date", required: !!required });
 const fl = (name) => ({ name, type: "file" });
@@ -36,6 +41,7 @@ const ALL = [
     deleteRule: "@request.auth.role_id.can_manage = true",
     fields: [txt("code", 1), txt("name", 1), txt("description"),
       sel("level", ["leadership", "management", "employee"], 1),
+      num("rank", { min: 1, onlyInt: true }),
       sel("view_scope", ["all", "department", "group", "personal"], 1),
       bool_("can_add_plans"), bool_("can_edit_plans"), bool_("can_delete_plans"),
       bool_("can_add_tasks"), bool_("can_edit_tasks"), bool_("can_delete_tasks"),

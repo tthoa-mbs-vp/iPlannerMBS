@@ -38,7 +38,7 @@
 | **professional_groups** | base | 7 | create · update · delete | Đọc mọi user; ghi can_manage |
 | **proposals** | base | 10 | create · update · delete | createRule owner-bound (requester_id) |
 | **qualifications** | base | 8 | create · update · delete | Như salary_records (HR-view), ghi can_manage. |
-| **roles** | base | 18 | create · update · delete | Chứa cờ quyền (can_*) + view_scope + approval_scope — nguồn quyết định rule/guard/scope |
+| **roles** | base | 19 | create · update · delete | Chứa cờ quyền (can_*) + view_scope + approval_scope — nguồn quyết định rule/guard/scope |
 | **salary_records** | base | 6 | create · update · delete | `hr.pb.js` enforce view_scope theo can_view_salary (department/all). |
 | **system_logs** | base | 7 | ✗create · ✗update · ✗delete | Audit server-side: create/update/delete đều null — chỉ server `$app.save()` ghi (chống giả mạo log) |
 | **tasks** | base | 26 | create · update · delete | Guard `guards.pb.js` (update): executor chỉ được đổi status (in_progress/pending_approval); supervisor chỉ đổi status/rating/rated_*/completed_at/description/name; cấm tự rate (A10); **completed_at do server stamp = now() khi chuyển sang completed (M8)**, không sửa được khi đã completed, xóa khi rời completed |
@@ -694,7 +694,7 @@
 
 ## roles — base
 
-**Mô tả:** Chứa cờ quyền (can_*) + view_scope + approval_scope — nguồn quyết định rule/guard/scope. Tạo/sửa/xóa chỉ can_manage.
+**Mô tả:** Chứa cờ quyền (can_*) + view_scope + approval_scope — nguồn quyết định rule/guard/scope. Tạo/sửa/xóa chỉ can_manage. Thêm `rank` để phân cấp chức vụ (1 = cao nhất).
 
 ### API rules
 
@@ -714,6 +714,7 @@
 | `code` | Text | ✅ | — |
 | `name` | Text | ✅ | — |
 | `level` | Select | ✅ | giá trị: leadership · management · employee |
+| `rank` | Number | — | **Cấp bậc chức vụ, số nhỏ = cấp cao hơn** (1 = Giám đốc, 2 = Phó, 3 = Trưởng phòng…). min 1; số nguyên; thêm ở migration `1799200000_add_role_rank.js`. Thuần thứ tự/hiển thị — **không tham gia phân quyền**, quyền vẫn do `level` + các cờ `can_*` quyết định |
 | `view_scope` | Select | ✅ | giá trị: all · department · group · personal |
 | `can_add_plans` | Bool | — | — |
 | `can_edit_plans` | Bool | — | — |

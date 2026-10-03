@@ -33,22 +33,24 @@ for (const d of depts) {
 }
 
 // 2. Create roles
+// `rank` = cấp bậc chức vụ, số nhỏ hơn là cấp cao hơn (1 = Giám đốc).
+// `level` vẫn là nhóm thô dùng cho phân quyền.
 log("\nCreating roles...");
 const roles = [
   {
-    code: "ADMIN", name: "Quản trị viên", level: "leadership", view_scope: "all",
+    code: "ADMIN", name: "Quản trị viên", level: "leadership", rank: 1, view_scope: "all",
     can_add_plans: true, can_edit_plans: true, can_delete_plans: true,
     can_add_tasks: true, can_edit_tasks: true, can_delete_tasks: true,
     can_manage: true,
   },
   {
-    code: "TRUONGPHONG", name: "Trưởng phòng", level: "management", view_scope: "department",
+    code: "TRUONGPHONG", name: "Trưởng phòng", level: "management", rank: 3, view_scope: "department",
     can_add_plans: true, can_edit_plans: true, can_delete_plans: false,
     can_add_tasks: true, can_edit_tasks: true, can_delete_tasks: false,
     can_manage: false,
   },
   {
-    code: "NV", name: "Nhân viên", level: "employee", view_scope: "personal",
+    code: "NV", name: "Nhân viên", level: "employee", rank: 4, view_scope: "personal",
     can_add_plans: false, can_edit_plans: false, can_delete_plans: false,
     can_add_tasks: false, can_edit_tasks: false, can_delete_tasks: false,
     can_manage: false,
