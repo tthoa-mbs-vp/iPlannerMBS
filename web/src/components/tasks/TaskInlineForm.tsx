@@ -138,7 +138,7 @@ export default function TaskInlineForm({ initialValues, onSubmit, onCancel, pend
     <form onSubmit={handleSubmit} className={`rounded-xl border ${col.border} ${col.bg} p-3 space-y-2`}>
       <div className="flex items-center justify-between">
         <span className={`font-bold ${col.label} ${dim.heading}`}>{title || "Thêm nhiệm vụ mới"}</span>
-        <button type="button" onClick={onCancel}
+        <button type="button" onClick={onCancel} aria-label="Đóng" title="Đóng"
           className="rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200">
           <X className="h-3.5 w-3.5" />
         </button>

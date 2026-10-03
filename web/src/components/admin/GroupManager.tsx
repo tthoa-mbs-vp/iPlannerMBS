@@ -288,8 +288,8 @@ function InlineGroupRow({
         <td className="px-4 py-2 text-right">
           <label className="mb-1 block text-xs font-medium text-teal-700 dark:text-teal-300">Thao tác</label>
           <div className="flex items-center justify-end gap-1 pt-1">
-            <button type="button" onClick={() => onSave()} disabled={isSaving} className={btn.save}><Check className="h-4 w-4" /></button>
-            <button type="button" onClick={onCancel} className={btn.cancel}><X className="h-4 w-4" /></button>
+            <button type="button" onClick={() => onSave()} disabled={isSaving} aria-label="Lưu" title="Lưu" className={btn.save}><Check className="h-4 w-4" /></button>
+            <button type="button" onClick={onCancel} aria-label="Huỷ" title="Huỷ" className={btn.cancel}><X className="h-4 w-4" /></button>
           </div>
         </td>
       </tr>

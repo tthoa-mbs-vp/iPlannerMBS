@@ -288,8 +288,8 @@ export default function UserManager() {
                   <td className="px-4 py-2 text-right">
                     <label className="mb-1 block text-xs font-medium text-violet-700 dark:text-violet-300">Thao tác</label>
                     <div className="flex items-center justify-end gap-1 pt-1">
-                      <button onClick={handleSave} disabled={isSaving} className={btn.save}><Check className="h-4 w-4" /></button>
-                      <button onClick={cancelEdit} className={btn.cancel}><X className="h-4 w-4" /></button>
+                      <button onClick={handleSave} disabled={isSaving} aria-label="Lưu" title="Lưu" className={btn.save}><Check className="h-4 w-4" /></button>
+                      <button onClick={cancelEdit} aria-label="Huỷ" title="Huỷ" className={btn.cancel}><X className="h-4 w-4" /></button>
                     </div>
                   </td>
                 </tr>
@@ -344,8 +344,8 @@ export default function UserManager() {
                       <td className="px-4 py-2 text-right">
                         <label className="mb-1 block text-xs font-medium text-violet-700 dark:text-violet-300">Thao tác</label>
                         <div className="flex items-center gap-1 pt-1">
-                          <button onClick={handleSave} disabled={isSaving} className={btn.save}><Check className="h-4 w-4" /></button>
-                          <button onClick={cancelEdit} className={btn.cancel}><X className="h-4 w-4" /></button>
+                          <button onClick={handleSave} disabled={isSaving} aria-label="Lưu" title="Lưu" className={btn.save}><Check className="h-4 w-4" /></button>
+                          <button onClick={cancelEdit} aria-label="Huỷ" title="Huỷ" className={btn.cancel}><X className="h-4 w-4" /></button>
                         </div>
                       </td>
                     </tr>

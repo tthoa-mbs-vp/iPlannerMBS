@@ -50,8 +50,8 @@ export default [
     languageOptions: { globals: { ...globals.jest } },
   },
   {
-    // Test chạy trong Node (vitest node env) và đọc file backend từ disk.
-    files: ["src/test/pbHooksHelpers.test.ts"],
+    // Test đọc file từ disk nên cần global của Node (__dirname, readFileSync).
+    files: ["src/test/pbHooksHelpers.test.ts", "src/test/a11y.test.tsx"],
     languageOptions: { globals: { ...globals.node } },
   },
   {

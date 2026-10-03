@@ -39,7 +39,7 @@ export default function Header({ onToggleSidebar }: { onToggleSidebar: () => voi
         <div className="hidden sm:block h-6 w-px bg-indigo-100" />
         {backTo && (
           typeof backTo === "string" ? (
-            <Link to={backTo} className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 transition-colors dark:text-slate-400 dark:hover:bg-slate-800">
+            <Link to={backTo} aria-label="Quay lại" className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 transition-colors dark:text-slate-400 dark:hover:bg-slate-800">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           ) : (
@@ -64,6 +64,9 @@ export default function Header({ onToggleSidebar }: { onToggleSidebar: () => voi
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
+            aria-haspopup="true"
+            aria-expanded={menuOpen}
+            aria-label={user ? `Tài khoản ${user.name || user.email}` : "Tài khoản"}
             className="flex items-center gap-3 rounded-lg transition-all duration-200 hover:bg-slate-50 px-2 py-1.5 dark:hover:bg-slate-800"
           >
             <div className="text-right hidden sm:block">
@@ -77,7 +80,7 @@ export default function Header({ onToggleSidebar }: { onToggleSidebar: () => voi
             {avatarUrl ? (
               <img
                 src={avatarUrl}
-                alt="avatar"
+                alt={`Ảnh đại diện ${user?.name || user?.email || ""}`}
                 className="h-9 w-9 rounded-full object-cover ring-2 ring-indigo-200/50 dark:ring-indigo-500/30 shadow-md"
               />
             ) : (
@@ -87,6 +90,9 @@ export default function Header({ onToggleSidebar }: { onToggleSidebar: () => voi
             )}
           </button>
 
+          {/* Không dùng role="menu" cho khối bên dưới: khi đó các phần tử con
+              bắt buộc phải là menuitem, mà nút giao diện / đăng xuất ở đây
+              không thuộc mô hình menu chuẩn nên sẽ vi phạm ARIA. */}
           {menuOpen && (
             <div className="absolute right-0 top-full mt-2 w-56 overflow-hidden rounded-2xl glass-panel animate-in fade-in slide-in-from-top-2">
               <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
@@ -113,6 +119,8 @@ export default function Header({ onToggleSidebar }: { onToggleSidebar: () => voi
                     return (
                       <button key={opt.value} onClick={() => setMode(opt.value)}
                         title={opt.label}
+                        aria-label={`Giao diện ${opt.label.toLowerCase()}`}
+                        aria-pressed={mode === opt.value}
                         className={`flex flex-1 items-center justify-center rounded-md px-2 py-1.5 transition-colors ${
                           mode === opt.value
                             ? "bg-white text-indigo-600 shadow-sm dark:bg-slate-600 dark:text-indigo-300"

@@ -2,7 +2,10 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <!-- Không khoá zoom: maximum-scale=1.0 + user-scalable=no vi phạm WCAG 1.4.4,
+         người khiếm thị không thể phóng để đọc chữ. viewport-fit=cover cho
+         vùng an toàn trên iPhone có tai notch. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#4f46e5" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />

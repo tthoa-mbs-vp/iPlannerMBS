@@ -141,7 +141,7 @@ export default function LeaveInlineForm({ initialValues, onSubmit, onCancel, pen
     <form onSubmit={handleSubmit} className="rounded-xl border border-indigo-300 bg-indigo-50/40 p-3 space-y-2.5 dark:border-indigo-800 dark:bg-indigo-950/40">
       <div className="flex items-center justify-between">
         <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300">{title || "Thêm đơn xin nghỉ phép"}</span>
-        <button type="button" onClick={onCancel}
+        <button type="button" onClick={onCancel} aria-label="Đóng" title="Đóng"
           className="rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-300">
           <X className="h-3.5 w-3.5" />
         </button>
