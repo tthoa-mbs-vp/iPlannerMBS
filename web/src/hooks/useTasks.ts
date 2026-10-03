@@ -31,6 +31,10 @@ export function useTasks(filter?: string) {
         filter: addSoftDeleteFilter(filter),
         fields: LIST_FIELDS,
         expand: "plan_id,host_dept_id,executor_id,supervisor_id",
+        // Bắt buộc: nếu không, PocketBase tự suy ra cancelKey là
+        // method + path (KHÔNG kèm query string), nên mọi query của cùng
+        // collection sẽ hủy lẫn nhau dù filter khác nhau.
+        requestKey: `tasks-${filter ?? ""}`,
       });
       return records;
     },
@@ -67,6 +71,7 @@ export function useTrashedTasks() {
         filter: "is_deleted=true",
         fields: LIST_FIELDS,
         expand: "plan_id,executor_id,supervisor_id",
+        requestKey: "tasks-trashed",
       });
     },
     staleTime: 30_000,

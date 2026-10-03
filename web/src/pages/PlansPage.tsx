@@ -105,6 +105,10 @@ export default function PlansPage() {  const navigate = useNavigate();
         sort: "-created",
         filter,
         fields: "id,plan_id",
+        // Bắt buộc: nếu không, PocketBase tự suy ra cancelKey là
+        // method + path (KHÔNG kèm query string), nên mọi query của cùng
+        // collection sẽ hủy lẫn nhau dù filter khác nhau.
+        requestKey: `tasks-personal-${user!.id}`,
       });
     },
     enabled: viewScope === "personal",

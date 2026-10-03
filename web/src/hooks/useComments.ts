@@ -44,6 +44,10 @@ export function useComments(taskId: string) {
         filter: `task_id="${taskId}"`,
         sort: "-created",
         expand: "user_id,quote_id.user_id",
+        // Bắt buộc: nếu không, PocketBase tự suy ra cancelKey là
+        // method + path (KHÔNG kèm query string), nên mọi query của cùng
+        // collection sẽ hủy lẫn nhau dù filter khác nhau.
+        requestKey: `comments-task-${taskId}`,
       });
       return records;
     },
@@ -84,6 +88,7 @@ export function useAllComments() {
       return pb.collection("comments").getFullList<Comment>(200, {
         sort: "-created",
         expand: "user_id",
+        requestKey: "comments-all",
       });
     },
     staleTime: 10_000,

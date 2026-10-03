@@ -19,6 +19,10 @@ export function usePlans(filter?: string) {
         filter: addSoftDeleteFilter(filter),
         fields: LIST_FIELDS,
         expand: "leader_id,host_dept_id,partner_dept_ids,group_id",
+        // Bắt buộc: nếu không, PocketBase tự suy ra cancelKey là
+        // method + path (KHÔNG kèm query string), nên mọi query của cùng
+        // collection sẽ hủy lẫn nhau dù filter khác nhau.
+        requestKey: `plans-${filter ?? ""}`,
       });
       return records;
     },
@@ -55,6 +59,7 @@ export function useTrashedPlans() {
         filter: "is_deleted=true",
         fields: LIST_FIELDS,
         expand: "leader_id,host_dept_id,group_id",
+        requestKey: "plans-trashed",
       });
     },
     staleTime: 30_000,
