@@ -1,4 +1,3 @@
-import JSZip from "jszip";
 import { getFileUrl } from "../api/client";
 import { TASK_STATUS_LABELS } from "./constants";
 import { exportHtmlToPdf, type PdfInfoBlock, type PdfSummaryItem } from "./exportPdf";
@@ -158,6 +157,9 @@ export async function exportAttachmentsZip(
   attachments: TaskAttachment[],
   filename: string
 ): Promise<void> {
+  // JSZip ~100 KB: chỉ nạp khi thật sự đóng gói file, không kéo theo mỗi
+  // lần mở trang chi tiết nhiệm vụ.
+  const { default: JSZip } = await import("jszip");
   const zip = new JSZip();
   for (const att of attachments) {
     const folder = sanitizeFolderName(att.taskName);
