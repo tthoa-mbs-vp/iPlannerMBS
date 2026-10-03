@@ -50,6 +50,11 @@ export default [
     languageOptions: { globals: { ...globals.jest } },
   },
   {
+    // Test chạy trong Node (vitest node env) và đọc file backend từ disk.
+    files: ["src/test/pbHooksHelpers.test.ts"],
+    languageOptions: { globals: { ...globals.node } },
+  },
+  {
     files: ["**/*.mjs", "scripts/**/*.js", "vite.config.*"],
     languageOptions: { globals: { ...globals.node } },
     rules: {

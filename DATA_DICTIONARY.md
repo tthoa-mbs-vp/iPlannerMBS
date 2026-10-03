@@ -382,7 +382,7 @@
 | `base_score` | Number | — | — |
 | `difficulty_coeff` | Number | — | — |
 | `progress_score` | Number | — | — |
-| `result_rating` | Number | — | — |
+| `result_rating` | Number | — | copy nguyên vẹn từ `tasks.rating` (thang 1–10) |
 | `final_score` | Number | — | — |
 | `created` | Autodate | — | tự set khi tạo |
 | `updated` | Autodate | — | tự set khi tạo + tự set khi sửa |
@@ -824,7 +824,7 @@
 | `is_high_impact` | Bool | — | — |
 | `coordinating_dept_id` | Relation | — | → departments; một |
 | `completed_at` | Date | — | — |
-| `rating` | Number | — | min 1; max 5; số nguyên |
+| `rating` | Number | — | min 1; max 10; số nguyên (**thang 1–10**, nâng từ max 5 ở migration `1799100000_widen_task_rating_to_10.js`) |
 | `rated_by_id` | Relation | — | → users; một |
 | `rated_at` | Date | — | — |
 | `created` | Autodate | — | tự set khi tạo |

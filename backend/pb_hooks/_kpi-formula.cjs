@@ -18,12 +18,19 @@
 //     completed_at,    // ISO string | null
 //     updated,         // ISO string (fallback completion stamp)
 //     deadline,        // ISO string | null
-//     rating,          // number 0..5
+//     rating,          // number 0..10 (10-point scale)
 //   })
 //
 // Returns the same shape that kpi_scores records store:
 //   { base_score, difficulty_coeff, max_converted_score, progress_score,
 //     result_rating, final_score }
+//
+// The 1–10 rating scale is enforced by the tasks.rating schema field (min 1,
+// max 10, integer), widened from the old max 5 by migration
+// 1799100000_widen_task_rating_to_10.js. Rows written before that migration keep
+// their 1–5 value on purpose: under the /10 divisor a legacy 5 scores exactly
+// half the result weight, which is the honest reading of "rated on the old
+// 5-point scale". Rewriting history would corrupt already-reported KPIs.
 //
 // If you change the formula, update BOTH callers' expectations AND the test
 // vectors in backend/test/helpers_logic.test.js + web/src/test/kpi.test.ts.
@@ -68,7 +75,11 @@
     }
 
     var rating = Number(input.rating) || 0
-    var resultLevel = rating / 5.0
+    // Rating uses a 10-point scale (0..10). Records written before the scale
+    // migration hold 0..5 values; those land in the lower half of the result
+    // contribution rather than being rescaled, which is the intended behaviour
+    // for historical data — see web/src/test/kpiRatingScale.test.ts.
+    var resultLevel = rating / 10.0
 
     var round1 = function (v) { return Math.round(v * 10) / 10 }
 

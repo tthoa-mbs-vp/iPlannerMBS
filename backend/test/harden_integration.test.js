@@ -259,13 +259,43 @@ async function main() {
     // KPI formula parity: the score must come from the SHARED _kpi-formula.cjs
     // module (require(__hooks + "/_kpi-formula.cjs")) — normal task, rating 5,
     // completed_at stamped NOW vs the 2026-06-30 deadline -> >5 days late ->
-    // schedule 0% -> final = 10 * 0.7 * (5/5) = 7.0
+    // schedule 0% -> final = 10 * (0.7 * 5/10) = 3.5  (rating is on a 1–10 scale)
     assert.strictEqual(kpiAdmin.base_score, 10, "shared formula: base 10 for normal task")
     assert.strictEqual(kpiAdmin.difficulty_coeff, 1.0, "shared formula: difficulty 1.0 (no partner dept)")
     assert.strictEqual(kpiAdmin.progress_score, 0, "shared formula: >5 days late -> schedule 0%")
     assert.strictEqual(kpiAdmin.result_rating, 5, "shared formula: rating preserved")
-    assert.strictEqual(kpiAdmin.final_score, 7.0, "shared formula: 10*0.7*1.0 = 7.0")
+    assert.strictEqual(kpiAdmin.final_score, 3.5, "shared formula: 10*(0.3*0 + 0.7*0.5) = 3.5")
     ok("KPI score computed by the shared _kpi-formula.cjs module (backend path parity)")
+
+    // ----------------------------------------------- K1 — thang KPI 1–10
+    console.log("\nK1 — tasks.rating phải nhận được thang 1–10:")
+    const ratingField = (await expectOk(baseUrl, "GET", "/api/collections/tasks", { token: adminToken }))
+      .fields.find((f) => f.name === "rating")
+    assert.ok(ratingField, "tasks.rating field must exist")
+    assert.strictEqual(ratingField.min, 1, "tasks.rating min = 1")
+    assert.strictEqual(ratingField.max, 10, "tasks.rating max = 10 (migration 1799100000)")
+    ok("tasks.rating schema allows 1–10")
+
+    // These live in planB (userB's out-of-scope plan) on purpose: adding tasks to
+    // planC would break the exact-set scope assertions further down (H2/M4).
+    const maxRated = await expectOk(baseUrl, "POST", "/api/collections/tasks/records", {
+      token: adminToken,
+      body: { name: "K1 rated 10", plan_id: planB.id, category: "normal", host_dept_id: deptB.id, executor_id: userB.id, supervisor_id: userB.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", status: "completed", rating: 10, is_recurring: false },
+    })
+    assert.strictEqual(maxRated.rating, 10, "rating 10 must be accepted (was impossible when max = 5)")
+    const maxKpi = (await list("kpi_scores", adminToken)).filter((k) => k.task_id === maxRated.id)[0]
+    assert.ok(maxKpi, "K1 rated-10 task gets a KPI score")
+    assert.strictEqual(maxKpi.result_rating, 10, "result_rating mirrors the full 10")
+    // late (>5 days) + full marks -> 10 * (0.3*0 + 0.7*1) = 7.0
+    assert.strictEqual(maxKpi.final_score, 7.0, "rating 10 on a late task scores 7.0")
+    ok("rating 10 accepted end-to-end and scored at the top of the scale")
+
+    const overMax = await http(baseUrl, "POST", "/api/collections/tasks/records", {
+      token: adminToken,
+      body: { name: "K1 over max", plan_id: planB.id, category: "normal", host_dept_id: deptB.id, executor_id: userB.id, supervisor_id: userB.id, collaborator_ids: [], start_date: "2026-01-01 00:00:00.000Z", deadline: "2026-06-30 00:00:00.000Z", rating: 11, is_recurring: false },
+    })
+    assert.strictEqual(overMax.status, 400, "rating 11 must be rejected by the schema (got " + overMax.status + ")")
+    ok("rating above 10 is rejected server-side")
 
     // ================================================================ H2
     console.log("\nH2 — fail-closed scope: user without a loadable role is narrowed to personal:")

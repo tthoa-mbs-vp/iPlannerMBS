@@ -280,7 +280,8 @@ Task chuyển trạng thái (guard chặn field ngoài phạm vi)
 plan.progress = trung bình cộng % tiến độ các task (completed=100, pending=75, in_progress=50)
 plan.status: tất cả completed → "completed"; có task chạy → "in_progress";
   completed + còn task chưa xong → quay lại "in_progress"; paused/cancelled không bao giờ bị tự ghi đè
-KPI: base(10/12 đột xuất) × (0.3×schedule + 0.7×rating) × hệ số khó (1.0/1.1/1.2)
+KPI: base(10/12 đột xuất) × (0.3×schedule + 0.7×rating/10) × hệ số khó (1.0/1.1/1.2)
+  rating: thang 1–10 (nhãn + màu ở web/src/utils/constants.ts, RATING_LABELS/RATING_COLORS/RATING_SCALE)
 ```
 
 ```mermaid

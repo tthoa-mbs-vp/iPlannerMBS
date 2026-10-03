@@ -5,6 +5,7 @@ import { pb, getUserAvatar } from "../api/client";
 import { useEmployeeProfile, useUpsertEmployeeProfile } from "../hooks/useEmployeeProfiles";
 import { useAuthStore } from "../stores/authStore";
 import { usePageTitleStore } from "../stores/pageTitleStore";
+import { useToastStore } from "../stores/toastStore";
 import {
   User as UserIcon, Briefcase, CreditCard, Pencil, Save, Loader2, GraduationCap, DollarSign, Key, UserCog,
 } from "lucide-react";
@@ -71,6 +72,7 @@ function CardSection({ icon: Icon, title, gradient, children, actions }: { icon:
 
 export default function HRDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const addToast = useToastStore((s) => s.addToast);
   const authUser = useAuthStore((s) => s.user);
   const role = authUser?.expand?.role_id;
   const canManage = !!role?.can_manage;
@@ -154,16 +156,16 @@ export default function HRDetailPage() {
       if (isSelf) await checkAuth();
       qc.invalidateQueries({ queryKey: ["user", id] });
     } catch (err: unknown) {
-      alert(errorMessage(err, "Lỗi"));
+      addToast("error", errorMessage(err, "Lỗi"));
     }
     setSaving(false);
   };
 
   const handleChangePassword = async () => {
     if (!id) return;
-    if (!oldPassword || !newPassword) { alert("Vui lòng nhập đầy đủ mật khẩu"); return; }
+    if (!oldPassword || !newPassword) { addToast("error", "Vui lòng nhập đầy đủ mật khẩu"); return; }
     const pwError = validatePassword(newPassword);
-    if (pwError) { alert(pwError); return; }
+    if (pwError) { addToast("error", pwError); return; }
     setPwSaving(true);
     try {
       await pb.collection("users").update(id, {
@@ -175,7 +177,7 @@ export default function HRDetailPage() {
       setNewPassword("");
       setChangingPw(false);
     } catch (err: unknown) {
-      alert(errorMessage(err, "Lỗi khi đổi mật khẩu"));
+      addToast("error", errorMessage(err, "Lỗi khi đổi mật khẩu"));
     }
     setPwSaving(false);
   };

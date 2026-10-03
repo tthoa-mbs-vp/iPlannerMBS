@@ -2,6 +2,7 @@ import { lazy, Suspense, useState } from "react";
 import { useAdminUsersPaginated, useDepartments, useRoles } from "../../hooks/useDepartments";
 import { useProfessionalGroups } from "../../hooks/useProfessionalGroups";
 import { useDebounce } from "../../hooks/useDebounce";
+import { useToastStore } from "../../stores/toastStore";
 import { errorMessage } from "../../utils/errors";
 import { pb } from "../../api/client";
 
@@ -37,6 +38,7 @@ export default function UserManager() {
   const { data: roles } = useRoles();
   const { data: groups } = useProfessionalGroups();
   const qc = useQueryClient();
+  const addToast = useToastStore((s) => s.addToast);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editEmail, setEditEmail] = useState("");
@@ -166,7 +168,7 @@ export default function UserManager() {
       setAdminCreds(null);
       setResetPassword("");
       setResetPasswordConfirm("");
-    } catch (err: unknown) { alert(errorMessage(err, "Thao tác thất bại")); }
+    } catch (err: unknown) { addToast("error", errorMessage(err, "Thao tác thất bại")); }
     finally { setAdminSaving(false); }
   };
 

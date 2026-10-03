@@ -143,8 +143,17 @@ describe("calculateKpi", () => {
   it("calculates final_score correctly for on-time important task with rating 5", () => {
     const futureDeadline = new Date(Date.now() + 86400000 * 2).toISOString();
     const result = calculateKpi(makeTask({ category: "important", deadline: futureDeadline, rating: 5 }));
-    // base=10, difficulty=1.2, schedule=1.0, result=1.0, perf=10*(0.3*1+0.7*1)=10, actual=10*1.2=12
+    // 10-point scale: rating 5 -> result=0.5. base=10, difficulty=1.2, schedule=1.0,
+    // perf=10*(0.3*1+0.7*0.5)=6.5, actual=6.5*1.2=7.8
+    expect(result.final_score).toBe(7.8);
+  });
+
+  it("reaches max score for an important task rated 10/10", () => {
+    const futureDeadline = new Date(Date.now() + 86400000 * 2).toISOString();
+    const result = calculateKpi(makeTask({ category: "important", deadline: futureDeadline, rating: 10 }));
+    // result=1.0 -> perf=10*(0.3*1+0.7*1)=10, actual=10*1.2=12 = max_converted_score
     expect(result.final_score).toBe(12);
+    expect(result.max_converted_score).toBe(12);
   });
 
   it("handles edge case of exact deadline day", () => {

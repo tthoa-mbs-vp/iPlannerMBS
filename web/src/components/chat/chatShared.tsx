@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Send, Paperclip, X, FileText, Download, Maximize2, Filter, Search } from "lucide-react";
 import { getFileUrl } from "../../api/client";
+import { formatDateTime } from "../../utils/format";
 import CheckCombobox from "../shared/CheckCombobox";
 
 const IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif"];
@@ -13,7 +14,7 @@ export function formatTime(dateStr: string): string {
   if (diff < 60000) return "Vừa xong";
   if (diff < 3600000) return `${Math.floor(diff / 60000)} phút trước`;
   if (diff < 86400000) return `${Math.floor(diff / 3600000)} giờ trước`;
-  return d.toLocaleString("vi-VN");
+  return formatDateTime(dateStr);
 }
 
 export function highlightMentions(text: string): ReactNode {
@@ -241,11 +242,11 @@ export function ChatComposer({ onSend, mentionUsers, placeholder = "Nhập tin n
           )}
         </div>
         <div className="flex shrink-0 gap-1">
-          <button onClick={() => fileInputRef.current?.click()}
+          <button onClick={() => fileInputRef.current?.click()} aria-label="Đính kèm tệp"
             className="rounded-lg border border-slate-300 p-2.5 text-slate-400 hover:border-indigo-300 hover:text-indigo-600 transition-colors dark:border-slate-600 dark:text-slate-400 dark:hover:border-indigo-700 dark:hover:text-indigo-300">
             <Paperclip className="h-4 w-4" />
           </button>
-          <button onClick={handleSend} disabled={(!content.trim() && files.length === 0) || sending}
+          <button onClick={handleSend} disabled={(!content.trim() && files.length === 0) || sending} aria-label="Gửi tin nhắn"
             className="rounded-lg bg-indigo-600 p-2.5 text-white hover:bg-indigo-700 disabled:opacity-40 transition-colors">
             <Send className="h-4 w-4" />
           </button>

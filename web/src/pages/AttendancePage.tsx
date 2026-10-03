@@ -21,6 +21,7 @@ import EmptyState from "../components/shared/EmptyState";
 import ErrorState from "../components/shared/ErrorState";
 import { SkeletonTable } from "../components/shared/Skeleton";
 import { ATTENDANCE_STATUS_LABELS, ATTENDANCE_STATUS_STYLES } from "../utils/constants";
+import { formatDate } from "../utils/format";
 import type { AttendanceStatus } from "@shared/types";
 
 export default function AttendancePage() {
@@ -255,7 +256,7 @@ export default function AttendancePage() {
                 {logs.map((log) => (
                   <tr key={log.id} className="even:bg-slate-50/70 hover:bg-slate-50/50 transition dark:even:bg-slate-800/40 dark:hover:bg-slate-800/50">
                     <td className="px-6 py-4 font-semibold text-slate-800 dark:text-slate-100">
-                      {new Date(log.check_in).toLocaleDateString("vi-VN")}
+                      {formatDate(log.check_in)}
                     </td>
                     <td className="px-6 py-4 text-slate-700 font-medium dark:text-slate-200">
                       {new Date(log.check_in).toLocaleTimeString("vi-VN", {

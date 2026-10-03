@@ -4,6 +4,7 @@ import { useUpdateTask } from "../../hooks/useTasks";
 import { useAuthStore } from "../../stores/authStore";
 import { useToastStore } from "../../stores/toastStore";
 import DateField from "../shared/DateField";
+import { formatDate } from "../../utils/format";
 import type { Proposal } from "@shared/types";
 
 interface Props {
@@ -112,7 +113,7 @@ export default function ProposalSection({ taskId, supervisorId }: Props) {
           <p className="mt-1 text-xs text-amber-600 dark:text-amber-300">{p.reason}</p>
           {p.new_deadline && (
             <p className="mt-1 text-xs text-amber-600 dark:text-amber-300">
-              Hạn mới: {new Date(p.new_deadline).toLocaleDateString("vi-VN")}
+              Hạn mới: {formatDate(p.new_deadline)}
             </p>
           )}
           <div className="mt-2 flex gap-1.5">

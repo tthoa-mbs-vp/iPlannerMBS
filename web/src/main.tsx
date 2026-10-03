@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryCache, QueryClient, QueryClientProvider, keepPreviousData } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { pb } from "./api/client";
@@ -32,9 +32,11 @@ const queryClient = new QueryClient({
   }),
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 2,
+      staleTime: 1000 * 60 * 2, // 2 min — data stays fresh after initial fetch
+      gcTime: 1000 * 60 * 30, // 30 min — keep cache in memory to avoid re-fetch on tab switch
       retry: 1,
       refetchOnWindowFocus: false,
+      placeholderData: keepPreviousData, // prevent layout shift on paginated/refetching lists
     },
   },
 });

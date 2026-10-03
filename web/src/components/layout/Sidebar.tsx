@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import { APP_NAME } from "../../config/app";
 import {
@@ -12,12 +12,14 @@ import {
   Megaphone,
   Trash2,
   Shield,
+  ShieldCheck,
   Clock,
   CalendarDays,
   UserCog,
   Activity,
   Database,
   BookOpen,
+  X,
   type LucideIcon,
 } from "lucide-react";
 
@@ -58,6 +60,7 @@ const sections: { title: string; items: SidebarItem[] }[] = [
     items: [
       { to: "/hr", label: "Nhân sự", icon: UserCog, hrOnly: true },
       { to: "/attendance", label: "Chấm công", icon: Clock },
+      { to: "/surprise-check", label: "Kiểm tra đột xuất", icon: ShieldCheck, adminOnly: true },
       { to: "/leave", label: "Nghỉ phép", icon: CalendarDays },
     ],
   },
@@ -85,35 +88,98 @@ const sections: { title: string; items: SidebarItem[] }[] = [
   },
 ];
 
-export default function Sidebar({ open }: { open: boolean }) {
+interface SidebarProps {
+  open: boolean;
+  /** Drawer mode for narrow screens — no hover-expand, overlay on top of content. */
+  mobile?: boolean;
+  onCloseMobile?: () => void;
+}
+
+export default function Sidebar({ open, mobile, onCloseMobile }: SidebarProps) {
   const user = useAuthStore((s) => s.user);
   const role = user?.expand?.role_id;
   const isAdmin = role?.can_manage;
   const canViewSalary = !!role?.can_view_salary;
+  const location = useLocation();
 
   // Ở chế độ thu gọn: hover vào sidebar sẽ auto-expand dạng overlay (không đẩy nội dung).
   // Giao diện kính mờ: nền bán trong suốt + backdrop-blur để nội dung phía sau hiện mờ ảo.
   const [hovered, setHovered] = useState(false);
-  const expanded = open || hovered;
+  // Drawer luôn mở rộng; chỉ sidebar desktop mới dùng hover-expand.
+  const expanded = mobile ? true : open || hovered;
+
+  // Drawer phải tự đóng sau khi điều hướng, nếu không menu che màn hình.
+  useEffect(() => {
+    if (mobile && onCloseMobile) onCloseMobile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
+  if (mobile) {
+    return (
+      <>
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+          onClick={onCloseMobile}
+          aria-hidden="true"
+        />
+        <aside className="glass-sidebar fixed inset-y-0 left-0 z-50 flex w-72 flex-col text-white shadow-2xl transition-transform duration-300 lg:hidden">
+          <SidebarContent
+            expanded
+            isAdmin={isAdmin}
+            canViewSalary={canViewSalary}
+            onCloseMobile={onCloseMobile}
+          />
+        </aside>
+      </>
+    );
+  }
 
   return (
-    <div className={`relative shrink-0 transition-all duration-300 ${open ? "w-64" : "w-16"}`}>
+    <div className={`relative hidden shrink-0 transition-all duration-300 lg:block ${open ? "w-64" : "w-16"}`}>
       <aside
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className={`absolute inset-y-0 left-0 z-50 flex flex-col border-r border-slate-700/60 bg-slate-900/80 text-white shadow-xl backdrop-blur-xl transition-all duration-300 ${
+        className={`glass-sidebar absolute inset-y-0 left-0 z-50 flex flex-col text-white transition-all duration-300 ${
           expanded ? "w-64" : "w-16"
         }`}
       >
+        <SidebarContent expanded={expanded} isAdmin={isAdmin} canViewSalary={canViewSalary} />
+      </aside>
+    </div>
+  );
+}
+
+function SidebarContent({
+  expanded,
+  isAdmin,
+  canViewSalary,
+  onCloseMobile,
+}: {
+  expanded: boolean;
+  isAdmin?: boolean;
+  canViewSalary?: boolean;
+  onCloseMobile?: () => void;
+}) {
+  return (
+    <>
         <div className={`flex h-16 items-center border-b border-slate-700/50 ${expanded ? "justify-between px-6" : "justify-center"}`}>
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-700">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30">
               <ClipboardList className="h-5 w-5 text-white" />
             </div>
             {expanded && (
               <span className="text-lg font-bold text-white">{APP_NAME}</span>
             )}
           </div>
+          {onCloseMobile && (
+            <button
+              onClick={onCloseMobile}
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white lg:hidden"
+              aria-label="Đóng menu"
+            >
+              <X className="h-5 w-5" aria-hidden="true" />
+            </button>
+          )}
         </div>
 
         <nav className={`flex-1 space-y-1 overflow-y-auto py-4 ${expanded ? "px-3" : "px-2"}`}>
@@ -175,7 +241,6 @@ export default function Sidebar({ open }: { open: boolean }) {
             </div>
           ))}
         </nav>
-      </aside>
-    </div>
+    </>
   );
 }

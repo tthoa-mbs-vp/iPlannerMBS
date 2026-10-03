@@ -122,7 +122,7 @@ const collections = [
       number("num_task_recur_value", "recurring_value"), bool("bool_task_deleted", "is_deleted"),
       bool("bool_task_ad_hoc", "is_ad_hoc"), bool("bool_task_high_impact", "is_high_impact"),
       relation("rel_task_coord_dept", "coordinating_dept_id", "pbc_departments"), date("date_task_completed", "completed_at"),
-      number("num_task_rating", "rating", { min: 1, max: 5, onlyInt: true }), relation("rel_task_rated_by", "rated_by_id", USERS_ID), date("date_task_rated_at", "rated_at"),
+      number("num_task_rating", "rating", { min: 1, max: 10, onlyInt: true }), relation("rel_task_rated_by", "rated_by_id", USERS_ID), date("date_task_rated_at", "rated_at"),
     ],
   },
   {

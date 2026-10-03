@@ -8,7 +8,14 @@ import { usePageTitleStore } from "../stores/pageTitleStore";
 import { Award, CheckCircle, Clock, TrendingUp, RefreshCw, BarChart3, Star, Zap, FileDown, Trophy, User as UserIcon } from "lucide-react";
 import { exportToExcel } from "../utils/importExport";
 import { exportHtmlToPdf } from "../utils/exportPdf";
-import { getRatingBadgeStyle } from "../utils/constants";
+import {
+  getRatingBadgeStyle,
+  getRatingLabel,
+  ratingFromAvgScore,
+  RATING_COLORS,
+  RATING_LABELS,
+  RATING_SCALE,
+} from "../utils/constants";
 import { errorMessage } from "../utils/errors";
 import {
   aggregateUserKpi,
@@ -33,16 +40,6 @@ import Pagination from "../components/shared/Pagination";
 import { calculateKpi } from "../utils/kpi";
 import type { KpiScore } from "@shared/types";
 
-const RATING_LABELS: Record<number, string> = {
-  5: "Xuất sắc",
-  4: "Tốt",
-  3: "Khá",
-  2: "Trung bình",
-  1: "Cần cải thiện",
-};
-
-const RATING_COLORS = ["#ef4444", "#f59e0b", "#3b82f6", "#8b5cf6", "#10b981"];
-
 const KPI_EXPORT_COLUMNS: ColumnDef[] = [
   { key: "task_name", label: "Nhiệm vụ" },
   { key: "executor", label: "Người thực hiện" },
@@ -53,10 +50,6 @@ const KPI_EXPORT_COLUMNS: ColumnDef[] = [
   { key: "result_points", label: "Mức kết quả (%)" },
   { key: "final_score", label: "Điểm thực tế" },
 ];
-
-function getRating(avgScore: number): number {
-  return avgScore >= 10 ? 5 : avgScore >= 7 ? 4 : avgScore >= 5 ? 3 : avgScore >= 3 ? 2 : 1;
-}
 
 function getScheduleLabel(progress: number): string {
   if (progress >= 100) return "Đúng hạn";
@@ -143,7 +136,7 @@ function KpiTaskTable({ items, title }: { items: KpiScore[]; title: string }) {
               <td className="px-4 py-3 text-center">
                 {isFinalValid ? (
                 <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${getRatingBadgeStyle(k.result_rating)}`}>
-                  {RATING_LABELS[Math.round(k.result_rating)] || k.result_rating}
+                  {getRatingLabel(k.result_rating)}
                 </span>
                 ) : "—"}
               </td>
@@ -260,7 +253,7 @@ export default function KpiPage() {
   );
 
   const ratingDist = useMemo(
-    () => [1, 2, 3, 4, 5].map((r) => ({
+    () => RATING_SCALE.map((r) => ({
       name: RATING_LABELS[r],
       value: filteredKpiScores.filter((k) => Math.round(k.result_rating || 0) === r).length || 0,
       color: RATING_COLORS[r - 1],
@@ -332,7 +325,7 @@ export default function KpiPage() {
   );
 
   const myRatingDist = useMemo(
-    () => [1, 2, 3, 4, 5].map((r) => ({
+    () => RATING_SCALE.map((r) => ({
       name: RATING_LABELS[r],
       value: myKpiScores.filter((k) => Math.round(k.result_rating || 0) === r).length || 0,
       color: RATING_COLORS[r - 1],
@@ -626,7 +619,7 @@ export default function KpiPage() {
             </thead>
             <tbody>
               {paginatedUserKpi.map(({ user, taskCount, avgScore }) => {
-                const rating = getRating(avgScore);
+                const rating = ratingFromAvgScore(avgScore);
                 return (
                   <tr key={user.id} className="even:bg-slate-100 dark:even:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
                     <td className="px-4 py-3 text-sm font-medium text-slate-800 dark:text-slate-100">{user.name || user.email}</td>
@@ -635,7 +628,7 @@ export default function KpiPage() {
                     <td className="px-4 py-3 text-center">
                       <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${getRatingBadgeStyle(rating)}`}>
                         {rating >= 4 && <Zap className="h-3 w-3" />}
-                        {RATING_LABELS[rating]}
+                        {getRatingLabel(rating)}
                       </span>
                     </td>
                   </tr>
@@ -731,7 +724,7 @@ export default function KpiPage() {
               </div>
               <div>
                 <p className="text-xs text-indigo-200">Xếp loại</p>
-                <p className="text-xl font-bold">{RATING_LABELS[getRating(myAvgScore)]}</p>
+                <p className="text-xl font-bold">{getRatingLabel(ratingFromAvgScore(myAvgScore))}</p>
               </div>
             </div>
           </div>

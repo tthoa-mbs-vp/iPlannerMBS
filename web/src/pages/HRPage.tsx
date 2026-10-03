@@ -94,9 +94,9 @@ export default function HRPage() {
   if (!canAccessHr) return <Navigate to="/dashboard" replace />;
 
   return (
-    <div className="flex gap-5 h-[calc(100vh-7rem)]">
+    <div className="flex flex-col lg:flex-row gap-5 h-auto lg:h-[calc(100vh-7rem)]">
       {/* Left panel: Departments */}
-      <div className="w-72 min-w-0 flex flex-col rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden dark:border-slate-700 dark:bg-slate-900">
+      <div className="w-full lg:w-72 min-w-0 flex flex-col rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden dark:border-slate-700 dark:bg-slate-900 lg:h-full h-[40vh]">
         <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3 dark:border-slate-700">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 shadow-sm">
             <Building2 className="h-4 w-4 text-white" />

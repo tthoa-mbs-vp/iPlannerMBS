@@ -45,6 +45,38 @@ function TriggeredHarness() {
   );
 }
 
+describe("Modal — rendering", () => {
+  beforeEach(() => {
+    cleanup();
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+
+  it("renders its title and children", () => {
+    render(
+      <Modal title="Chỉnh sửa nhiệm vụ" onClose={vi.fn()}>
+        <p>Nội dung chi tiết</p>
+      </Modal>
+    );
+    expect(screen.getByText("Chỉnh sửa nhiệm vụ")).toBeInTheDocument();
+    expect(screen.getByText("Nội dung chi tiết")).toBeInTheDocument();
+  });
+
+  it("calls onClose when the close button is clicked", () => {
+    const onClose = vi.fn();
+    render(
+      <Modal title="Đóng được" onClose={onClose}>
+        <p>Nội dung</p>
+      </Modal>
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Đóng" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("Modal — accessibility", () => {
   beforeEach(() => {
     cleanup();

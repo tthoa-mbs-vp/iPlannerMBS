@@ -3866,7 +3866,7 @@
         "help": "",
         "hidden": false,
         "id": "num_task_rating",
-        "max": 5,
+        "max": 10,
         "min": 1,
         "name": "rating",
         "onlyInt": true,

@@ -93,7 +93,8 @@ function TrashList({ type }: { type: "plans" | "tasks" }) {
             Xóa tất cả ({items.length})
           </button>
         )}
-      </div>            {items.map((item: TrashItem) => (
+      </div>
+      {items.map((item: TrashItem) => (
         <div key={item.id}
           className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 dark:bg-red-950/50">

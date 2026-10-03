@@ -30,30 +30,30 @@ export default function Pagination({
       else p = page - 2 + i;
       return (
         <button key={p} onClick={() => onChange(p)}
-          className={`flex h-6 min-w-6 items-center justify-center rounded-md px-1 text-[11px] font-medium transition ${p === page ? "bg-indigo-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"}`}>{p}</button>
+          className={`flex h-7 min-w-7 items-center justify-center rounded-lg px-1.5 text-[11px] font-medium transition-all duration-200 ${p === page ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md shadow-indigo-500/30" : "text-slate-600 hover:bg-white/50 dark:text-slate-400 dark:hover:bg-white/5"}`}>{p}</button>
       );
     });
   };
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-slate-100 bg-slate-50/50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800/40">
+    <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-white/30 dark:border-white/5 glass-light px-2 sm:px-3 py-1.5 rounded-b-2xl">
       <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
         {onPageSizeChange && (
           <select value={pageSize} onChange={(e) => onPageSizeChange(Number(e.target.value))} title="Số dòng/trang"
-            className="rounded-md border border-slate-200 bg-white px-1 py-0.5 text-[11px] focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800">
+            className="rounded-lg glass-input px-2 py-1 text-[11px] focus:border-indigo-500 focus:outline-none">
             {pageSizeOptions.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         )}
         {totalCount != null && <span className="whitespace-nowrap text-slate-400 dark:text-slate-500">{start}-{end} / {totalCount}</span>}
       </div>
-      <div className="flex flex-wrap items-center gap-0.5">
+      <div className="flex items-center gap-0.5 overflow-x-auto">
         <button onClick={() => onChange(Math.max(1, page - 1))} disabled={page <= 1}
-          className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700" title="Trang trước">
+          className="flex h-7 w-7 items-center justify-center rounded-lg glass-input text-slate-600 hover:bg-white/60 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 dark:text-slate-400 dark:hover:bg-white/5" title="Trang trước">
           <ChevronLeft className="h-3.5 w-3.5" />
         </button>
         {pageButtons()}
         <button onClick={() => onChange(Math.min(totalPages, page + 1))} disabled={page >= totalPages}
-          className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700" title="Trang sau">
+          className="flex h-7 w-7 items-center justify-center rounded-lg glass-input text-slate-600 hover:bg-white/60 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 dark:text-slate-400 dark:hover:bg-white/5" title="Trang sau">
           <ChevronRight className="h-3.5 w-3.5" />
         </button>
       </div>

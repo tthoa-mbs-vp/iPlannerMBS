@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Bell, CheckCheck, Loader2, MessageSquare, GitPullRequest, Clock, AlertTriangle, AtSign, Megaphone, ChevronDown, ChevronRight, Eye } from "lucide-react";
+import { Bell, CheckCheck, Loader2, MessageSquare, GitPullRequest, Clock, AlertTriangle, AtSign, Megaphone, ChevronDown, ChevronRight, Eye, ShieldCheck } from "lucide-react";
+import { formatDateTimeShort } from "../../utils/format";
 import {
   useUnreadCount,
   useNotifications,
@@ -20,6 +21,7 @@ const TYPE_ICONS: Record<string, typeof Bell> = {
   deadline_warning: Clock,
   task_update: GitPullRequest,
   proposal_update: AlertTriangle,
+  surprise_check: ShieldCheck,
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -29,6 +31,7 @@ const TYPE_COLORS: Record<string, string> = {
   deadline_warning: "bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300",
   task_update: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300",
   proposal_update: "bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-300",
+  surprise_check: "bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300",
 };
 
 interface Group {
@@ -96,12 +99,7 @@ function NotifItem({ n, onRead, onClose }: { n: Notification; onRead: (id: strin
           {ref.message || getNotificationTypeLabel(n.type)}
         </p>
         <p className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
-          {new Date(n.created).toLocaleDateString("vi-VN", {
-            hour: "2-digit",
-            minute: "2-digit",
-            day: "numeric",
-            month: "numeric",
-          })}
+          {formatDateTimeShort(n.created)}
         </p>
       </div>
       {!n.is_read && (
@@ -130,7 +128,7 @@ export default function NotificationDropdown() {
   return (
     <div className="relative" ref={ref}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen(!open)} aria-label="Thông báo"
         className="relative rounded-full p-2 text-slate-500 transition-all duration-200 hover:bg-gradient-to-br hover:from-indigo-50 hover:to-blue-50 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300 dark:hover:from-indigo-950/40 dark:hover:to-blue-950/40"
       >
         <Bell className="h-5 w-5" />

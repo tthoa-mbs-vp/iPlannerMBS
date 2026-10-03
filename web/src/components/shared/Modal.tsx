@@ -115,16 +115,16 @@ export default function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 overflow-y-auto glass-backdrop"
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="flex min-h-full items-center justify-center p-4">
+      <div className="flex min-h-full items-center justify-center p-2 sm:p-4">
         <div
           ref={panelRef}
-          className={`w-full ${MAX_WIDTH[maxWidth]} my-8 rounded-2xl bg-white shadow-2xl shadow-black/20 border border-white/10 animate-[fadeIn_0.2s_ease-out] dark:bg-slate-900 dark:border-slate-700`}
+          className={`w-full ${MAX_WIDTH[maxWidth]} my-0 sm:my-8 rounded-none sm:rounded-3xl glass-ultra animate-[fadeIn_0.2s_ease-out] max-h-screen sm:max-h-none overflow-y-auto`}
         >
           <div className={`flex items-center justify-between ${ACCENT_BG[accentColor]} rounded-t-2xl px-6 py-4`}>
             <h3 id={titleId} className="text-lg font-bold text-white drop-shadow-sm">{title}</h3>

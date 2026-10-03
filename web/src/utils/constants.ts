@@ -106,11 +106,76 @@ export const ATTENDANCE_STATUS_STYLES: Record<AttendanceStatus, string> = {
   absent: "bg-rose-100 text-rose-700",
 };
 
+// ─── Thang KPI 1–10 ──────────────────────────────────────────────────────────
+// Nguồn duy nhất cho thang xếp loại. Trước đây mỗi component tự khai báo một
+// bản `RATING_LABELS` 1–5 riêng (4 bản sao trong repo) nên dễ lệch nhau.
+// `tasks.rating` được migration 1799100000_widen_task_rating_to_10.js mở
+// rộng lên max 10 để khớp với công thức `_kpi-formula.cjs` (rating / 10.0).
+
+export const RATING_MIN = 1;
+export const RATING_MAX = 10;
+/** Xếp loại mặc định khi mở hộp thoại đánh giá — tương đương "Khá". */
+export const RATING_DEFAULT = 6;
+
+export const RATING_LABELS: Record<number, string> = {
+  1: "Rất kém",
+  2: "Kém",
+  3: "Dưới kỳ vọng",
+  4: "Chưa đạt",
+  5: "Trung bình",
+  6: "Khá",
+  7: "Tốt",
+  8: "Rất tốt",
+  9: "Xuất sắc",
+  10: "Vượt trội",
+};
+
+/** Màu biểu đồ theo xếp loại 1–10, cùng thứ tự với RATING_LABELS. */
+export const RATING_COLORS: readonly string[] = [
+  "#dc2626", // 1  đỏ
+  "#ea580c", // 2  cam đậm
+  "#f59e0b", // 3  hổ phách
+  "#eab308", // 4  vàng
+  "#84cc16", // 5  lime
+  "#22c55e", // 6  xanh lá
+  "#10b981", // 7  emerald
+  "#14b8a6", // 8  teal
+  "#06b6d4", // 9  cyan
+  "#3b82f6", // 10 xanh dương
+];
+
+/** Danh sách xếp loại 1–10, dùng cho vòng lặp render sao/nút. */
+export const RATING_SCALE: readonly number[] = Array.from(
+  { length: RATING_MAX - RATING_MIN + 1 },
+  (_, i) => RATING_MIN + i,
+);
+
+/** Nhãn của một xếp loại, có fallback về chính số điểm. */
+export function getRatingLabel(rating: number): string {
+  return RATING_LABELS[Math.round(rating)] ?? String(rating);
+}
+
+/** Kẹp một giá trị về khoảng hợp lệ của thang 1–10. */
+export function clampRating(rating: number): number {
+  if (!Number.isFinite(rating)) return RATING_MIN;
+  return Math.min(RATING_MAX, Math.max(RATING_MIN, Math.round(rating)));
+}
+
+/**
+ * Quy điểm trung bình (final_score, thang 10) về xếp loại 1–10.
+ * Trước thang 10, hàm này dùng ngưỡng `>=10 ? 5 : >=7 ? 4 : ...` nên mọi điểm
+ * dưới 10 đều bị dồn về 1–4. Giờ quy đổi trực tiếp rồi kẹp trong 1–10.
+ */
+export function ratingFromAvgScore(avgScore: number): number {
+  if (!Number.isFinite(avgScore) || avgScore <= 0) return RATING_MIN;
+  return clampRating(avgScore);
+}
+
 export function getRatingBadgeStyle(rating: number): string {
-  const r = Math.round(rating);
-  if (r >= 4) return "bg-emerald-100 text-emerald-700";
-  if (r >= 3) return "bg-blue-100 text-blue-700";
-  if (r >= 2) return "bg-amber-100 text-amber-700";
+  const r = clampRating(rating);
+  if (r >= 8) return "bg-emerald-100 text-emerald-700";
+  if (r >= 6) return "bg-blue-100 text-blue-700";
+  if (r >= 4) return "bg-amber-100 text-amber-700";
   return "bg-red-100 text-red-700";
 }
 

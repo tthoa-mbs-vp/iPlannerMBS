@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { usePersistedState } from "../hooks/usePersistedState";
 import { Navigate } from "react-router-dom";
-import { Building2, Users, UserCheck, Network, Radio } from "lucide-react";
+import { Building2, Users, UserCheck, Network, Radio, Settings } from "lucide-react";
 import { useAuthStore } from "../stores/authStore";
 import { usePageTitleStore } from "../stores/pageTitleStore";
 import DepartmentManager from "../components/admin/DepartmentManager";
@@ -9,6 +9,7 @@ import RoleManager from "../components/admin/RoleManager";
 import UserManager from "../components/admin/UserManager";
 import GroupManager from "../components/admin/GroupManager";
 import PresenceManager from "../components/admin/PresenceManager";
+import AutoApproveSettings from "../components/admin/AutoApproveSettings";
 import TabBar, { type Tab } from "../components/shared/TabBar";
 
 type AdminTab =
@@ -16,7 +17,8 @@ type AdminTab =
   | "roles"
   | "groups"
   | "users"
-  | "presence";
+  | "presence"
+  | "settings";
 
 const tabs: Tab[] = [
   { key: "departments", label: "Phòng ban", icon: Building2, gradient: "from-sky-500 to-cyan-600" },
@@ -24,6 +26,7 @@ const tabs: Tab[] = [
   { key: "roles", label: "Chức vụ", icon: UserCheck, gradient: "from-amber-500 to-orange-600" },
   { key: "users", label: "Người dùng", icon: Users, gradient: "from-violet-500 to-purple-600" },
   { key: "presence", label: "Kiểm tra hiện diện", icon: Radio, gradient: "from-rose-500 to-red-600" },
+  { key: "settings", label: "Cài đặt", icon: Settings, gradient: "from-slate-500 to-gray-600" },
 ];
 
 export default function AdminPage() {
@@ -46,6 +49,7 @@ export default function AdminPage() {
         {activeTab === "roles" && <RoleManager />}
         {activeTab === "users" && <UserManager />}
         {activeTab === "presence" && <PresenceManager />}
+        {activeTab === "settings" && <AutoApproveSettings />}
       </div>
     </div>
   );

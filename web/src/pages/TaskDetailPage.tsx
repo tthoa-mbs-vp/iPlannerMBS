@@ -15,7 +15,16 @@ import TaskInlineForm from "../components/tasks/TaskInlineForm";
 import Modal from "../components/shared/Modal";
 import { useAuthStore } from "../stores/authStore";
 import { usePageTitleStore } from "../stores/pageTitleStore";
-import { TASK_STATUS_LABELS, TASK_STATUS_STYLES, TASK_STATUS_COLORS } from "../utils/constants";
+import {
+  TASK_STATUS_LABELS,
+  TASK_STATUS_STYLES,
+  TASK_STATUS_COLORS,
+  getRatingLabel,
+  RATING_DEFAULT,
+  RATING_MAX,
+  RATING_MIN,
+  RATING_SCALE,
+} from "../utils/constants";
 import { isTaskOverdue } from "../utils/format";
 import { exportAttachmentsZip, exportTaskReportPdf, collectTaskAttachments, safeFilename } from "../utils/exportTaskReport";
 import type { KpiScore, SystemLog, Task, TaskCategory, TaskStatus, User as UserType } from "@shared/types";
@@ -213,7 +222,6 @@ function KpiTab({ task, taskId }: { task?: Task; taskId: string }) {
   const r = kpiScores || (task ? calculateKpi(task) : null);
   const isStored = !!kpiScores;
 
-  const RATING_LABELS: Record<number, string> = { 5: "Xuất sắc", 4: "Tốt", 3: "Khá", 2: "Trung bình", 1: "Cần cải thiện" };
   const scheduleLabel = (v: number) => v >= 100 ? "Đúng hạn" : v >= 80 ? "Trễ 1-3 ngày" : v >= 60 ? "Trễ 4-5 ngày" : v > 0 ? "Trễ >5 ngày" : "—";
 
   return (
@@ -242,7 +250,7 @@ function KpiTab({ task, taskId }: { task?: Task; taskId: string }) {
           </div>
           <div>
             <label className="text-xs text-slate-400 dark:text-slate-500">Mức kết quả</label>
-            <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{isStored && r.result_rating ? (RATING_LABELS[r.result_rating] || r.result_rating) : "—"}</p>
+            <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{isStored && r.result_rating ? getRatingLabel(r.result_rating) : "—"}</p>
           </div>
         </div>
       ) : (
@@ -436,7 +444,7 @@ export default function TaskDetailPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [leftTab, setLeftTab] = usePersistedState<"info" | "files" | "log" | "kpi">(`task_tab_${taskId || "new"}`, "info");
   const [showRating, setShowRating] = useState(false);
-  const [selectedRating, setSelectedRating] = useState(3);
+  const [selectedRating, setSelectedRating] = useState(RATING_DEFAULT);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const [completeContent, setCompleteContent] = useState("");
   const [completeFiles, setCompleteFiles] = useState<File[]>([]);
@@ -663,20 +671,23 @@ export default function TaskDetailPage() {
         <Modal title="Đánh giá kết quả" onClose={() => setShowRating(false)} maxWidth="sm" accentColor="amber">
           <div className="p-6">
             <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Chọn xếp loại cho nhiệm vụ này</p>
-            <div className="mt-4 flex justify-center gap-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button key={star} onClick={() => setSelectedRating(star)}
-                  className={`h-10 w-10 rounded-full text-lg font-bold transition-all ${
-                    selectedRating >= star
-                      ? "bg-amber-400 text-white shadow-md scale-110"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700"
+            <div className="mt-4 grid grid-cols-10 gap-1">
+              {RATING_SCALE.map((value) => (
+                <button key={value} onClick={() => setSelectedRating(value)}
+                  aria-pressed={selectedRating === value}
+                  title={getRatingLabel(value)}
+                  className={`h-9 rounded-lg text-sm font-bold transition-all ${
+                    selectedRating === value
+                      ? "bg-amber-400 text-white shadow-md"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-amber-100 dark:hover:bg-slate-700"
                   }`}>
-                  {star}
+                  {value}
                 </button>
               ))}
             </div>
-            <div className="mt-2 text-center text-xs text-slate-400 dark:text-slate-500">
-              {selectedRating === 5 ? "Xuất sắc" : selectedRating === 4 ? "Tốt" : selectedRating === 3 ? "Khá" : selectedRating === 2 ? "Trung bình" : "Cần cải thiện"}
+            <div className="mt-3 text-center">
+              <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">{getRatingLabel(selectedRating)}</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">Thang {RATING_MIN}–{RATING_MAX} · mặc định {RATING_DEFAULT}/10</p>
             </div>
             <div className="mt-5 flex justify-end gap-2">
               <button onClick={() => setShowRating(false)}

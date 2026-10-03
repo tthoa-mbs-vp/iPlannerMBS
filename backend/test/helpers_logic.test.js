@@ -208,9 +208,24 @@ console.log("upsertKpi (KPI formula):")
   assert.strictEqual(rec._data.difficulty_coeff, 1.0, "difficulty 1.0")
   assert.strictEqual(rec._data.progress_score, 100, "on-time -> schedule 100%")
   assert.strictEqual(rec._data.result_rating, 5, "rating preserved")
-  assert.strictEqual(rec._data.final_score, 10, "on-time rating-5 -> 10.0")
+  // 10-point scale: rating 5 -> result 0.5, so 10*(0.3*1 + 0.7*0.5) = 6.5
+  assert.strictEqual(rec._data.final_score, 6.5, "on-time rating-5 -> 6.5")
   assert.strictEqual(rec._data.max_converted_score, 10, "max 10")
-  ok("completed on-time, rating 5 -> final 10.0")
+  ok("completed on-time, rating 5 -> final 6.5")
+
+  reset()
+  // Top of the 10-point scale is what reaches the full converted score.
+  H.upsertKpi(taskRec({
+    status: "completed",
+    category: "normal",
+    completed_at: iso(Date.UTC(2026, 5, 30)),
+    deadline: iso(Date.UTC(2026, 5, 30)),
+    rating: 10,
+  }))
+  const rTop = state.saved[0]
+  assert.strictEqual(rTop._data.final_score, 10, "on-time rating-10 -> 10.0 (full)")
+  assert.strictEqual(rTop._data.final_score, rTop._data.max_converted_score, "rating 10 reaches max")
+  ok("completed on-time, rating 10 -> full marks")
 
   reset()
   const late2 = taskRec({
@@ -222,8 +237,8 @@ console.log("upsertKpi (KPI formula):")
   H.upsertKpi(late2)
   const r2 = state.saved[0]
   assert.strictEqual(r2._data.progress_score, 80, "2 days late -> schedule 80%")
-  assert.strictEqual(r2._data.final_score, 8.0, "10*(0.3*0.8 + 0.7*0.8) = 8.0")
-  ok("2 days late, rating 4 -> 8.0")
+  assert.strictEqual(r2._data.final_score, 5.2, "10*(0.3*0.8 + 0.7*0.4) = 5.2")
+  ok("2 days late, rating 4 -> 5.2")
 
   reset()
   const late6 = taskRec({
@@ -235,8 +250,8 @@ console.log("upsertKpi (KPI formula):")
   H.upsertKpi(late6)
   const r3 = state.saved[0]
   assert.strictEqual(r3._data.progress_score, 0, ">5 days late -> schedule 0%")
-  assert.strictEqual(r3._data.final_score, 5.6, "10*0.7*0.8 = 5.6")
-  ok("6 days late -> schedule 0, final 5.6")
+  assert.strictEqual(r3._data.final_score, 2.8, "10*0.7*0.4 = 2.8")
+  ok("6 days late -> schedule 0, final 2.8")
 
   reset()
   const important = taskRec({
@@ -249,9 +264,9 @@ console.log("upsertKpi (KPI formula):")
   H.upsertKpi(important)
   const r4 = state.saved[0]
   assert.strictEqual(r4._data.difficulty_coeff, 1.2, "high-impact -> difficulty 1.2")
-  assert.strictEqual(r4._data.final_score, 12, "10 * 1.2 = 12")
+  assert.strictEqual(r4._data.final_score, 7.8, "6.5 * 1.2 = 7.8")
   assert.strictEqual(r4._data.max_converted_score, 12, "max 12")
-  ok("high-impact -> difficulty 1.2, final 12")
+  ok("high-impact -> difficulty 1.2, final 7.8")
 
   reset()
   const sudden = taskRec({
@@ -264,7 +279,7 @@ console.log("upsertKpi (KPI formula):")
   H.upsertKpi(sudden)
   const r5 = state.saved[0]
   assert.strictEqual(r5._data.base_score, 12, "sudden -> base 12")
-  assert.strictEqual(r5._data.final_score, 12, "sudden on-time rating-5 -> 12")
+  assert.strictEqual(r5._data.final_score, 7.8, "sudden on-time rating-5 -> 12*0.65 = 7.8")
   ok("sudden task -> base 12")
 
   reset()
@@ -278,7 +293,7 @@ console.log("upsertKpi (KPI formula):")
   H.upsertKpi(partner)
   const r6 = state.saved[0]
   assert.strictEqual(r6._data.difficulty_coeff, 1.1, "partner department -> difficulty 1.1")
-  assert.strictEqual(r6._data.final_score, 11, "10 * 1.1 = 11")
+  assert.strictEqual(r6._data.final_score, 7.2, "round1(6.5 * 1.1) = round1(7.15) = 7.2")
   ok("partner department -> difficulty 1.1")
 
   reset()
@@ -295,7 +310,7 @@ console.log("upsertKpi (KPI formula):")
   assert.strictEqual(state.kpi.length, 1, "no duplicate kpi rows")
   assert.strictEqual(state.saved.length, 1, "existing record updated in place")
   assert.strictEqual(state.saved[0], existingRec, "same record reused")
-  assert.strictEqual(existingRec._data.final_score, 10, "existing record re-scored")
+  assert.strictEqual(existingRec._data.final_score, 6.5, "existing record re-scored")
   ok("existing kpi row is updated in place (no duplicates)")
 
   reset()

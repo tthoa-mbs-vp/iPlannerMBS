@@ -6,6 +6,9 @@ import type { Plan } from "@shared/types";
 
 const COLLECTION = "plans";
 
+/** Fields needed for list/table views. */
+const LIST_FIELDS = "id,name,leader_id,host_dept_id,partner_dept_ids,group_id,start_date,end_date,status,is_sudden,is_high_impact,progress,is_deleted,created,updated";
+
 export function usePlans(filter?: string) {
   return useQuery({
     queryKey: ["plans", filter],
@@ -14,6 +17,7 @@ export function usePlans(filter?: string) {
       const records = await pb.collection(COLLECTION).getFullList<Plan>(500, {
         sort: "-created",
         filter: addSoftDeleteFilter(filter),
+        fields: LIST_FIELDS,
         expand: "leader_id,host_dept_id,partner_dept_ids,group_id",
       });
       return records;
@@ -49,6 +53,7 @@ export function useTrashedPlans() {
       return pb.collection(COLLECTION).getFullList<Plan>({
         sort: "-updated",
         filter: "is_deleted=true",
+        fields: LIST_FIELDS,
         expand: "leader_id,host_dept_id,group_id",
       });
     },
