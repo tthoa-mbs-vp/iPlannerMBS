@@ -97,7 +97,7 @@ Script cần PocketBase đang chạy ở `http://localhost:8090` và biết thô
 cd web
 npm run typecheck    # tsc --noEmit
 npm run lint         # eslint (react-hooks + TanStack Query)
-npm run test         # vitest — 395 test / 44 file
+npm run test         # vitest — 433 test / 48 file
 npm run test:coverage # vitest + coverage, fail nếu dưới ngưỡng trong vite.config.ts
 npm run build        # tsc -b && vite build
 npm run ci           # typecheck + lint + test + build
