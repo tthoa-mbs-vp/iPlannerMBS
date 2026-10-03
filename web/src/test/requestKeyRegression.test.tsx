@@ -27,11 +27,18 @@ const mockCollection = vi.fn(() => ({
   getOne: mockGetOne,
 }));
 
+const mockAuthSetState = vi.fn();
+
 vi.mock("../api/client", () => ({
   pb: {
     collection: mockCollection,
     authStore: { record: { id: "user1" }, isValid: true },
   },
+}));
+
+vi.mock("../stores/authStore", () => ({
+  useAuthStore: (selector: (s: unknown) => unknown) =>
+    selector({ user: { id: "user1" }, isAuthenticated: true, setState: mockAuthSetState }),
 }));
 
 const queryClient = new QueryClient({
@@ -49,10 +56,18 @@ function requestKeysOf(index: number): string | undefined {
   return typeof opts === "object" ? opts?.requestKey : undefined;
 }
 
+/** requestKey của lần gọi getList thứ index. */
+function getListRequestKeysOf(index: number): string | undefined {
+  const call = mockGetList.mock.calls[index];
+  const opts = call?.[2];
+  return typeof opts === "object" ? opts?.requestKey : undefined;
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   queryClient.clear();
   mockGetFullList.mockResolvedValue([]);
+  mockGetList.mockResolvedValue({ items: [], totalItems: 0, page: 1, perPage: 50, totalPages: 1 });
 });
 
 describe("requestKey chống PocketBase tự hủy chéo", () => {
@@ -123,5 +138,30 @@ describe("requestKey chống PocketBase tự hủy chéo", () => {
     // "tasks-" vs "tasks-" — cùng filter thực sự nên dùng chung cancelKey,
     // đây là hành vi ĐÚNG (query trùng thì hủy query cũ là hợp lý).
     expect(requestKeysOf(0)).toBe(requestKeysOf(1));
+  });
+
+  // Đã đo thật: /notifications render NotificationDropdown (useUnreadCount)
+  // cùng NotificationsPage (useNotifications) → 1 request bị ERR_ABORTED
+  // và filter bị gọi lại 2 lần.
+  it("useUnreadCount và useNotifications phải có requestKey khác nhau", async () => {
+    const { useUnreadCount, useNotifications } = await import("../hooks/useNotifications");
+    const { result: a } = renderHook(() => useUnreadCount(), { wrapper: Wrapper });
+    await waitFor(() => expect(a.current.isSuccess).toBe(true));
+    const { result: b } = renderHook(() => useNotifications(1, 50, undefined, true), { wrapper: Wrapper });
+    await waitFor(() => expect(b.current.isSuccess).toBe(true));
+
+    expect(getListRequestKeysOf(0)).toBeDefined();
+    expect(getListRequestKeysOf(1)).toBeDefined();
+    expect(getListRequestKeysOf(0)).not.toBe(getListRequestKeysOf(1));
+  });
+
+  it("useNotifications phân trang phải có requestKey khác nhau", async () => {
+    const { useNotifications } = await import("../hooks/useNotifications");
+    const { result: a } = renderHook(() => useNotifications(1, 10, undefined, true), { wrapper: Wrapper });
+    await waitFor(() => expect(a.current.isSuccess).toBe(true));
+    const { result: b } = renderHook(() => useNotifications(2, 10, undefined, true), { wrapper: Wrapper });
+    await waitFor(() => expect(b.current.isSuccess).toBe(true));
+
+    expect(getListRequestKeysOf(0)).not.toBe(getListRequestKeysOf(1));
   });
 });

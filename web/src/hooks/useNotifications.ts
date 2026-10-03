@@ -16,6 +16,10 @@ export function useUnreadCount() {
       if (!userId) return 0;
       const result = await pb.collection("notifications").getList(1, 1, {
         filter: `user_id="${userId}" && is_read=false`,
+        // Bắt buộc: nếu không, PocketBase tự suy ra cancelKey là
+        // method + path (KHÔNG kèm query string), nên mọi query của cùng
+        // collection sẽ hủy lẫn nhau dù filter khác nhau.
+        requestKey: `notifications-unread-${userId}`,
       });
       return result.totalItems;
     },
@@ -38,6 +42,8 @@ export function useNotifications(page = 1, perPage = 10, typeFilter?: string, en
       return pb.collection("notifications").getList<Notification>(page, perPage, {
         filter,
         sort: "-created",
+        // Bắt buộc: xem useUnreadCount — cùng collection, filter khác nhau.
+        requestKey: `notifications-list-${userId}-${page}-${perPage}-${typeFilter ?? ""}`,
       });
     },
     enabled: !!userId && enabled,
@@ -71,6 +77,7 @@ export function useMarkAllAsRead() {
         const result = await pb.collection("notifications").getList(page, PAGE, {
           filter: `user_id="${userId}" && is_read=false`,
           fields: "id",
+          requestKey: `notifications-markall-${userId}`,
         });
         total = result.totalItems;
         if (result.items.length === 0) break;
