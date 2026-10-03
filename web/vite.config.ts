@@ -83,13 +83,13 @@ export default defineConfig({
       // The KPI formula is loaded through a sandbox at runtime; instrumenting it
       // produces noise rather than signal.
       exclude: ["src/test/**", "**/*.d.ts", "src/main.tsx"],
-      // Floors sit just under the measured coverage (37% statements) so CI fails
-      // on a regression instead of on a ratchet. Raise them as tests are added.
+      // Sàn đặt ngay dưới mức đo được (45.9% statements) để CI báo đúng khi có
+      // hồi quy, chứ không phải khi có tăng. Nâng lên kèm theo test mới.
       thresholds: {
-        statements: 35,
-        branches: 25,
-        functions: 28,
-        lines: 38,
+        statements: 44,
+        branches: 35,
+        functions: 37,
+        lines: 47,
       },
     },
   },

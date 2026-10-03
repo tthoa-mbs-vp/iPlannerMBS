@@ -185,5 +185,8 @@ export async function exportAttachmentsZip(
 }
 
 export function safeFilename(name: string): string {
-  return (name || "bao-cao").replace(/[\\/:*?"<>|]+/g, "_").trim().slice(0, 60) || "bao-cao";
+  const cleaned = (name || "").replace(/[\\/:*?"<>|]+/g, "_").trim().slice(0, 60).trim();
+  // Tên chỉ còn ký tự thay thế (ví dụ "///" -> "___") thì tải về sẽ ra file
+  // tên vô nghĩa, nên rơi về tên mặc định.
+  return /[\p{L}\p{N}]/u.test(cleaned) ? cleaned : "bao-cao";
 }

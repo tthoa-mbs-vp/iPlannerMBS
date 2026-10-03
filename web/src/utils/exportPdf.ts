@@ -36,7 +36,7 @@ export interface PdfSignatureRole {
   name?: string;
 }
 
-interface PdfOptions {
+export interface PdfOptions {
   title: string;
   meta?: string;
   summary?: PdfSummaryItem[];
@@ -52,7 +52,9 @@ interface PdfOptions {
   landscape?: boolean;
 }
 
-function buildHtml(opts: PdfOptions): string {
+/** Sinh HTML báo cáo hoàn chỉnh. Export ra để test: đây là nơi escape diễn ra,
+ *  sai ở đây là lỗ hổng XSS trong file PDF tải về chứ không chỉ là lỗi hiển thị. */
+export function buildHtml(opts: PdfOptions): string {
   const {
     title,
     meta = "",
