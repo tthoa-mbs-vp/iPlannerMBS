@@ -2,6 +2,9 @@
 
 Ứng dụng quản lý kế hoạch & nhiệm vụ cho MBS — theo dõi tiến độ plan, giao việc theo executor/supervisor, chấm điểm KPI, chấm công với kiểm tra IP/SSID, quản lý nghỉ phép và nhân sự.
 
+> **Phạm vi theo nhánh:** nhánh `main` là HR Platform đầy đủ; nhánh `plan-only` chỉ giữ phần
+> quản lý Kế hoạch/Nhiệm vụ. Xem [BRANCHES.md](BRANCHES.md) để biết nhánh nào gồm gì.
+
 **Stack:** React 19 · TypeScript · Vite 6 · Tailwind CSS 4 · TanStack Query · Zustand · React Router 7 · PocketBase 0.39.10
 
 ---

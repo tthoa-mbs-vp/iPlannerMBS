@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import SurpriseCheckModal from "../surprise/SurpriseCheckModal";
 
 const LS_KEY = "sidebar_open";
 
@@ -60,7 +59,6 @@ export default function AppLayout() {
           <Outlet />
         </main>
       </div>
-      <SurpriseCheckModal />
     </div>
   );
 }

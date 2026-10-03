@@ -17,26 +17,17 @@ const TaskDetailPage = lazy(() => import("./pages/TaskDetailPage"));
 const MLayout = lazy(() => import("./pages/mobile/MLayout"));
 const MDashboardPage = lazy(() => import("./pages/mobile/MDashboardPage"));
 const MTasksPage = lazy(() => import("./pages/mobile/MTasksPage"));
-const MAttendancePage = lazy(() => import("./pages/mobile/MAttendancePage"));
 const MProfilePage = lazy(() => import("./pages/mobile/MProfilePage"));
 const MNotificationsPage = lazy(() => import("./pages/mobile/MNotificationsPage"));
-const MAnnouncementsPage = lazy(() => import("./pages/mobile/MAnnouncementsPage"));
 const MKpiPage = lazy(() => import("./pages/mobile/MKpiPage"));
 const ReportsPage = lazy(() => import("./pages/ReportsPage"));
 const KpiPage = lazy(() => import("./pages/KpiPage"));
-const DiscussionPage = lazy(() => import("./pages/DiscussionPage"));
-const AnnouncementsPage = lazy(() => import("./pages/AnnouncementsPage"));
 const TrashPage = lazy(() => import("./pages/TrashPage"));
 const AdminPage = lazy(() => import("./pages/AdminPage"));
 const LogsPage = lazy(() => import("./pages/LogsPage"));
 const DataPage = lazy(() => import("./pages/DataPage"));
 const ProfileRedirect = lazy(() => import("./pages/ProfileRedirect"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
-const AttendancePage = lazy(() => import("./pages/AttendancePage"));
-const LeavePage = lazy(() => import("./pages/LeavePage"));
-const HRPage = lazy(() => import("./pages/HRPage"));
-const HRDetailPage = lazy(() => import("./pages/HRDetailPage"));
-const SurpriseCheckPage = lazy(() => import("./pages/SurpriseCheckPage"));
 
 
 function PageLoader() {
@@ -114,13 +105,6 @@ export default function App() {
             <Route path="/tasks/:id" element={<TaskDetailPage />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/kpi" element={<KpiPage />} />
-            <Route path="/discussion" element={<DiscussionPage />} />
-            <Route path="/announcements" element={<AnnouncementsPage />} />
-            <Route path="/announcements/:id" element={<AnnouncementsPage />} />
-            <Route path="/attendance" element={<AttendancePage />} />
-            <Route path="/leave" element={<LeavePage />} />
-            <Route path="/hr" element={<HRPage />} />
-            <Route path="/hr/:id" element={<HRDetailPage />} />
             <Route path="/profile" element={<ProfileRedirect />} />
             <Route path="/notifications" element={<NotificationsPage />} />
 
@@ -128,7 +112,6 @@ export default function App() {
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/admin/logs" element={<LogsPage />} />
             <Route path="/admin/data" element={<DataPage />} />
-            <Route path="/surprise-check" element={<SurpriseCheckPage />} />
           </Route>
           <Route
             element={
@@ -141,11 +124,8 @@ export default function App() {
           >
             <Route path="/m" element={<MDashboardPage />} />
             <Route path="/m/notifications" element={<MNotificationsPage />} />
-            <Route path="/m/announcements" element={<MAnnouncementsPage />} />
-            <Route path="/m/announcements/:id" element={<MAnnouncementsPage />} />
             <Route path="/m/tasks" element={<MTasksPage />} />
             <Route path="/m/kpi" element={<MKpiPage />} />
-            <Route path="/m/attendance" element={<MAttendancePage />} />
             <Route path="/m/profile" element={<MProfilePage />} />
           </Route>
           <Route path="*" element={<HomeRedirect />} />

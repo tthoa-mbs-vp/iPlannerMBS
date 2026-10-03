@@ -80,33 +80,7 @@ onRecordAfterCreateSuccess(function(e) {
       }
     }
 
-    // ---- announcements: notify all active users on create ----
-    if (name === "announcements") {
-      H.notifyAnnouncement(e.record)
-    }
-
-    // ---- leave_requests: auto-approve for leadership-level users with approval permission ----
-    if (name === "leave_requests") {
-      var lrUserId = e.record?.getString("user_id")
-      if (lrUserId && e.record?.getString("status") === "pending") {
-        var lrUser = null
-        try { lrUser = $app.findRecordById("users", lrUserId) } catch (ex) {}
-        if (lrUser) {
-          var lrRoleId = lrUser.getString("role_id")
-          if (lrRoleId) {
-            var lrRole = null
-            try { lrRole = $app.findRecordById("roles", lrRoleId) } catch (ex) {}
-            if (lrRole && lrRole.getString("level") === "leadership" && lrRole.getBool("can_approve_leave")) {
-              var lrRec = e.record
-              lrRec.set("status", "approved")
-              lrRec.set("approver_id", lrUserId)
-              $app.save(lrRec)
-            }
-          }
-        }
-      }
-    }
-  } catch (ex) {
+    } catch (ex) {
     console.error("all.pb.js: create fail on " + name, ex)
   }
 })
@@ -169,16 +143,6 @@ onRecordAfterDeleteSuccess(function(e) {
 
     // NOTE: proposal notifications reference the TASK (see helpers._notifyTask), so they are
     // cleaned up by the task-delete branch above — no per-proposal cleanup needed here.
-
-    // ---- leave_requests: recompute balance on permanent delete ----
-    if (name === "leave_requests") {
-      var lrUserId = e.record?.getString("user_id")
-      var lrStatus = e.record?.getString("status")
-      if (lrUserId && lrStatus === "approved") {
-        var lrYear = new Date(e.record?.getString("start_date") || new Date().toISOString()).getFullYear()
-        try { H.recomputeLeaveBalance(lrUserId, lrYear) } catch (ex) { console.error("leave balance recompute on delete fail", ex) }
-      }
-    }
   } catch (ex) {
     console.error("all.pb.js: delete fail on " + name, ex)
   }
@@ -232,15 +196,7 @@ onRecordAfterUpdateSuccess(function(e) {
       }
     }
 
-    // ---- leave_requests: recompute balance on ANY update (approval, un-approval, day edits) ----
-    if (name === "leave_requests") {
-      var lrUserId = e.record?.getString("user_id")
-      if (lrUserId) {
-        var lrYear = new Date(e.record?.getString("start_date") || new Date().toISOString()).getFullYear()
-        try { H.recomputeLeaveBalance(lrUserId, lrYear) } catch (ex) { console.error("leave balance recompute on update fail", ex) }
-      }
-    }
-  } catch (ex) {
+    } catch (ex) {
     console.error("all.pb.js: update fail on " + name, ex)
   }
 })

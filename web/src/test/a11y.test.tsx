@@ -142,7 +142,6 @@ describe("a11y — nút icon-only trong các bảng quản trị", () => {
     "../components/admin/GroupManager.tsx",
     "../components/admin/RoleManager.tsx",
     "../components/admin/UserManager.tsx",
-    "../components/leave/LeaveInlineForm.tsx",
     "../components/plans/PlanInlineForm.tsx",
     "../components/tasks/TaskInlineForm.tsx",
   ];
@@ -175,7 +174,6 @@ describe("a11y — input controlled không có onChange", () => {
     "../components/admin/RoleManager.tsx",
     "../components/admin/UserManager.tsx",
     "../components/admin/DepartmentManager.tsx",
-    "../components/attendance/WifiConfigModal.tsx",
   ];
 
   it.each(files)("%s không có `checked` mà thiếu onChange/readOnly", (rel) => {

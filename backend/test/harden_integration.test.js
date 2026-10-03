@@ -413,22 +413,14 @@ async function main() {
     }
     // owner path: as the profile owner this call would succeed if the account were enabled
     await expectCustom403("POST", "/api/custom/upsert-employee-profile", { userId: disabledUser.id })
-    // user-level presence endpoint: any authenticated user may send a heartbeat
-    await expectCustom403("POST", "/api/custom/presence/heartbeat", { device_info: "h3-disabled" })
     // manager-gated endpoints (ensureEnabled runs BEFORE the isManager gate)
     await expectCustom403("POST", "/api/custom/recalc-kpi", undefined)
-    await expectCustom403("GET", "/api/custom/presence/present", undefined)
-    await expectCustom403("GET", "/api/custom/presence/campaigns", undefined)
-    ok("disabled account blocked on custom endpoints (recalc-kpi / upsert-employee-profile / presence)")
+    ok("disabled account blocked on custom endpoints (recalc-kpi / upsert-employee-profile)")
 
     // controls — the SAME endpoints respond normally for enabled users, so the 403
     // above is the disabled gate, not a broken handler
-    const hb = await http(baseUrl, "POST", "/api/custom/presence/heartbeat", { token: tokenA, body: { device_info: "h3-control" } })
-    assert.strictEqual(hb.status, 200, "enabled user heartbeat must be 200 (got " + hb.status + ")")
     const upOk = await http(baseUrl, "POST", "/api/custom/upsert-employee-profile", { token: tokenA, body: { userId: userA.id, phone: "0900000099" } })
     assert.strictEqual(upOk.status, 200, "enabled owner upsert-employee-profile must be 200 (got " + upOk.status + ")")
-    const presentOk = await http(baseUrl, "GET", "/api/custom/presence/present", { token: tokenAdmin })
-    assert.strictEqual(presentOk.status, 200, "enabled manager present must be 200 (got " + presentOk.status + ")")
     const recalcOk = await http(baseUrl, "POST", "/api/custom/recalc-kpi", { token: tokenAdmin })
     assert.strictEqual(recalcOk.status, 200, "enabled manager recalc-kpi must be 200 (got " + recalcOk.status + ")")
     ok("custom endpoints work for enabled accounts (controls)")
@@ -485,45 +477,6 @@ async function main() {
     assert.strictEqual(noSal.status, 200, "non-HR salary list expected 200 (silent deny)")
     assert.strictEqual(noSal.data.totalItems, 0, "non-HR user must receive an EMPTY salary list (rule layer intact)")
     ok("non-HR user gets an empty salary_records list (listRule silent deny)")
-
-    // ================================================================ M1
-    console.log("\nM1 — check_in/check_out are server-stamped, never client-supplied:")
-    // deterministic status: a config with start 00:00 + 0 tolerance makes ANY real clock-in "late"
-    await c("attendance_configs", { office_name: "H1 Office", wifi_ssid: "h1-wifi", work_start_time: "00:00", work_end_time: "23:59", late_tolerance_minutes: 0, allowed_ips: [], is_active: true })
-    // the createRule (evaluated BEFORE hooks) rejects creating a log bound to someone else —
-    // user_id must be the actor's own id for the rule to pass; the guard then re-binds it
-    const forgeOther = await http(baseUrl, "POST", "/api/collections/attendance_logs/records", {
-      token: tokenA,
-      body: { user_id: userB.id, check_in: "2000-01-01 00:00:00.000Z", status: "on_time", method: "wifi" },
-    })
-    assert.strictEqual(forgeOther.status, 400, "cannot create a check-in log for another user (rule layer) — got " + forgeOther.status)
-    ok("cannot create a check-in bound to another user (C8 owner-binding rule)")
-
-    const forgedIn = await expectOk(baseUrl, "POST", "/api/collections/attendance_logs/records", {
-      token: tokenA,
-      body: { user_id: userA.id, check_in: "2000-01-01 00:00:00.000Z", status: "on_time", method: "wifi", ip_address: "8.8.8.8" },
-    })
-    assert.strictEqual(forgedIn.user_id, userA.id, "M1: user_id stays bound to the actor (got " + forgedIn.user_id + ")")
-    assert.ok(forgedIn.check_in, "M1: check_in must be present (got " + forgedIn.check_in + ")")
-    assert.notStrictEqual(forgedIn.check_in, "2000-01-01 00:00:00.000Z", "M1: backdated check_in must be overwritten by the server stamp")
-    assert.ok(Math.abs(new Date(forgedIn.check_in).getTime() - Date.now()) < 60000, "M1: check_in ≈ server now (got " + forgedIn.check_in + ")")
-    assert.strictEqual(forgedIn.status, "late", "M1: status computed from the server check_in, client's 'on_time' ignored (got " + forgedIn.status + ")")
-    assert.notStrictEqual(forgedIn.ip_address, "8.8.8.8", "M1: forged public ip_address not trusted")
-    ok("check-in: forged check_in / status / ip all overridden by the server (M1)")
-
-    // owner may only set check_out — and it too is server-stamped
-    const forgedOut = await expectOk(baseUrl, "PATCH", `/api/collections/attendance_logs/records/${forgedIn.id}`, {
-      token: tokenA,
-      body: { check_out: "2000-01-01 00:00:00.000Z" },
-    })
-    assert.ok(forgedOut.check_out, "M1: check_out must be present (got " + forgedOut.check_out + ")")
-    assert.notStrictEqual(forgedOut.check_out, "2000-01-01 00:00:00.000Z", "M1: backdated check_out must be overwritten")
-    assert.ok(Math.abs(new Date(forgedOut.check_out).getTime() - Date.now()) < 60000, "M1: check_out ≈ server now (got " + forgedOut.check_out + ")")
-    ok("check-out: backdated check_out ignored, server stamp used (M1)")
-
-    const rewriteIn = await http(baseUrl, "PATCH", `/api/collections/attendance_logs/records/${forgedIn.id}`, { token: tokenA, body: { check_in: "2026-01-01 00:00:00.000Z" } })
-    assert.strictEqual(rewriteIn.status, 403, "M1: owner cannot rewrite check_in (got " + rewriteIn.status + ")")
-    ok("owner cannot rewrite check_in after the fact (M1)")
 
     // ================================================================ M8
     console.log("\nM8 — completed_at is server-stamped on the transition into completed:")

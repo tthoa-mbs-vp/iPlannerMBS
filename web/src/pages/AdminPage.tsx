@@ -1,14 +1,13 @@
 import { useEffect } from "react";
 import { usePersistedState } from "../hooks/usePersistedState";
 import { Navigate } from "react-router-dom";
-import { Building2, Users, UserCheck, Network, Radio, Settings } from "lucide-react";
+import { Building2, Users, UserCheck, Network, Settings } from "lucide-react";
 import { useAuthStore } from "../stores/authStore";
 import { usePageTitleStore } from "../stores/pageTitleStore";
 import DepartmentManager from "../components/admin/DepartmentManager";
 import RoleManager from "../components/admin/RoleManager";
 import UserManager from "../components/admin/UserManager";
 import GroupManager from "../components/admin/GroupManager";
-import PresenceManager from "../components/admin/PresenceManager";
 import AutoApproveSettings from "../components/admin/AutoApproveSettings";
 import TabBar, { type Tab } from "../components/shared/TabBar";
 
@@ -17,7 +16,6 @@ type AdminTab =
   | "roles"
   | "groups"
   | "users"
-  | "presence"
   | "settings";
 
 const tabs: Tab[] = [
@@ -25,9 +23,10 @@ const tabs: Tab[] = [
   { key: "groups", label: "Tổ chuyên môn", icon: Network, gradient: "from-teal-500 to-emerald-600" },
   { key: "roles", label: "Chức vụ", icon: UserCheck, gradient: "from-amber-500 to-orange-600" },
   { key: "users", label: "Người dùng", icon: Users, gradient: "from-violet-500 to-purple-600" },
-  { key: "presence", label: "Kiểm tra hiện diện", icon: Radio, gradient: "from-rose-500 to-red-600" },
   { key: "settings", label: "Cài đặt", icon: Settings, gradient: "from-slate-500 to-gray-600" },
 ];
+
+const TAB_KEYS: AdminTab[] = tabs.map((t) => t.key as AdminTab);
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = usePersistedState<AdminTab>("admin_tab", "departments");
@@ -37,19 +36,23 @@ export default function AdminPage() {
 
   useEffect(() => { usePageTitleStore.getState().setTitle("Quản trị hệ thống"); }, []);
 
+  // Tab đã lưu trong localStorage có thể là tab không còn tồn tại
+  // (ví dụ "presence" sau khi nhánh plan-only gỡ Kiểm tra hiện diện) —
+  // nếu không kiểm tra, người dùng sẽ thấy trang trống.
+  const currentTab = TAB_KEYS.includes(activeTab) ? activeTab : "departments";
+
   if (!isAdmin) return <Navigate to="/dashboard" replace />;
 
   return (
     <div className="space-y-6">
-      <TabBar variant="page" tabs={tabs} active={activeTab} onChange={(k) => setActiveTab(k as AdminTab)} />
+      <TabBar variant="page" tabs={tabs} active={currentTab} onChange={(k) => setActiveTab(k as AdminTab)} />
 
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-        {activeTab === "departments" && <DepartmentManager />}
-        {activeTab === "groups" && <GroupManager />}
-        {activeTab === "roles" && <RoleManager />}
-        {activeTab === "users" && <UserManager />}
-        {activeTab === "presence" && <PresenceManager />}
-        {activeTab === "settings" && <AutoApproveSettings />}
+        {currentTab === "departments" && <DepartmentManager />}
+        {currentTab === "groups" && <GroupManager />}
+        {currentTab === "roles" && <RoleManager />}
+        {currentTab === "users" && <UserManager />}
+        {currentTab === "settings" && <AutoApproveSettings />}
       </div>
     </div>
   );

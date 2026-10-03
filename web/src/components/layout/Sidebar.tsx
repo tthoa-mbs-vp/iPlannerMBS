@@ -8,14 +8,8 @@ import {
   ClipboardList,
   BarChart3,
   Award,
-  MessagesSquare,
-  Megaphone,
   Trash2,
   Shield,
-  ShieldCheck,
-  Clock,
-  CalendarDays,
-  UserCog,
   Activity,
   Database,
   BookOpen,
@@ -28,7 +22,6 @@ interface NavItem {
   label: string;
   icon: LucideIcon;
   adminOnly?: boolean;
-  hrOnly?: boolean;
 }
 
 interface ExternalItem {
@@ -53,22 +46,6 @@ const sections: { title: string; items: SidebarItem[] }[] = [
       { to: "/plans", label: "Kế hoạch & Nhiệm vụ", icon: ClipboardList },
       { to: "/reports", label: "Báo cáo", icon: BarChart3 },
       { to: "/kpi", label: "KPI", icon: Award },
-    ],
-  },
-  {
-    title: "Quản lý Nhân sự",
-    items: [
-      { to: "/hr", label: "Nhân sự", icon: UserCog, hrOnly: true },
-      { to: "/attendance", label: "Chấm công", icon: Clock },
-      { to: "/surprise-check", label: "Kiểm tra đột xuất", icon: ShieldCheck, adminOnly: true },
-      { to: "/leave", label: "Nghỉ phép", icon: CalendarDays },
-    ],
-  },
-  {
-    title: "Trao đổi",
-    items: [
-      { to: "/announcements", label: "Bảng tin", icon: Megaphone },
-      { to: "/discussion", label: "Trao đổi & Thảo luận", icon: MessagesSquare },
     ],
   },
   {
@@ -99,7 +76,6 @@ export default function Sidebar({ open, mobile, onCloseMobile }: SidebarProps) {
   const user = useAuthStore((s) => s.user);
   const role = user?.expand?.role_id;
   const isAdmin = role?.can_manage;
-  const canViewSalary = !!role?.can_view_salary;
   const location = useLocation();
 
   // Ở chế độ thu gọn: hover vào sidebar sẽ auto-expand dạng overlay (không đẩy nội dung).
@@ -126,7 +102,6 @@ export default function Sidebar({ open, mobile, onCloseMobile }: SidebarProps) {
           <SidebarContent
             expanded
             isAdmin={isAdmin}
-            canViewSalary={canViewSalary}
             onCloseMobile={onCloseMobile}
           />
         </aside>
@@ -143,7 +118,7 @@ export default function Sidebar({ open, mobile, onCloseMobile }: SidebarProps) {
           expanded ? "w-64" : "w-16"
         }`}
       >
-        <SidebarContent expanded={expanded} isAdmin={isAdmin} canViewSalary={canViewSalary} />
+        <SidebarContent expanded={expanded} isAdmin={isAdmin} />
       </aside>
     </div>
   );
@@ -152,12 +127,10 @@ export default function Sidebar({ open, mobile, onCloseMobile }: SidebarProps) {
 function SidebarContent({
   expanded,
   isAdmin,
-  canViewSalary,
   onCloseMobile,
 }: {
   expanded: boolean;
   isAdmin?: boolean;
-  canViewSalary?: boolean;
   onCloseMobile?: () => void;
 }) {
   return (
@@ -195,7 +168,6 @@ function SidebarContent({
               )}
               {section.items.map((item) => {
                 if ("adminOnly" in item && item.adminOnly && !isAdmin) return null;
-                if ("hrOnly" in item && item.hrOnly && !isAdmin && !canViewSalary) return null;
                 const Icon = item.icon;
                 const linkClasses = (active: boolean) =>
                   `flex items-center rounded-lg text-sm font-medium transition-all duration-200 ${

@@ -6,8 +6,7 @@ import { usePageTitleStore } from "../stores/pageTitleStore";
 import { useTasks } from "../hooks/useTasks";
 import { useKpiScores } from "../hooks/useKpiScores";
 import { useUsers } from "../hooks/useDepartments";
-import { useAttendanceLogs, useAttendanceConfigs, useCheckIn, useCheckOut } from "../hooks/useAttendance";
-import { TASK_STATUS_LABELS, TASK_STATUS_STYLES, ATTENDANCE_STATUS_STYLES } from "../utils/constants";
+import { TASK_STATUS_LABELS, TASK_STATUS_STYLES } from "../utils/constants";
 import { isTaskOverdue } from "../utils/format";
 import type { Task } from "@shared/types";
 import {
@@ -17,7 +16,6 @@ import {
   AlertTriangle,
   CheckCircle2,
   ListChecks,
-  Wifi,
   ArrowRight,
   Sparkles,
   Briefcase,
@@ -50,17 +48,10 @@ function diffDays(dateStr: string): number {
 
 export default function MyDayPage() {
   const user = useAuthStore((s) => s.user);
-  const userId = user?.id;
 
   const { data: tasks, isLoading: tasksLoading, error: tasksError, refetch: refetchTasks } = useTasks();
   const { data: kpiScores } = useKpiScores();
   const { data: users = [] } = useUsers();
-  const { data: logs = [], isLoading: attendanceLoading } = useAttendanceLogs(userId);
-  const { data: configs = [] } = useAttendanceConfigs();
-
-  const checkInMutation = useCheckIn();
-  const checkOutMutation = useCheckOut();
-  const [checkingIn, setCheckingIn] = useState(false);
 
   const [showTaskFilters, setShowTaskFilters] = useState(false);
   const [taskSearch, setTaskSearch] = useState("");
@@ -158,33 +149,7 @@ export default function MyDayPage() {
     setTaskPage(1);
   }
 
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const todayLog = logs.find((l) => l.check_in?.startsWith(todayStr));
-
-  const activeConfig = configs.find((c) => c.is_active) || configs[0];
-
-  const handleCheckIn = () => {
-    if (!user || checkingIn) return;
-    setCheckingIn(true);
-    checkInMutation.mutate(
-      {
-        user_id: user.id,
-        ssid: activeConfig?.wifi_ssid || "",
-        bssid: activeConfig?.wifi_bssid,
-        config: activeConfig,
-        notes: activeConfig ? `Tại ${activeConfig.office_name}` : "Check-in nhanh",
-      },
-      {
-        onSettled: () => setCheckingIn(false),
-      }
-    );
-  };
-
-  const handleCheckOut = () => {
-    if (todayLog?.id) checkOutMutation.mutate(todayLog.id);
-  };
-
-  const isLoading = tasksLoading || attendanceLoading;
+  const isLoading = tasksLoading;
 
   const dateLabel = format(new Date(), "EEEE, dd/MM/yyyy", { locale: vi });
   const roleLabel = user?.expand?.role_id?.name;
@@ -198,12 +163,6 @@ export default function MyDayPage() {
     { label: "Trễ hạn", value: myTaskCounts.overdue, icon: AlertTriangle, color: "text-rose-600 dark:text-rose-300", bg: "bg-rose-100 dark:bg-rose-900/40", link: "/tasks" },
     { label: "Hoàn thành", value: myTaskCounts.completed, icon: Award, color: "text-emerald-600 dark:text-emerald-300", bg: "bg-emerald-100 dark:bg-emerald-900/40", link: "/tasks" },
   ];
-
-  const todayTime = todayLog
-    ? `${new Date(todayLog.check_in).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}`
-    : null;
-  const checkedOut = !!todayLog?.check_out;
-  const lateToday = todayLog?.status === "late";
 
   return (
     <div className="space-y-6">
@@ -225,33 +184,7 @@ export default function MyDayPage() {
               {deptLabel && <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium"><CalendarDays className="h-3 w-3" />{deptLabel}</span>}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {!todayLog ? (
-              <button
-                onClick={handleCheckIn}
-                disabled={checkInMutation.isPending || checkingIn}
-                className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-indigo-700 shadow-md transition-transform hover:scale-[1.02] disabled:opacity-60"
-              >
-                <Wifi className="h-4 w-4" />
-                {checkInMutation.isPending || checkingIn ? "Đang chấm công..." : "Chấm công vào ca"}
-              </button>
-            ) : !checkedOut ? (
-              <button
-                onClick={handleCheckOut}
-                disabled={checkOutMutation.isPending}
-                className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-5 py-2.5 text-sm font-semibold text-amber-950 shadow-md transition-transform hover:scale-[1.02] disabled:opacity-60"
-              >
-                <Clock className="h-4 w-4" />
-                {checkOutMutation.isPending ? "Đang ra ca..." : "Ra ca"}
-              </button>
-            ) : (
-              <span className="inline-flex items-center gap-2 rounded-xl bg-emerald-400/20 px-4 py-2.5 text-sm font-semibold text-emerald-100 ring-1 ring-emerald-300/40">
-                <CheckCircle2 className="h-4 w-4" />
-                Đã hoàn thành công hôm nay
-              </span>
-            )}
           </div>
-        </div>
       </div>
 
       {isLoading ? (
@@ -443,43 +376,6 @@ export default function MyDayPage() {
 
             {/* Right column */}
             <div className="flex flex-col space-y-4">
-              {/* Attendance */}
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-                <div className="mb-3 flex items-center gap-2">
-                  <div className="rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 p-2 shadow-lg shadow-emerald-500/20">
-                    <Clock className="h-4 w-4 text-white" />
-                  </div>
-                  <h3 className="font-semibold text-slate-800 dark:text-slate-100">Chấm công hôm nay</h3>
-                </div>
-                {todayLog ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-700/40">
-                      <span className="text-xs text-slate-500 dark:text-slate-400">Giờ vào ca</span>
-                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{todayTime}</span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-700/40">
-                      <span className="text-xs text-slate-500 dark:text-slate-400">Giờ ra ca</span>
-                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                        {checkedOut
-                          ? new Date(todayLog.check_out!).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
-                          : "Chưa ra ca"}
-                      </span>
-                    </div>
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${ATTENDANCE_STATUS_STYLES[lateToday ? "late" : "on_time"]}`}>
-                      {lateToday ? (<><AlertTriangle className="h-3 w-3" /> Đi muộn</>) : (<><CheckCircle2 className="h-3 w-3" /> Đúng giờ</>)}
-                    </span>
-                  </div>
-                ) : (
-                  <EmptyState
-                    icon={Clock}
-                    message="Chưa chấm công hôm nay"
-                    subMessage="Đừng quên chấm công khi đến văn phòng"
-                    size="sm"
-                    className="py-6"
-                  />
-                )}
-              </div>
-
               {/* KPI của tôi (from Dashboard "Việc của tôi") */}
               <div className="flex flex-1 flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
                 <div className="mb-3 flex items-center gap-2">

@@ -2,9 +2,7 @@ import { NavLink, Outlet, Link } from "react-router-dom";
 import {
   LayoutDashboard,
   ClipboardList,
-  Clock,
   User,
-  Megaphone,
   Bell,
   Sun,
   Moon,
@@ -13,17 +11,14 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore";
 import { useUnreadCount } from "../../hooks/useNotifications";
-import { usePresenceHeartbeat } from "../../hooks/usePresence";
 import { useTheme } from "../../hooks/useTheme";
 import { APP_NAME } from "../../config/app";
 import { isMobileDevice } from "../../utils/device";
 
 const tabs = [
   { to: "/m", label: "Tổng quan", icon: LayoutDashboard, end: true },
-  { to: "/m/announcements", label: "Bảng tin", icon: Megaphone },
   { to: "/m/tasks", label: "Việc của tôi", icon: ClipboardList },
   { to: "/m/kpi", label: "KPI", icon: Award },
-  { to: "/m/attendance", label: "Chấm công", icon: Clock },
   { to: "/m/profile", label: "Cá nhân", icon: User },
 ];
 
@@ -31,7 +26,6 @@ export default function MLayout() {
   const user = useAuthStore((s) => s.user);
   const { data: unreadCount = 0 } = useUnreadCount();
   const { mode, cycle } = useTheme();
-  usePresenceHeartbeat(true);
 
   return (
     <div className="flex h-screen flex-col bg-slate-50 dark:bg-slate-950">
