@@ -62,7 +62,7 @@ describe("usePlans", () => {
     mockCreate.mockResolvedValue(mockPlans[0]);
     const { useCreatePlan } = await import("../hooks/usePlans");
     const { result } = renderHook(() => useCreatePlan(), { wrapper: Wrapper });
-    await result.current.mutateAsync({ name: "New Plan" } as any);
+    await result.current.mutateAsync({ name: "New Plan" });
     expect(mockCreate).toHaveBeenCalledWith({ name: "New Plan" });
   });
 

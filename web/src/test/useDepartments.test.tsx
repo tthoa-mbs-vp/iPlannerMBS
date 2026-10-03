@@ -52,7 +52,7 @@ describe("useDepartments", () => {
     mockCreate.mockResolvedValue(mockDepartments[0]);
     const { useCreateDepartment } = await import("../hooks/useDepartments");
     const { result } = renderHook(() => useCreateDepartment(), { wrapper: Wrapper });
-    await result.current.mutateAsync({ code: "IT", name: "Phòng IT" } as any);
+    await result.current.mutateAsync({ code: "IT", name: "Phòng IT" });
     expect(mockCreate).toHaveBeenCalledWith({ code: "IT", name: "Phòng IT" });
   });
 

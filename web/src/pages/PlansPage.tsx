@@ -22,10 +22,10 @@ import PlanFiltersDropdown from "../components/plans/PlanFiltersDropdown";
 import TaskFiltersDropdown from "../components/plans/TaskFiltersDropdown";
 import Pagination from "../components/shared/Pagination";
 const ImportModal = lazy(() => import("../components/admin/ImportModal"));
-import { exportToExcel, exportToCsv, exportToJson, PLAN_EXPORT_COLUMNS, TASK_EXPORT_COLUMNS } from "../utils/importExport";
+import { exportToExcel, exportToCSV, exportToJSON, PLAN_EXPORT_COLUMNS, TASK_EXPORT_COLUMNS } from "../utils/importExport";
+import { exportToPdfPlans, exportToPdfTasks } from "../utils/pdfExports";
 import type { Task, Department, Plan, PlanStatus } from "@shared/types";
 import { PLAN_STATUS_LABELS, PLAN_STATUS_STYLES } from "../utils/constants";
-import { exportToPdfPlans, exportToPdfTasks } from "../utils/pageHelpers";
 import { planInUserGroups, taskInUserGroups, userGroupIds } from "../utils/groupScope";
 import { useDebounce } from "../hooks/useDebounce";
 import { usePersistedState } from "../hooks/usePersistedState";
@@ -119,7 +119,7 @@ export default function PlansPage() {  const navigate = useNavigate();
     else if (viewScope === "personal") {
       if (!personalTasks || personalTasks.length === 0) list = allPlans.filter((p) => p.leader_id === user?.id);
       else {
-        const planIds = new Set(personalTasks.map((t) => (t as unknown as Task).plan_id).filter(Boolean));
+        const planIds = new Set(personalTasks.map((t) => t.plan_id).filter(Boolean));
         list = allPlans.filter((p) => planIds.has(p.id) || p.leader_id === user?.id);
       }
     } else {
@@ -290,8 +290,8 @@ export default function PlansPage() {  const navigate = useNavigate();
     const data = plans.map((p) => ({ ...p, host_dept: p.expand?.host_dept_id?.name || "" }));
     const columns = [...PLAN_EXPORT_COLUMNS, { key: "host_dept", label: "Phòng chủ trì" }];
     if (format === "xlsx") exportToExcel(data, columns, "ke-hoach");
-    else if (format === "csv") exportToCsv(data, columns, "ke-hoach");
-    else if (format === "json") exportToJson(data, "ke-hoach");
+    else if (format === "csv") exportToCSV(data, columns, "ke-hoach");
+    else if (format === "json") exportToJSON(data, columns, "ke-hoach");
     else exportToPdfPlans(plans, landscape);
   };
 
@@ -300,8 +300,8 @@ export default function PlansPage() {  const navigate = useNavigate();
     const data = filteredTasks.map((t) => ({ ...t, plan_name: t.expand?.plan_id?.name || "", executor: t.expand?.executor_id?.name || "", }));
     const columns = [...TASK_EXPORT_COLUMNS, { key: "plan_name", label: "Kế hoạch" }, { key: "executor", label: "Người thực hiện" }];
     if (format === "xlsx") exportToExcel(data, columns, "nhiem-vu");
-    else if (format === "csv") exportToCsv(data, columns, "nhiem-vu");
-    else if (format === "json") exportToJson(data, "nhiem-vu");
+    else if (format === "csv") exportToCSV(data, columns, "nhiem-vu");
+    else if (format === "json") exportToJSON(data, columns, "nhiem-vu");
     else exportToPdfTasks(filteredTasks, landscape);
   };
 
@@ -371,9 +371,9 @@ export default function PlansPage() {  const navigate = useNavigate();
   };
 
   return (
-    <div ref={containerRef} className="flex flex-col lg:flex-row gap-0 h-auto lg:h-[calc(100vh-7rem)] w-full max-w-full overflow-hidden select-none" onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
+    <div ref={containerRef} className="flex gap-0 h-[calc(100vh-7rem)] w-full max-w-full overflow-hidden select-none" onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
       {/* Left panel: Plans list */}
-      <div className="shrink-0 min-w-0 flex flex-col rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-900 h-[50vh] lg:h-auto" style={{ width: typeof window !== 'undefined' && window.innerWidth < 1024 ? '100%' : `${leftWidth}%` }}>
+      <div className="shrink-0 min-w-0 flex flex-col rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-900" style={{ width: `${leftWidth}%` }}>
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-700">
           <div className="flex items-center gap-2">
             <input type="checkbox" checked={allPlansSelected} onChange={handleSelectAllPlans}
@@ -402,7 +402,7 @@ export default function PlansPage() {  const navigate = useNavigate();
                 <span className="text-xs text-slate-500 mr-1 dark:text-slate-400">Đã chọn {selectedPlanIds.size}</span>
                 {canDeletePlans && (
                 <button onClick={handleBulkDeletePlans} disabled={bulkDeletePlans.isPending}
-                  className="rounded-lg border border-red-200 bg-red-50 p-1.5 text-red-500 hover:bg-red-100 disabled:opacity-40 transition-colors dark:border-red-900 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-950" title="Xóa các kế hoạch đã chọn" aria-label="Xóa các kế hoạch đã chọn">
+                  className="rounded-lg border border-red-200 bg-red-50 p-1.5 text-red-500 hover:bg-red-100 disabled:opacity-40 transition-colors dark:border-red-900 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-950" title="Xóa các kế hoạch đã chọn">
                   <Trash2 className="h-4 w-4" />
                 </button>
                 )}
@@ -525,7 +525,7 @@ export default function PlansPage() {  const navigate = useNavigate();
                   <div className="flex items-center gap-2 text-[10px] text-slate-400 mb-1.5 min-w-0 overflow-hidden dark:text-slate-500">
                     <span className="font-bold text-slate-600 shrink-0 dark:text-slate-300">{plan.expand?.host_dept_id?.name || "—"}</span>
                     {plan.expand?.partner_dept_ids && plan.expand.partner_dept_ids.length > 0 && (
-                      <span className="text-slate-300 truncate min-w-0 dark:text-slate-500" title={plan.expand.partner_dept_ids.map((d: { name?: string }) => d.name).join(", ")}>· {plan.expand.partner_dept_ids.map((d: { name?: string }) => d.name).join(", ")}</span>
+                      <span className="text-slate-300 truncate min-w-0 dark:text-slate-500" title={plan.expand.partner_dept_ids.map((d) => d.name).join(", ")}>· {plan.expand.partner_dept_ids.map((d) => d.name).join(", ")}</span>
                     )}
                     <span className="text-slate-300 shrink-0 dark:text-slate-500">·</span>
                     <span className="shrink-0 truncate">{new Date(plan.start_date).toLocaleDateString("vi-VN")} → {new Date(plan.end_date).toLocaleDateString("vi-VN")}</span>
@@ -597,13 +597,10 @@ export default function PlansPage() {  const navigate = useNavigate();
         </div>
       </div>
       <div
-        className={`hidden lg:flex w-1.5 cursor-col-resize shrink-0 items-center justify-center transition-colors hover:bg-indigo-100 active:bg-indigo-200 ${dragging ? "bg-indigo-200" : "bg-transparent"}`}
+        className={`w-1.5 cursor-col-resize shrink-0 flex items-center justify-center transition-colors hover:bg-indigo-100 active:bg-indigo-200 ${dragging ? "bg-indigo-200" : "bg-transparent"}`}
         onMouseDown={handleMouseDown}
       >
         <GripVertical className="h-4 w-4 text-slate-300 pointer-events-none dark:text-slate-600" />
-      </div>
-      <div className="lg:hidden h-1.5 shrink-0 bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-        <div className="w-12 h-0.5 rounded-full bg-slate-300 dark:bg-slate-600" />
       </div>
 
       {/* Right panel: Tasks */}
@@ -724,7 +721,6 @@ export default function PlansPage() {  const navigate = useNavigate();
                   <div />
                 )}
               </div>
-              <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="bg-slate-50 dark:bg-slate-800">
@@ -736,7 +732,6 @@ export default function PlansPage() {  const navigate = useNavigate();
                     <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">Người thực hiện</th>
                     <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">Người giám sát</th>
                     <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">Hạn</th>
-                    <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">Trọng số</th>
                   </tr>
                 </thead>
               <tbody>
@@ -751,7 +746,6 @@ export default function PlansPage() {  const navigate = useNavigate();
                 ))}
               </tbody>
             </table>
-            </div>
             <Pagination
               page={tasksPage}
               totalPages={taskTotalPages}

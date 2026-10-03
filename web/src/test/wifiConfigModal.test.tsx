@@ -46,7 +46,7 @@ describe("WifiConfigModal — allowed_ips", () => {
     fireEvent.click(screen.getByRole("button", { name: "Lưu cấu hình" }));
 
     expect(await vi.waitFor(() => createMock.mock.calls.length)).toBe(1);
-    const payload = createMock.mock.calls[0][0] as any;
+    const payload = createMock.mock.calls[0][0] as Record<string, unknown>;
     expect(payload.allowed_ips).toEqual(["192.168.1.0/24", "192.168.1.5", "*"]);
   });
 
@@ -55,6 +55,6 @@ describe("WifiConfigModal — allowed_ips", () => {
     fireEvent.click(screen.getByRole("button", { name: "Lưu cấu hình" }));
 
     expect(await vi.waitFor(() => createMock.mock.calls.length)).toBe(1);
-    expect((createMock.mock.calls[0][0] as any).allowed_ips).toEqual([]);
+    expect((createMock.mock.calls[0][0] as Record<string, unknown>).allowed_ips).toEqual([]);
   });
 });

@@ -1,20 +1,48 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { createRequire } from "node:module";
 
 // Load the PocketBase hooks helper file in this sandbox. helpers.js only uses
 // $app inside request-time handlers; its pure helpers evaluate cleanly in Node.
-const helpersPath = resolve(__dirname, "../../../backend/pb_hooks/helpers.js");
+const hooksDir = resolve(__dirname, "../../../backend/pb_hooks");
+const helpersPath = resolve(hooksDir, "helpers.js");
 const source = readFileSync(helpersPath, "utf-8");
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let H: any;
+// helpers.js pulls the KPI formula in via require(). The sandbox below has no
+// module system of its own, so hand it one rooted at pb_hooks — that also
+// verifies the "./_kpi-formula.cjs" branch of the dual-runtime loader.
+const nodeRequire = createRequire(hooksDir + "/");
+
+type Helpers = {
+  pub: {
+    eq: (a: unknown, b: unknown) => boolean;
+    ipInList: (ip: unknown, list: unknown) => boolean;
+    isPrivateIp: (ip: unknown) => boolean;
+    jsonArr: (v: unknown) => string[];
+    taskFields: (v: unknown) => unknown;
+  };
+  _arr: (v: unknown) => unknown[];
+  _str: (v: unknown) => string;
+  _ipToInt: (v: unknown) => number;
+  _computeKpi: (input: Record<string, unknown>) => {
+    base_score: number;
+    difficulty_coeff: number;
+    max_converted_score: number;
+    progress_score: number;
+    result_rating: number;
+    final_score: number;
+  };
+};
+
+let H: Helpers;
 
 beforeAll(() => {
   const fakeModule = { exports: {} as Record<string, unknown> };
   const factory = new Function(
     "module",
     "exports",
+    "require",
     `${source}
     return {
       pub: module.exports,
@@ -24,7 +52,7 @@ beforeAll(() => {
       _computeKpi: _computeKpi,
     };`
   );
-  H = factory(fakeModule, fakeModule.exports);
+  H = factory(fakeModule, fakeModule.exports, nodeRequire) as Helpers;
 });
 
 describe("pb_hooks/helpers — arr/json helpers", () => {

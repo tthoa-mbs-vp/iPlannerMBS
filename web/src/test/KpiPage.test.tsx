@@ -5,7 +5,7 @@ beforeAll(() => {
     observe() {}
     unobserve() {}
     disconnect() {}
-  } as any;
+  } as unknown as typeof ResizeObserver;
 });
 import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -36,9 +36,9 @@ vi.mock("../hooks/useKpiScores", () => ({
 vi.mock("../hooks/useTasks", () => ({
   useTasks: vi.fn(() => ({
     data: [
-      { id: "t1", name: "Task A", executor_id: "u1", status: "completed",  category: "normal", deadline: new Date().toISOString() },
-      { id: "t2", name: "Task B", executor_id: "u2", status: "completed",  category: "important", deadline: new Date().toISOString() },
-      { id: "t3", name: "Task C", executor_id: "u1", status: "completed",  category: "normal", deadline: new Date().toISOString() },
+      { id: "t1", name: "Task A", executor_id: "u1", status: "completed", category: "normal", deadline: new Date().toISOString() },
+      { id: "t2", name: "Task B", executor_id: "u2", status: "completed", category: "important", deadline: new Date().toISOString() },
+      { id: "t3", name: "Task C", executor_id: "u1", status: "completed", category: "normal", deadline: new Date().toISOString() },
     ],
     isLoading: false,
   })),

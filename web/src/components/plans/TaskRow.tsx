@@ -1,7 +1,7 @@
 import { memo } from "react";
-import type { Task } from "@shared/types";
+import type { Task, User } from "@shared/types";
 import { TASK_STATUS_LABELS, TASK_STATUS_STYLES } from "../../utils/constants";
-import { isTaskOverdue, formatDate } from "../../utils/format";
+import { isTaskOverdue } from "../../utils/format";
 
 interface TaskRowProps {
   task: Task;
@@ -34,7 +34,7 @@ const TaskRow = memo(function TaskRow({ task, isSelected, onToggle, onOpen }: Ta
         </div>
         {task.expand?.collaborator_ids && task.expand.collaborator_ids.length > 0 && (
           <div className="text-[11px] text-slate-400 mt-0.5 dark:text-slate-500">
-            {task.expand.collaborator_ids.map((u: { name?: string; email?: string }) => u.name || u.email).join(", ")}
+            {task.expand.collaborator_ids.map((u: User) => u.name).join(", ")}
           </div>
         )}
       </td>
@@ -43,15 +43,14 @@ const TaskRow = memo(function TaskRow({ task, isSelected, onToggle, onOpen }: Ta
       </td>
       <td className="px-4 py-3 whitespace-nowrap">
         <div className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
-          <span>{formatDate(task.start_date)}</span>
+          <span>{new Date(task.start_date).toLocaleDateString("vi-VN")}</span>
           <span className="text-slate-300 dark:text-slate-600">→</span>
         </div>
         <div className={`text-sm font-bold ${isOverdue ? "text-rose-600 dark:text-rose-400" : "text-slate-700 dark:text-slate-200"}`}>
-          {formatDate(task.deadline)}
+          {new Date(task.deadline).toLocaleDateString("vi-VN")}
           {isOverdue && " ⚠"}
         </div>
       </td>
-      <td className="px-4 py-3 text-sm font-bold text-indigo-600 whitespace-nowrap"></td>
     </tr>
   );
 });

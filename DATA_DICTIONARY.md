@@ -171,7 +171,6 @@
 | `due_date` | Date | — | — |
 | `completion_date` | Date | — | — |
 | `progress` | Number | — | — |
-| `weight` | Number | — | — |
 | `archived_at` | Date | ✅ | — |
 
 ---
@@ -383,7 +382,7 @@
 | `base_score` | Number | — | — |
 | `difficulty_coeff` | Number | — | — |
 | `progress_score` | Number | — | — |
-| `result_rating` | Number | — | — |
+| `result_rating` | Number | — | copy nguyên vẹn từ `tasks.rating` (thang 1–10) |
 | `final_score` | Number | — | — |
 | `created` | Autodate | — | tự set khi tạo |
 | `updated` | Autodate | — | tự set khi tạo + tự set khi sửa |
@@ -817,7 +816,6 @@
 | `start_date` | Date | ✅ | — |
 | `deadline` | Date | ✅ | — |
 | `status` | Select | ✅ | giá trị: not_started · in_progress · pending_approval · completed · proposed_extension · proposed_cancellation · cancelled |
-| `weight` | Number | — | — |
 | `is_recurring` | Bool | — | — |
 | `recurring_type` | Select | — | giá trị: monthly · weekly |
 | `recurring_value` | Number | — | — |
@@ -826,7 +824,7 @@
 | `is_high_impact` | Bool | — | — |
 | `coordinating_dept_id` | Relation | — | → departments; một |
 | `completed_at` | Date | — | — |
-| `rating` | Number | — | min 1; max 5; số nguyên |
+| `rating` | Number | — | min 1; max 10; số nguyên (**thang 1–10**, nâng từ max 5 ở migration `1799100000_widen_task_rating_to_10.js`) |
 | `rated_by_id` | Relation | — | → users; một |
 | `rated_at` | Date | — | — |
 | `created` | Autodate | — | tự set khi tạo |
@@ -859,7 +857,7 @@
 | `emailVisibility` | Bool | — | — |
 | `verified` | Bool | — | — |
 | `name` | Text | — | max 255 ký tự |
-| `avatar` | File | — | MIME: image/jpeg, image/png, image/svg+xml, image/gif, image/webp |
+| `avatar` | File | — | MIME: image/jpeg, image/png, image/gif, image/webp (không chấp nhận SVG — tránh stored-XSS) |
 | `created` | Autodate | — | tự set khi tạo |
 | `updated` | Autodate | — | tự set khi tạo + tự set khi sửa |
 | `department_id` | Relation | — | → departments; một |

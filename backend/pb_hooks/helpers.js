@@ -184,7 +184,8 @@ function _recalcPlanProgress(planId) {
     $app.save(plan)
     return
   }
-  var progressSum = 0
+  // Progress = simple average of task progress (the per-task `weight` field was removed)
+  var sumProgress = 0
   var allCompleted = true
   var hasStarted = false
   for (var ti = 0; ti < tasks.length; ti++) {
@@ -194,14 +195,24 @@ function _recalcPlanProgress(planId) {
     if (status === "completed") taskProgress = 100
     else if (status === "pending_approval") taskProgress = 75
     else if (status === "in_progress") taskProgress = 50
-    progressSum += taskProgress
+    sumProgress += taskProgress
     if (status !== "completed") allCompleted = false
     if (status === "in_progress" || status === "pending_approval" || status === "completed") hasStarted = true
   }
-  var newProgress = tasks.length > 0 ? Math.round(progressSum / tasks.length) : 0
+  var newProgress = Math.round(sumProgress / tasks.length)
   plan.set("progress", newProgress)
-  if (allCompleted && plan.getString("status") !== "cancelled") plan.set("status", "completed")
-  else if (hasStarted && plan.getString("status") === "not_started") plan.set("status", "in_progress")
+  // Status transitions. paused/cancelled are deliberate human states — progress is
+  // still recomputed, but the status is never auto-overridden (a paused plan stays
+  // paused even if every task happens to be completed). A completed plan that gains
+  // a not-yet-completed task (or has one reopened) reverts to in_progress so the
+  // badge can never say "completed" while progress < 100%.
+  if (allCompleted && plan.getString("status") !== "cancelled" && plan.getString("status") !== "paused") {
+    plan.set("status", "completed")
+  } else if (hasStarted && plan.getString("status") === "not_started") {
+    plan.set("status", "in_progress")
+  } else if (!allCompleted && hasStarted && plan.getString("status") === "completed") {
+    plan.set("status", "in_progress")
+  }
   $app.save(plan)
 }
 
@@ -422,8 +433,17 @@ function _notifyAnnouncement(announcement) {
 }
 
 // ---- kpi.pb.js helpers ----
-function _round1(v) {
-  return Math.round(v * 10) / 10
+// The KPI formula itself lives in ONE place — _kpi-formula.cjs (same dir), so the
+// web app (web/src/utils/kpi.ts) and the backend can never drift apart. This
+// loader handles both runtimes: PocketBase (require() resolves absolute paths
+// inside pb_hooks via __hooks) and plain Node unit tests (module-relative).
+function _loadKpiFormula() {
+  try {
+    if (typeof __hooks !== "undefined" && __hooks) {
+      return require(__hooks + "/_kpi-formula.cjs")
+    }
+  } catch (ex) { /* fall through to the Node path */ }
+  return require("./_kpi-formula.cjs")
 }
 
 function _hasPartnerDept(task) {
@@ -440,49 +460,18 @@ function _hasPartnerDept(task) {
 }
 
 function _computeKpi(task) {
-  var isAdHoc = task.getString("category") === "sudden" || task.getBool("is_ad_hoc")
-  var isHighImpact = task.getString("category") === "important" || task.getBool("is_high_impact")
-
-  var baseScore = isAdHoc ? 12 : 10
-
-  var difficultyCoeff = 1.0
-  if (isHighImpact) {
-    difficultyCoeff = 1.2
-  } else if (_hasPartnerDept(task)) {
-    difficultyCoeff = 1.1
-  }
-
-  var scheduleLevel = 0
-  if (task.getString("status") === "completed") {
-    var completedAt = task.getString("completed_at") || task.getString("updated")
-    var deadline = task.getString("deadline")
-    if (completedAt && deadline) {
-      var daysLate = (new Date(completedAt).getTime() - new Date(deadline).getTime()) / (1000 * 60 * 60 * 24)
-      if (daysLate <= 0) scheduleLevel = 1.0
-      else if (daysLate <= 3) scheduleLevel = 0.8
-      else if (daysLate <= 5) scheduleLevel = 0.6
-      else scheduleLevel = 0.0
-    } else {
-      // missing deadline or completion stamp -> no lateness evidence, treat as on-time
-      scheduleLevel = 1.0
-    }
-  }
-
-  var rating = task.getFloat("rating") || 0
-  var resultLevel = rating / 10.0
-
-  var performanceScore = _round1(baseScore * (0.3 * scheduleLevel + 0.7 * resultLevel))
-  var actualScore = _round1(performanceScore * difficultyCoeff)
-  var maxConverted = _round1(baseScore * difficultyCoeff)
-
-  return {
-    base_score: baseScore,
-    difficulty_coeff: difficultyCoeff,
-    max_converted_score: maxConverted,
-    progress_score: Math.round(scheduleLevel * 100),
-    result_rating: rating,
-    final_score: actualScore,
-  }
+  var kpi = _loadKpiFormula()
+  return kpi.computeKpiScore({
+    category: task.getString("category"),
+    is_ad_hoc: task.getBool("is_ad_hoc"),
+    is_high_impact: task.getBool("is_high_impact"),
+    hasPartnerDept: _hasPartnerDept(task),
+    status: task.getString("status"),
+    completed_at: task.getString("completed_at") || null,
+    updated: task.getString("updated"),
+    deadline: task.getString("deadline") || null,
+    rating: task.getFloat("rating") || 0,
+  })
 }
 
 function _upsertKpi(task) {

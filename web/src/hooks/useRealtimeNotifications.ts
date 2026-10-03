@@ -14,10 +14,10 @@ export function useRealtimeNotifications() {
   useEffect(() => {
     if (!userId) return;
 
-    const handler = (e: { action: string; record: Notification }) => {
+    const handler = (e: { action?: string; record?: Notification }) => {
       if (e.action === "create") {
         const record = e.record;
-        if (record.user_id === userId) {
+        if (record && record.user_id === userId) {
           const ref = decodeRef(record);
           const label = getNotificationTypeLabel(record.type);
           const msg = ref.message || label;

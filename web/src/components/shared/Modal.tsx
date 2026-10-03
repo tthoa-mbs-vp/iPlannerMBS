@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 
 interface Props {
   title: string;
@@ -45,21 +45,71 @@ export default function Modal({
   accentColor = "indigo",
 }: Props) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
 
   useEffect(() => {
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+
+    // Remember what had focus so the keyboard user lands back where they were
+    // after the dialog closes — without this, focus falls to <body> and
+    // Tab-from-the-top restarts the whole page, losing the user's place.
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+
+    // Elements a keyboard user can actually reach. Visibility is checked via
+    // attributes rather than getClientRects()/offsetParent: those need a layout
+    // engine, so they report "hidden" for everything under jsdom and would
+    // silently empty the trap during tests.
+    const FOCUSABLE = 'a[href], button:not([disabled]), input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const focusables = () =>
+      Array.from(panelRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []).filter(
+        (el) => !el.hidden && el.getAttribute("aria-hidden") !== "true"
+      );
+
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+
+      // Focus trap: without it, Tab walks straight out of the dialog and into
+      // the page behind, so screen-reader and keyboard users end up editing
+      // an invisible layer.
+      const items = focusables();
+      if (items.length === 0) {
+        e.preventDefault();
+        return;
+      }
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      const inside = active instanceof HTMLElement && panelRef.current?.contains(active);
+
+      if (e.shiftKey && (active === first || !inside)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (active === last || !inside)) {
+        e.preventDefault();
+        first.focus();
+      }
     };
+
     document.addEventListener("keydown", handler);
     const timer = window.setTimeout(() => {
-      panelRef.current?.querySelector<HTMLElement>("button, input, select, textarea, [tabindex]")?.focus();
+      const items = focusables();
+      // Prefer the first form control; fall back to any focusable element.
+      const preferred = panelRef.current?.querySelector<HTMLElement>(
+        "input:not([type=hidden]), select, textarea"
+      );
+      (preferred && items.includes(preferred) ? preferred : items[0])?.focus();
     }, 0);
+
     return () => {
       document.body.style.overflow = prevOverflow;
       document.removeEventListener("keydown", handler);
       window.clearTimeout(timer);
+      previouslyFocused?.focus?.();
     };
   }, [onClose]);
 
@@ -68,7 +118,7 @@ export default function Modal({
       className="fixed inset-0 z-50 overflow-y-auto glass-backdrop"
       role="dialog"
       aria-modal="true"
-      aria-label={title}
+      aria-labelledby={titleId}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="flex min-h-full items-center justify-center p-2 sm:p-4">
@@ -77,7 +127,7 @@ export default function Modal({
           className={`w-full ${MAX_WIDTH[maxWidth]} my-0 sm:my-8 rounded-none sm:rounded-3xl glass-ultra animate-[fadeIn_0.2s_ease-out] max-h-screen sm:max-h-none overflow-y-auto`}
         >
           <div className={`flex items-center justify-between ${ACCENT_BG[accentColor]} rounded-t-2xl px-6 py-4`}>
-            <h3 className="text-lg font-bold text-white drop-shadow-sm">{title}</h3>
+            <h3 id={titleId} className="text-lg font-bold text-white drop-shadow-sm">{title}</h3>
             <button
               onClick={onClose}
               aria-label="Đóng"

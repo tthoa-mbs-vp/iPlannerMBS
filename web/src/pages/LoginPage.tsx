@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import { APP_NAME, APP_VERSION } from "../config/app";
 import { isMobileDevice } from "../utils/device";
+import { errorMessage } from "../utils/errors";
 import { ClipboardList } from "lucide-react";
 
 export default function LoginPage() {
@@ -30,7 +31,7 @@ export default function LoginPage() {
       await login(email, password, remember);
       navigate(homePath, { replace: true });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Đăng nhập thất bại");
+      setError(errorMessage(err, "Đăng nhập thất bại"));
     } finally {
       setLoading(false);
     }
@@ -39,14 +40,13 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-950 via-slate-900 to-blue-950">
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -left-40 -top-40 h-96 w-96 rounded-full bg-gradient-to-r from-blue-500/25 to-indigo-500/25 blur-3xl animate-pulse" />
-        <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-gradient-to-r from-purple-500/25 to-pink-500/25 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-r from-cyan-500/15 to-blue-500/15 blur-3xl" />
+        <div className="absolute -left-40 -top-40 h-80 w-80 rounded-full bg-gradient-to-r from-blue-500/20 to-indigo-500/20 blur-3xl" />
+        <div className="absolute -bottom-40 -right-40 h-80 w-80 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 blur-3xl" />
       </div>
       <div className="relative w-full max-w-md">
-        <div className="rounded-3xl border border-white/15 bg-white/10 p-8 shadow-2xl backdrop-blur-xl glass-card">
+        <div className="rounded-2xl border border-white/10 bg-white/10 p-8 shadow-2xl backdrop-blur-xl">
           <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-xl shadow-blue-500/40">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/30">
               <ClipboardList className="h-8 w-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-white">{APP_NAME}</h1>
@@ -70,7 +70,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-indigo-300/40 transition-all duration-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 backdrop-blur-sm"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-indigo-300/50 transition-all duration-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
                 placeholder="your@email.com"
                 required
               />
@@ -84,7 +84,7 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-indigo-300/40 transition-all duration-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 backdrop-blur-sm"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-indigo-300/50 transition-all duration-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
                 placeholder="••••••••"
                 required
               />
@@ -101,7 +101,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 transition-all duration-200 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-500/30 transition-all duration-200 hover:shadow-xl hover:shadow-blue-500/40 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? "Đang đăng nhập..." : "Đăng nhập"}
             </button>

@@ -97,8 +97,11 @@ export default function CommentSection({ taskId, taskStatus }: {
   const personOptions = useMemo(() => chatSenders(comments, allUsers), [comments, allUsers]);
 
   const handleSend = async (content: string, files: File[]) => {
+    // Guard rather than cast: without a signed-in user there is no author to
+    // record, and the old `as any` silently posted a comment with user_id undefined.
+    if (!user) return;
     await createComment.mutateAsync({
-      data: { task_id: taskId, user_id: user?.id, content, quote_id: quoteId || undefined } as Partial<Comment> & { task_id: string; user_id?: string; content: string },
+      data: { task_id: taskId, user_id: user.id, content, quote_id: quoteId || undefined },
       files: files.length > 0 ? files : undefined,
       taskId,
     });
@@ -111,7 +114,7 @@ export default function CommentSection({ taskId, taskStatus }: {
     try {
       await updateComment.mutateAsync({
         id,
-        data: { content: editContent.trim() } as Partial<Comment> & { content: string },
+        data: { content: editContent.trim() },
         files: editFiles.length > 0 ? editFiles : undefined,
         taskId,
       });
@@ -234,11 +237,11 @@ export default function CommentSection({ taskId, taskStatus }: {
                       </button>
                       {canModify(c) && (
                         <>
-                          <button onClick={() => { setEditingId(c.id); setEditContent(c.content); setEditFiles([]); }} aria-label="Chỉnh sửa bình luận"
+                          <button onClick={() => { setEditingId(c.id); setEditContent(c.content); setEditFiles([]); }}
                             className="rounded p-0.5 text-slate-300 hover:text-blue-500 transition-colors dark:text-slate-500">
                             <Pencil className="h-3 w-3" />
                           </button>
-                          <button onClick={() => handleDelete(c.id)} aria-label="Xóa bình luận"
+                          <button onClick={() => handleDelete(c.id)}
                             className="rounded p-0.5 text-slate-300 hover:text-red-500 transition-colors dark:text-slate-500">
                             <Trash2 className="h-3 w-3" />
                           </button>

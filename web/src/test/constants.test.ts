@@ -1,6 +1,15 @@
 import { describe, it, expect } from "vitest";
 import {
+  clampRating,
   getRatingBadgeStyle,
+  getRatingLabel,
+  ratingFromAvgScore,
+  RATING_COLORS,
+  RATING_DEFAULT,
+  RATING_LABELS,
+  RATING_MAX,
+  RATING_MIN,
+  RATING_SCALE,
   TASK_STATUS_LABELS,
   PLAN_STATUS_LABELS,
   LEAVE_STATUS_LABELS,
@@ -9,34 +18,99 @@ import {
   PLAN_STATUS_HEX,
 } from "../utils/constants";
 
-describe("getRatingBadgeStyle", () => {
-  it("returns emerald for rating >= 4", () => {
-    expect(getRatingBadgeStyle(5)).toContain("emerald");
-    expect(getRatingBadgeStyle(4)).toContain("emerald");
-    expect(getRatingBadgeStyle(4.5)).toContain("emerald");
+describe("thang KPI 1–10", () => {
+  it("covers every integer from 1 to 10", () => {
+    expect(RATING_MIN).toBe(1);
+    expect(RATING_MAX).toBe(10);
+    expect(RATING_SCALE).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   });
 
-  it("returns blue for rating >= 3", () => {
-    expect(getRatingBadgeStyle(3)).toContain("blue");
-    expect(getRatingBadgeStyle(3.4)).toContain("blue"); // rounds to 3
+  it("has a label and a chart colour for every step of the scale", () => {
+    for (const r of RATING_SCALE) {
+      expect(RATING_LABELS[r], `label for ${r}`).toBeTruthy();
+    }
+    expect(RATING_COLORS).toHaveLength(RATING_SCALE.length);
+    expect(new Set(RATING_COLORS).size).toBe(RATING_COLORS.length);
   });
 
-  it("returns amber for rating >= 2", () => {
-    expect(getRatingBadgeStyle(2)).toContain("amber");
-    expect(getRatingBadgeStyle(2.4)).toContain("amber"); // rounds to 2
+  it("keys RATING_COLORS by offset so RATING_COLORS[r - 1] lines up", () => {
+    expect(RATING_COLORS[0]).toBe(RATING_COLORS[RATING_MIN - 1]);
+    expect(RATING_COLORS[9]).toBe(RATING_COLORS[RATING_MAX - 1]);
   });
 
-  it("returns red for rating < 2", () => {
+  it("getRatingLabel falls back to the raw score outside the scale", () => {
+    expect(getRatingLabel(7)).toBe(RATING_LABELS[7]);
+    expect(getRatingLabel(7.4)).toBe(RATING_LABELS[7]);
+    expect(getRatingLabel(42)).toBe("42");
+  });
+
+  it("clampRating keeps values inside 1–10 and rounds", () => {
+    expect(clampRating(0)).toBe(1);
+    expect(clampRating(-5)).toBe(1);
+    expect(clampRating(11)).toBe(10);
+    expect(clampRating(7.6)).toBe(8);
+    expect(clampRating(Number.NaN)).toBe(1);
+  });
+
+  it("keeps the default rating inside the scale", () => {
+    expect(RATING_DEFAULT).toBeGreaterThanOrEqual(RATING_MIN);
+    expect(RATING_DEFAULT).toBeLessThanOrEqual(RATING_MAX);
+  });
+});
+
+describe("ratingFromAvgScore", () => {
+  it("passes a full 10/10 score straight through", () => {
+    expect(ratingFromAvgScore(10)).toBe(10);
+  });
+
+  it("rounds mid scores instead of dumping them into 1–4 (old 1–5 scale)", () => {
+    expect(ratingFromAvgScore(7)).toBe(7);
+    expect(ratingFromAvgScore(8.2)).toBe(8);
+    expect(ratingFromAvgScore(9.6)).toBe(10);
+  });
+
+  it("never leaves the 1–10 scale", () => {
+    expect(ratingFromAvgScore(0)).toBe(1);
+    expect(ratingFromAvgScore(-3)).toBe(1);
+    expect(ratingFromAvgScore(12)).toBe(10);
+    expect(ratingFromAvgScore(Number.NaN)).toBe(1);
+  });
+});
+
+describe("getRatingBadgeStyle (thang 1–10)", () => {
+  it("returns emerald for the top band (>= 8)", () => {
+    expect(getRatingBadgeStyle(10)).toContain("emerald");
+    expect(getRatingBadgeStyle(8)).toContain("emerald");
+    expect(getRatingBadgeStyle(8.5)).toContain("emerald");
+  });
+
+  it("returns blue for the upper-mid band (>= 6)", () => {
+    expect(getRatingBadgeStyle(7)).toContain("blue");
+    expect(getRatingBadgeStyle(6)).toContain("blue");
+  });
+
+  it("returns amber for the lower-mid band (>= 4)", () => {
+    expect(getRatingBadgeStyle(5)).toContain("amber");
+    expect(getRatingBadgeStyle(4)).toContain("amber");
+  });
+
+  it("returns red for the bottom band (< 4)", () => {
+    expect(getRatingBadgeStyle(3)).toContain("red");
     expect(getRatingBadgeStyle(1)).toContain("red");
-    expect(getRatingBadgeStyle(0)).toContain("red");
-    expect(getRatingBadgeStyle(1.4)).toContain("red"); // rounds to 1
+    expect(getRatingBadgeStyle(0)).toContain("red"); // clamped to 1
+  });
+
+  it("clamps out-of-range ratings instead of falling through", () => {
+    expect(getRatingBadgeStyle(99)).toContain("emerald");
+    expect(getRatingBadgeStyle(-99)).toContain("red");
   });
 
   it("rounds rating before checking thresholds", () => {
-    expect(getRatingBadgeStyle(3.7)).toContain("emerald"); // rounds to 4 -> emerald
-    expect(getRatingBadgeStyle(3.4)).toContain("blue"); // rounds to 3 -> blue
-    expect(getRatingBadgeStyle(2.5)).toContain("blue"); // rounds to 3 -> blue
-    expect(getRatingBadgeStyle(1.5)).toContain("amber"); // rounds to 2 -> amber
+    expect(getRatingBadgeStyle(7.7)).toContain("emerald"); // rounds to 8
+    expect(getRatingBadgeStyle(5.6)).toContain("blue"); // rounds to 6
+    expect(getRatingBadgeStyle(4.5)).toContain("amber"); // rounds to 5
+    expect(getRatingBadgeStyle(3.5)).toContain("amber"); // rounds to 4 -> amber band
+    expect(getRatingBadgeStyle(3.4)).toContain("red"); // rounds to 3 -> red band
   });
 });
 

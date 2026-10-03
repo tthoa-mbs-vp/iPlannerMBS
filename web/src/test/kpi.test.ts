@@ -1,8 +1,17 @@
 import { describe, it, expect } from "vitest";
 import { calculateKpi } from "../utils/kpi";
-import type { Task } from "@shared/types";
+import type { Plan, Task } from "@shared/types";
 
-function makeTask(overrides: Partial<Task> = {}): Task {
+/**
+ * Overrides for makeTask. `expand` is deliberately looser than Task's: tests
+ * only ever need one or two fields of the nested plan, and requiring a full
+ * Plan just to set `partner_dept_ids` forced an `as any` at every call site.
+ */
+type TaskOverrides = Omit<Partial<Task>, "expand"> & {
+  expand?: Omit<NonNullable<Task["expand"]>, "plan_id"> & { plan_id?: Partial<Plan> };
+};
+
+function makeTask(overrides: TaskOverrides = {}): Task {
   const now = Date.now();
   return {
     id: "task1",
@@ -20,188 +29,141 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     is_deleted: false,
     created: new Date(now).toISOString(),
     updated: new Date(now).toISOString(),
+    // The one cast lives here, in the factory, instead of at every call site:
+    // expand is intentionally partial in TaskOverrides.
     ...overrides,
-  };
+  } as Task;
 }
 
 describe("calculateKpi", () => {
-  describe("basic field presence", () => {
-    it("returns correct fields", () => {
-      const result = calculateKpi(makeTask());
-      expect(result).toHaveProperty("task_id", "task1");
-      expect(result).toHaveProperty("base_score");
-      expect(result).toHaveProperty("difficulty_coeff");
-      expect(result).toHaveProperty("progress_score");
-      expect(result).toHaveProperty("final_score");
-      expect(result).toHaveProperty("result_rating");
-      expect(result).toHaveProperty("max_converted_score");
-    });
+  it("returns correct fields", () => {
+    const result = calculateKpi(makeTask());
+    expect(result).toHaveProperty("task_id", "task1");
+    expect(result).toHaveProperty("base_score");
+    expect(result).toHaveProperty("difficulty_coeff");
+    expect(result).toHaveProperty("progress_score");
+    expect(result).toHaveProperty("final_score");
+    expect(result).toHaveProperty("result_rating");
   });
 
-  describe("base_score", () => {
-    it("is 10 for normal tasks", () => {
-      expect(calculateKpi(makeTask({ category: "normal" })).base_score).toBe(10);
-    });
-
-    it("is 12 for sudden tasks", () => {
-      expect(calculateKpi(makeTask({ category: "sudden" })).base_score).toBe(12);
-    });
-
-    it("is 12 for important tasks", () => {
-      expect(calculateKpi(makeTask({ category: "important" })).base_score).toBe(10);
-    });
+  it("base_score is 10 for normal tasks", () => {
+    const result = calculateKpi(makeTask({ category: "normal" }));
+    expect(result.base_score).toBe(10);
   });
 
-  describe("difficulty_coeff", () => {
-    it("is 1.0 for normal tasks", () => {
-      expect(calculateKpi(makeTask({ category: "normal" })).difficulty_coeff).toBe(1.0);
-    });
-
-    it("is 1.2 for important tasks", () => {
-      expect(calculateKpi(makeTask({ category: "important" })).difficulty_coeff).toBe(1.2);
-    });
-
-    it("is 1.1 when task has coordinating department", () => {
-      const result = calculateKpi(makeTask({ category: "normal", coordinating_dept_id: "dept2" }));
-      expect(result.difficulty_coeff).toBe(1.1);
-    });
-
-    it("is 1.1 when plan has partner departments", () => {
-      const result = calculateKpi(makeTask({
-        category: "normal",
-        expand: { plan_id: { partner_dept_ids: ["dept2"] } },
-      } as any));
-      expect(result.difficulty_coeff).toBe(1.1);
-    });
-
-    it("is 1.2 for important even with coordinating dept (important takes priority)", () => {
-      const result = calculateKpi(makeTask({ category: "important", coordinating_dept_id: "dept2" }));
-      expect(result.difficulty_coeff).toBe(1.2);
-    });
+  it("base_score is 12 for sudden tasks", () => {
+    const result = calculateKpi(makeTask({ category: "sudden" }));
+    expect(result.base_score).toBe(12);
   });
 
-  describe("scheduleLevel (progress_score)", () => {
-    it("is 100 (on-time) when completed before deadline", () => {
-      const future = new Date(Date.now() + 86400000 * 2).toISOString();
-      expect(calculateKpi(makeTask({ deadline: future })).progress_score).toBe(100);
-    });
-
-    it("is 80 for 1-3 days late", () => {
-      const past = new Date(Date.now() - 86400000 * 2).toISOString();
-      expect(calculateKpi(makeTask({ deadline: past })).progress_score).toBe(80);
-    });
-
-    it("is 60 for 4-5 days late", () => {
-      const past = new Date(Date.now() - 86400000 * 4).toISOString();
-      expect(calculateKpi(makeTask({ deadline: past })).progress_score).toBe(60);
-    });
-
-    it("is 0 for >5 days late", () => {
-      const past = new Date(Date.now() - 86400000 * 10).toISOString();
-      expect(calculateKpi(makeTask({ deadline: past })).progress_score).toBe(0);
-    });
-
-    it("is 0 for non-completed tasks", () => {
-      expect(calculateKpi(makeTask({ status: "in_progress" })).progress_score).toBe(0);
-    });
-
-    it("is 100 for completed task without deadline", () => {
-      expect(calculateKpi(makeTask({ deadline: "" as any })).progress_score).toBe(100);
-    });
+  it("uses difficulty coefficient 1.0 for normal tasks", () => {
+    const result = calculateKpi(makeTask({ category: "normal" }));
+    expect(result.difficulty_coeff).toBe(1.0);
   });
 
-  describe("resultLevel (rating / 10.0 scale)", () => {
-    it("defaults to 0 when no rating", () => {
-      expect(calculateKpi(makeTask()).result_rating).toBe(0);
-    });
-
-    it("uses task rating field", () => {
-      expect(calculateKpi(makeTask({ rating: 5 } as any)).result_rating).toBe(5);
-    });
-
-    it("rating 10 = resultLevel 1.0 (max)", () => {
-      const future = new Date(Date.now() + 86400000 * 2).toISOString();
-      const result = calculateKpi(makeTask({ deadline: future, rating: 10 } as any));
-      expect(result.result_rating).toBe(10);
-      // final_score = base(10) * (0.3*1.0 + 0.7*1.0) * 1.0 = 10 * 1.0 = 10
-      expect(result.final_score).toBe(10);
-    });
-
-    it("rating 5 = resultLevel 0.5 (half)", () => {
-      const future = new Date(Date.now() + 86400000 * 2).toISOString();
-      const result = calculateKpi(makeTask({ deadline: future, rating: 5 } as any));
-      expect(result.result_rating).toBe(5);
-      // final_score = base(10) * (0.3*1.0 + 0.7*0.5) * 1.0 = 10 * 0.65 = 6.5
-      expect(result.final_score).toBe(6.5);
-    });
-
-    it("rating 1 = resultLevel 0.1 (minimum)", () => {
-      const future = new Date(Date.now() + 86400000 * 2).toISOString();
-      const result = calculateKpi(makeTask({ deadline: future, rating: 1 } as any));
-      expect(result.result_rating).toBe(1);
-      // final_score = base(10) * (0.3*1.0 + 0.7*0.1) * 1.0 = 10 * 0.37 = 3.7
-      expect(result.final_score).toBe(3.7);
-    });
+  it("uses difficulty coefficient 1.2 for important tasks", () => {
+    const result = calculateKpi(makeTask({ category: "important" }));
+    expect(result.difficulty_coeff).toBe(1.2);
   });
 
-  describe("final_score calculation", () => {
-    it("on-time normal task with no rating: 10 * (0.3*1 + 0.7*0) * 1.0 = 3", () => {
-      const future = new Date(Date.now() + 86400000 * 2).toISOString();
-      const result = calculateKpi(makeTask({ category: "normal", deadline: future }));
-      expect(result.final_score).toBe(3);
-    });
-
-    it("on-time important task with rating 10: 10 * (0.3*1 + 0.7*1) * 1.2 = 12", () => {
-      const future = new Date(Date.now() + 86400000 * 2).toISOString();
-      const result = calculateKpi(makeTask({ category: "important", deadline: future, rating: 10 } as any));
-      expect(result.final_score).toBe(12);
-    });
-
-    it("on-time sudden task with rating 8: 12 * (0.3*1 + 0.7*0.8) * 1.0 = 10.3", () => {
-      const future = new Date(Date.now() + 86400000 * 2).toISOString();
-      const result = calculateKpi(makeTask({ category: "sudden", deadline: future, rating: 8 } as any));
-      expect(result.final_score).toBe(10.3);
-    });
-
-    it("3-day late normal task with rating 6: 10 * (0.3*0.8 + 0.7*0.6) * 1.0 = 6.6", () => {
-      const past = new Date(Date.now() - 86400000 * 2).toISOString();
-      const result = calculateKpi(makeTask({ category: "normal", deadline: past, rating: 6 } as any));
-      expect(result.final_score).toBe(6.6);
-    });
-
-    it("final_score is rounded to 1 decimal", () => {
-      const result = calculateKpi(makeTask({ deadline: new Date(Date.now() + 86400000 * 2).toISOString() }));
-      expect(result.final_score! * 10).toBe(Math.round(result.final_score! * 10));
-    });
+  it("difficulty coefficient for sudden is 1.0 (no high_impact, no coordinating)", () => {
+    const result = calculateKpi(makeTask({ category: "sudden" }));
+    expect(result.difficulty_coeff).toBe(1.0);
   });
 
-  describe("max_converted_score", () => {
-    it("equals base_score * difficulty_coeff", () => {
-      const result = calculateKpi(makeTask({ category: "important" }));
-      expect(result.max_converted_score).toBe(12); // 10 * 1.2
-    });
-
-    it("equals 12 for sudden task", () => {
-      const result = calculateKpi(makeTask({ category: "sudden" }));
-      expect(result.max_converted_score).toBe(12); // 12 * 1.0
-    });
+  it("uses difficulty coefficient 1.1 when task has coordinating department (not important)", () => {
+    const result = calculateKpi(makeTask({ category: "normal", coordinating_dept_id: "dept2" }));
+    expect(result.difficulty_coeff).toBe(1.1);
   });
 
-  describe("edge cases", () => {
-    it("handles exact deadline day (on-time)", () => {
-      const today = new Date(Date.now() + 86400000).toISOString();
-      expect(calculateKpi(makeTask({ deadline: today })).progress_score).toBe(100);
-    });
+  it("uses difficulty coefficient 1.1 when plan has partner departments (not important)", () => {
+    const result = calculateKpi(makeTask({
+      category: "normal",
+      expand: { plan_id: { partner_dept_ids: ["dept2"] } },
+    }));
+    expect(result.difficulty_coeff).toBe(1.1);
+  });
 
-    it("handles cancelled task", () => {
-      const result = calculateKpi(makeTask({ status: "cancelled" }));
-      expect(result.progress_score).toBe(0);
-      expect(result.final_score).toBe(0);
-    });
+  it("uses difficulty coefficient 1.2 for important tasks even with coordinating department", () => {
+    const result = calculateKpi(makeTask({ category: "important", coordinating_dept_id: "dept2" }));
+    expect(result.difficulty_coeff).toBe(1.2);
+  });
 
-    it("handles pending_approval task", () => {
-      const result = calculateKpi(makeTask({ status: "pending_approval" }));
-      expect(result.progress_score).toBe(0);
-    });
+  it("scores 100 for completion before deadline", () => {
+    const futureDeadline = new Date(Date.now() + 86400000 * 2).toISOString();
+    const result = calculateKpi(makeTask({ deadline: futureDeadline }));
+    expect(result.progress_score).toBe(100);
+  });
+
+  it("scores 0 for completion >5 days late", () => {
+    const pastDeadline = new Date(Date.now() - 86400000 * 10).toISOString();
+    const result = calculateKpi(makeTask({ deadline: pastDeadline }));
+    expect(result.progress_score).toBe(0);
+  });
+
+  it("scores 80 for 1-3 days late", () => {
+    const pastDeadline = new Date(Date.now() - 86400000 * 2).toISOString();
+    const result = calculateKpi(makeTask({ deadline: pastDeadline }));
+    expect(result.progress_score).toBe(80);
+  });
+
+  it("scores 60 for 4-5 days late", () => {
+    const pastDeadline = new Date(Date.now() - 86400000 * 4).toISOString();
+    const result = calculateKpi(makeTask({ deadline: pastDeadline }));
+    expect(result.progress_score).toBe(60);
+  });
+
+  it("scores 0 for not completed tasks", () => {
+    const result = calculateKpi(makeTask({ status: "in_progress" }));
+    expect(result.progress_score).toBe(0);
+  });
+
+  it("scores 100 for completed task without a deadline", () => {
+    const result = calculateKpi(makeTask({ deadline: "" }));
+    expect(result.progress_score).toBe(100);
+  });
+
+  it("result_rating defaults to 0", () => {
+    const result = calculateKpi(makeTask());
+    expect(result.result_rating).toBe(0);
+  });
+
+  it("result_rating uses the task rating field", () => {
+    const result = calculateKpi(makeTask({ rating: 5 }));
+    expect(result.result_rating).toBe(5);
+  });
+
+  it("calculates final_score correctly for on-time normal task", () => {
+    const futureDeadline = new Date(Date.now() + 86400000 * 2).toISOString();
+    const result = calculateKpi(makeTask({ category: "normal", deadline: futureDeadline }));
+    // base=10, difficulty=1.0, schedule=1.0, result=0.0 (unrated), perf=10*(0.3*1+0.7*0)=3, actual=3
+    expect(result.final_score).toBe(3);
+  });
+
+  it("calculates final_score correctly for on-time important task with rating 5", () => {
+    const futureDeadline = new Date(Date.now() + 86400000 * 2).toISOString();
+    const result = calculateKpi(makeTask({ category: "important", deadline: futureDeadline, rating: 5 }));
+    // 10-point scale: rating 5 -> result=0.5. base=10, difficulty=1.2, schedule=1.0,
+    // perf=10*(0.3*1+0.7*0.5)=6.5, actual=6.5*1.2=7.8
+    expect(result.final_score).toBe(7.8);
+  });
+
+  it("reaches max score for an important task rated 10/10", () => {
+    const futureDeadline = new Date(Date.now() + 86400000 * 2).toISOString();
+    const result = calculateKpi(makeTask({ category: "important", deadline: futureDeadline, rating: 10 }));
+    // result=1.0 -> perf=10*(0.3*1+0.7*1)=10, actual=10*1.2=12 = max_converted_score
+    expect(result.final_score).toBe(12);
+    expect(result.max_converted_score).toBe(12);
+  });
+
+  it("handles edge case of exact deadline day", () => {
+    const todayDeadline = new Date(Date.now() + 86400000).toISOString();
+    const result = calculateKpi(makeTask({ deadline: todayDeadline }));
+    expect(result.progress_score).toBe(100);
+  });
+
+  it("final_score is rounded to 1 decimal", () => {
+    const result = calculateKpi(makeTask({ category: "normal", deadline: new Date(Date.now() + 86400000 * 2).toISOString() }));
+    expect(result.final_score! * 10).toBe(Math.round(result.final_score! * 10));
   });
 });

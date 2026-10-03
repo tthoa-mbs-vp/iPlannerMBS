@@ -49,7 +49,7 @@ onRecordUpdateRequest(function(e) {
 
   // ---- tasks: executor/supervisor may only do status transitions, never soft-delete or self-rate ----
   // The tasks.updateRule grants executor_id/supervisor_id full update access; without this guard an
-  // executor could set status="completed" + rating=5 + rated_by_id=self (inflating their KPI), or
+  // executor could set status="completed" + rating=10 + rated_by_id=self (inflating their KPI), or
   // is_deleted=true bypassing can_delete_tasks.
   if (name === "tasks") {
     var ri = H.roleInfo(actor)
@@ -392,7 +392,7 @@ onRecordCreateRequest(function(e) {
 
   // ---- tasks: forbid creating completed/rated/deleted tasks (KPI manipulation) ----
   // can_add_tasks users could otherwise create tasks with status="completed", a backdated
-  // completed_at, rating=5 and rated_by_id=<anyone> — the after-create hook in all.pb.js
+  // completed_at, rating=10 and rated_by_id=<anyone> — the after-create hook in all.pb.js
   // upserts a KPI score immediately, so this would mint fake scores attributed to others.
   // They could also set is_deleted=true to bypass can_delete_tasks and hide the task.
   // can_manage / superusers keep full control. (is_high_impact stays a normal input field.)

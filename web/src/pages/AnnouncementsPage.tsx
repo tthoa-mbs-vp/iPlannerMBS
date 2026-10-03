@@ -9,9 +9,9 @@ import {
 import Spinner from "../components/shared/Spinner";
 import EmptyState from "../components/shared/EmptyState";
 import ErrorState from "../components/shared/ErrorState";
+import { errorMessage } from "../utils/errors";
 import Modal from "../components/shared/Modal";
 import { sanitizeHtml, stripTags } from "../utils/sanitize";
-import { formatDateLong, formatDateTimeShort } from "../utils/format";
 import type { Announcement } from "@shared/types";
 
 const emptyForm = { title: "", content: "", is_pinned: false, is_active: true };
@@ -70,7 +70,7 @@ export default function AnnouncementsPage() {
   };
 
   if (isLoading) return <Spinner size="md" />;
-  if (error) return <ErrorState message="Không thể tải bảng tin" subMessage={(error as Error)?.message || "Vui lòng thử lại"} onRetry={() => refetch()} />;
+  if (error) return <ErrorState message="Không thể tải bảng tin" subMessage={errorMessage(error, "Vui lòng thử lại")} onRetry={() => refetch()} />;
 
   return (
     <div className="flex h-full gap-5">
@@ -110,7 +110,7 @@ export default function AnnouncementsPage() {
                 </div>
                 <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">{stripTags(a.content) || "—"}</p>
                 <p className="mt-1.5 text-[11px] text-slate-400 dark:text-slate-500">
-                  {a.expand?.author_id?.name || "Admin"} · {formatDateLong(a.published_at || a.created)}
+                  {a.expand?.author_id?.name || "Admin"} · {new Date(a.published_at || a.created).toLocaleDateString("vi-VN", { day: "numeric", month: "numeric", year: "numeric" })}
                 </p>
               </button>
             ))}
@@ -149,7 +149,7 @@ export default function AnnouncementsPage() {
                   <h1 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-50">{selected.title}</h1>
                   <p className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
                     <UserIcon className="h-3.5 w-3.5" />
-                    {selected.expand?.author_id?.name || "Admin"} · {formatDateTimeShort(selected.published_at || selected.created)}
+                    {selected.expand?.author_id?.name || "Admin"} · {new Date(selected.published_at || selected.created).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "numeric", month: "numeric", year: "numeric" })}
                   </p>
                 </div>
               </div>

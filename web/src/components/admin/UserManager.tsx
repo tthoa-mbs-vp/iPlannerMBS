@@ -2,14 +2,17 @@ import { lazy, Suspense, useState } from "react";
 import { useAdminUsersPaginated, useDepartments, useRoles } from "../../hooks/useDepartments";
 import { useProfessionalGroups } from "../../hooks/useProfessionalGroups";
 import { useDebounce } from "../../hooks/useDebounce";
-import { pb } from "../../api/client";
 import { useToastStore } from "../../stores/toastStore";
+import { errorMessage } from "../../utils/errors";
+import { pb } from "../../api/client";
+
 import { useQueryClient } from "@tanstack/react-query";
 import { Pencil, RotateCcw, Check, X, Plus, Users as UsersIcon, Upload, Key, Search } from "lucide-react";
 import ExportButton from "../shared/ExportButton";
 const ImportModal = lazy(() => import("./ImportModal"));
-import { exportToExcel, exportToCsv, exportToJson, USER_EXPORT_COLUMNS } from "../../utils/importExport";
+import { exportToExcel, exportToCSV, exportToJSON, USER_EXPORT_COLUMNS } from "../../utils/importExport";
 import type { User } from "@shared/types";
+import { validatePassword } from "@shared/validators";
 import { btn } from "../../utils/buttonClasses";
 import Spinner from "../shared/Spinner";
 import EmptyState from "../shared/EmptyState";
@@ -88,7 +91,8 @@ export default function UserManager() {
     try {
       if (editingId === "new") {
         if (!editEmail || !editPassword) { setError("Vui lòng nhập email và mật khẩu"); setIsSaving(false); return; }
-        if (editPassword.length < 8) { setError("Mật khẩu phải từ 8 ký tự"); setIsSaving(false); return; }
+        const pwError = validatePassword(editPassword);
+        if (pwError) { setError(pwError); setIsSaving(false); return; }
         await pb.collection("users").create({
           email: editEmail,
           name: editName || undefined,
@@ -115,7 +119,7 @@ export default function UserManager() {
       }
       qc.invalidateQueries({ queryKey: ["users"] });
       setEditingId(null);
-    } catch (err: unknown) { setError(err instanceof Error ? err.message : "Lỗi"); }
+    } catch (err: unknown) { setError(errorMessage(err, "Lỗi")); }
     setIsSaving(false);
   };
 
@@ -140,7 +144,9 @@ export default function UserManager() {
     if (!adminCreds || !adminEmail || !adminPassword) return;
     const { user, action } = adminCreds;
     if (action === "reset_password") {
-      if (!resetPassword || resetPassword.length < 8) { setResetPasswordError("Mật khẩu phải từ 8 ký tự"); return; }
+      if (!resetPassword) { setResetPasswordError("Vui lòng nhập mật khẩu mới"); return; }
+      const pwError = validatePassword(resetPassword);
+      if (pwError) { setResetPasswordError(pwError); return; }
       if (resetPassword !== resetPasswordConfirm) { setResetPasswordError("Mật khẩu không khớp"); return; }
     }
     setAdminSaving(true);
@@ -162,7 +168,7 @@ export default function UserManager() {
       setAdminCreds(null);
       setResetPassword("");
       setResetPasswordConfirm("");
-    } catch (err: unknown) { addToast("error", err instanceof Error ? err.message : "Lỗi"); }
+    } catch (err: unknown) { addToast("error", errorMessage(err, "Thao tác thất bại")); }
     finally { setAdminSaving(false); }
   };
 
@@ -197,8 +203,8 @@ export default function UserManager() {
                     reminder_days: u.reminder_days ?? 2,
                   }));
                   if (format === "xlsx") exportToExcel(data, USER_EXPORT_COLUMNS, "nguoi-dung");
-                  else if (format === "csv") exportToCsv(data, USER_EXPORT_COLUMNS, "nguoi-dung");
-                  else exportToJson(data, "nguoi-dung");
+                  else if (format === "csv") exportToCSV(data, USER_EXPORT_COLUMNS, "nguoi-dung");
+                  else exportToJSON(data, USER_EXPORT_COLUMNS, "nguoi-dung");
                 })
                 .catch(() => {});
             }}
@@ -282,8 +288,8 @@ export default function UserManager() {
                   <td className="px-4 py-2 text-right">
                     <label className="mb-1 block text-xs font-medium text-violet-700 dark:text-violet-300">Thao tác</label>
                     <div className="flex items-center justify-end gap-1 pt-1">
-                      <button onClick={handleSave} disabled={isSaving} className={btn.save} aria-label="Lưu"><Check className="h-4 w-4" /></button>
-                      <button onClick={cancelEdit} className={btn.cancel} aria-label="Hủy"><X className="h-4 w-4" /></button>
+                      <button onClick={handleSave} disabled={isSaving} className={btn.save}><Check className="h-4 w-4" /></button>
+                      <button onClick={cancelEdit} className={btn.cancel}><X className="h-4 w-4" /></button>
                     </div>
                   </td>
                 </tr>
@@ -338,8 +344,8 @@ export default function UserManager() {
                       <td className="px-4 py-2 text-right">
                         <label className="mb-1 block text-xs font-medium text-violet-700 dark:text-violet-300">Thao tác</label>
                         <div className="flex items-center gap-1 pt-1">
-                          <button onClick={handleSave} disabled={isSaving} className={btn.save} aria-label="Lưu"><Check className="h-4 w-4" /></button>
-                          <button onClick={cancelEdit} className={btn.cancel} aria-label="Hủy"><X className="h-4 w-4" /></button>
+                          <button onClick={handleSave} disabled={isSaving} className={btn.save}><Check className="h-4 w-4" /></button>
+                          <button onClick={cancelEdit} className={btn.cancel}><X className="h-4 w-4" /></button>
                         </div>
                       </td>
                     </tr>

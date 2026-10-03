@@ -3,7 +3,8 @@ import { useRoles, useCreateRole, useUpdateRole, useDeleteRole } from "../../hoo
 import { Plus, Pencil, Trash2, Check, X, UserCheck, Upload, Search } from "lucide-react";
 import ExportButton from "../shared/ExportButton";
 const ImportModal = lazy(() => import("./ImportModal"));
-import { exportToExcel, exportToCsv, exportToJson, ROLE_EXPORT_COLUMNS } from "../../utils/importExport";
+import { exportToExcel, exportToCSV, exportToJSON, ROLE_EXPORT_COLUMNS } from "../../utils/importExport";
+import { errorMessage } from "../../utils/errors";
 import type { Role, RoleLevel, ViewScope, ApprovalScope } from "@shared/types";
 import { btn } from "../../utils/buttonClasses";
 import Spinner from "../shared/Spinner";
@@ -22,7 +23,15 @@ const SCOPE_OPTIONS = [
   { value: "personal", label: "Cá nhân" },
 ];
 
-const PERM_FIELDS = [
+/** The editable boolean permission flags on a Role. */
+type RolePerms = Pick<
+  Role,
+  | "can_add_plans" | "can_edit_plans" | "can_delete_plans"
+  | "can_add_tasks" | "can_edit_tasks" | "can_delete_tasks"
+  | "can_manage" | "can_approve_leave" | "can_view_salary"
+>;
+
+const PERM_FIELDS: { key: keyof RolePerms; label: string }[] = [
   { key: "can_add_plans", label: "Thêm kế hoạch" },
   { key: "can_edit_plans", label: "Sửa kế hoạch" },
   { key: "can_delete_plans", label: "Xóa kế hoạch" },
@@ -93,7 +102,7 @@ export default function RoleManager() {
       if (editingId === "new") await createRole.mutateAsync(data);
       else if (editingId) await updateRole.mutateAsync({ id: editingId, data });
       setEditingId(null);
-    } catch (err: unknown) { setError(err instanceof Error ? err.message : "Lỗi"); }
+    } catch (err: unknown) { setError(errorMessage(err, "Lỗi")); }
   };
 
   const handleDelete = async (id: string) => {
@@ -144,8 +153,8 @@ export default function RoleManager() {
                 approval_scope: r.approval_scope === "all" ? "Toàn bộ" : r.approval_scope === "department" ? "Phòng ban" : r.approval_scope === "group" ? "Tổ chuyên môn" : "—",
               }));
               if (format === "xlsx") exportToExcel(data, ROLE_EXPORT_COLUMNS, "chuc-vu");
-              else if (format === "csv") exportToCsv(data, ROLE_EXPORT_COLUMNS, "chuc-vu");
-              else exportToJson(data, "chuc-vu");
+              else if (format === "csv") exportToCSV(data, ROLE_EXPORT_COLUMNS, "chuc-vu");
+              else exportToJSON(data, ROLE_EXPORT_COLUMNS, "chuc-vu");
             }}
           />
           <button onClick={() => setShowImport(true)}
@@ -231,8 +240,8 @@ export default function RoleManager() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button onClick={() => startEdit(r)} className={btn.edit} aria-label="Chỉnh sửa"><Pencil className="h-4 w-4" /></button>
-                      <button onClick={() => handleDelete(r.id)} className={btn.delete} aria-label="Xóa"><Trash2 className="h-4 w-4" /></button>
+                      <button onClick={() => startEdit(r)} className={btn.edit}><Pencil className="h-4 w-4" /></button>
+                      <button onClick={() => handleDelete(r.id)} className={btn.delete}><Trash2 className="h-4 w-4" /></button>
                     </td>
                   </tr>
                 )
@@ -262,9 +271,8 @@ function InlineRoleRow({
   level: string; onLevelChange: (v: string) => void;
   scope: string; onScopeChange: (v: string) => void;
   approvalScope: string; onApprovalScopeChange: (v: string) => void;
-  perms: Record<string, boolean>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onPermsChange: (p: any) => void;
+  perms: RolePerms;
+  onPermsChange: (p: RolePerms) => void;
   error: string; isSaving: boolean; onSave: () => void; onCancel: () => void;
 }) {
   return (
@@ -310,7 +318,7 @@ function InlineRoleRow({
             {PERM_FIELDS.map((pf) => (
               <label key={pf.key} className="flex items-center gap-1.5 text-xs">
                 <input type="checkbox"
-                  checked={!!perms[pf.key]}
+                  checked={perms[pf.key]}
                   onChange={(e) => onPermsChange({ ...perms, [pf.key]: e.target.checked })}
                   className="rounded border-slate-300 text-amber-600 focus:ring-amber-500 dark:border-slate-600 dark:text-amber-400" />
                 {pf.label}
@@ -336,8 +344,8 @@ function InlineRoleRow({
         <td className="px-4 py-2 text-right">
           <label className="mb-1 block text-xs font-medium text-amber-700 dark:text-amber-300">Thao tác</label>
           <div className="flex items-center justify-end gap-1 pt-1">
-            <button type="button" onClick={() => onSave()} disabled={isSaving} className={btn.save} aria-label="Lưu"><Check className="h-4 w-4" /></button>
-            <button type="button" onClick={onCancel} className={btn.cancel} aria-label="Hủy"><X className="h-4 w-4" /></button>
+            <button type="button" onClick={() => onSave()} disabled={isSaving} className={btn.save}><Check className="h-4 w-4" /></button>
+            <button type="button" onClick={onCancel} className={btn.cancel}><X className="h-4 w-4" /></button>
           </div>
         </td>
       </tr>

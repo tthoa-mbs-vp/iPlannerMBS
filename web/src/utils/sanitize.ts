@@ -1,29 +1,45 @@
-const DANGEROUS_TAGS = [
-  "script", "iframe", "object", "embed", "link", "style", "meta",
-  "svg", "math", "form", "input", "button", "textarea", "select", "option",
-  "video", "audio", "source", "track", "frame", "frameset", "base",
+import DOMPurify from "dompurify";
+
+// Form controls and media embeds are not part of rich text: allowing them lets
+// anyone who can post a comment render a convincing fake login box (<form
+// action="…">) or an arbitrary <video> inside our own UI. KEEP_CONTENT is off
+// so the label text of a stripped <button>/<option> does not survive either.
+const FORBIDDEN_TAGS = [
+  "form",
+  "input",
+  "button",
+  "textarea",
+  "select",
+  "option",
+  "optgroup",
+  "fieldset",
+  "legend",
+  "label",
+  "video",
+  "audio",
+  "source",
+  "track",
+  "frame",
+  "frameset",
+  "object",
+  "embed",
+  "applet",
+  "base",
+  "meta",
+  "link",
 ];
 
-// Attributes that carry a URL and can execute on click/load.
-const URL_ATTRIBUTES = ["href", "src", "xlink:href", "action", "formaction", "poster", "background"];
-
-const DANGEROUS_URL_PREFIX = /^(javascript|vbscript|data):/i;
-
+// Sanitize untrusted HTML (comments, announcements, chat) before rendering.
+// DOMPurify removes script/style/on* attributes, javascript: URLs, <svg> payloads,
+// etc. — a hardened, well-audited alternative to the previous hand-rolled
+// DOMParser-based filter (which could miss edge cases like mXSS).
 export function sanitizeHtml(html: string): string {
-  const doc = new DOMParser().parseFromString(html || "", "text/html");
-  doc.querySelectorAll(DANGEROUS_TAGS.join(",")).forEach((el) => el.remove());
-  doc.querySelectorAll("*").forEach((el) => {
-    for (const attr of Array.from(el.attributes)) {
-      const name = attr.name.toLowerCase();
-      const val = attr.value;
-      if (name.startsWith("on") || name === "srcdoc") {
-        el.removeAttribute(attr.name);
-      } else if (URL_ATTRIBUTES.includes(name) && DANGEROUS_URL_PREFIX.test(val)) {
-        el.removeAttribute(attr.name);
-      }
-    }
+  return DOMPurify.sanitize(html || "", {
+    USE_PROFILES: { html: true },
+    FORBID_TAGS: FORBIDDEN_TAGS,
+    KEEP_CONTENT: false,
+    FORBID_ATTR: ["formaction", "action", "target"],
   });
-  return (doc.body || doc.documentElement).innerHTML;
 }
 
 export function stripTags(html: string): string {

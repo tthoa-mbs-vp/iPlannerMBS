@@ -1,5 +1,9 @@
 # Đề xuất tối ưu ứng dụng — iPlanner (cập nhật 20/08/2026)
 
+> ⚠️ **Tài liệu lỗi thời** — phần lớn đề xuất ở đây đã được triển khai. Xem [`review-2026-08.md`](./review-2026-08.md) để biết trạng thái hiện tại. Giữ lại làm tham chiếu lịch sử.
+>
+> **Vị trí:** tài liệu nội bộ trong `docs/` — KHÔNG đặt trong `web/public/` để tránh phát hành công khai.
+
 ---
 
 ## Mức độ ưu tiên: 🔴 CRITICAL

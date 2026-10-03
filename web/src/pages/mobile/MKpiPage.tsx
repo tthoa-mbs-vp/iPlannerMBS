@@ -1,10 +1,16 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useKpiScores } from "../../hooks/useKpiScores";
 import { useTasks } from "../../hooks/useTasks";
 import { useUsers } from "../../hooks/useDepartments";
 import { useAuthStore } from "../../stores/authStore";
-import { calculateKpi } from "../../utils/kpi";
-import { getRatingBadgeStyle } from "../../utils/constants";
+import {
+  aggregateUserKpi,
+  buildTaskKpi,
+  createPeriodMatcher,
+  filterCompletedTasksInPeriod,
+  filterKpiScoresInPeriod,
+} from "../../utils/kpiSelectors";
+import { getRatingBadgeStyle, getRatingLabel, ratingFromAvgScore } from "../../utils/constants";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale/vi";
 import Leaderboard from "../../components/kpi/Leaderboard";
@@ -18,18 +24,6 @@ import {
   ClipboardList,
 } from "lucide-react";
 import type { KpiScore } from "@shared/types";
-
-const RATING_LABELS: Record<number, string> = {
-  5: "Xuất sắc",
-  4: "Tốt",
-  3: "Khá",
-  2: "Trung bình",
-  1: "Cần cải thiện",
-};
-
-function getRating(avgScore: number): number {
-  return avgScore >= 10 ? 5 : avgScore >= 7 ? 4 : avgScore >= 5 ? 3 : avgScore >= 3 ? 2 : 1;
-}
 
 function getMonthOptions() {
   const options: { value: string; label: string }[] = [];
@@ -87,56 +81,36 @@ export default function MKpiPage() {
   });
   const [selectedYear, setSelectedYear] = useState(format(new Date(), "yyyy"));
 
-  const isInPeriod = useCallback(
-    (dateStr: string) => {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return true;
-      if (periodType === "all") return true;
-      if (periodType === "month") return format(d, "yyyy-MM") === selectedMonth;
-      if (periodType === "quarter") {
-        const [year, qStr] = selectedQuarter.split("-Q");
-        return String(d.getFullYear()) === year && Math.floor(d.getMonth() / 3) + 1 === Number(qStr);
-      }
-      return String(d.getFullYear()) === selectedYear;
-    },
+  const isInPeriod = useMemo(
+    () =>
+      createPeriodMatcher({
+        periodType,
+        selectedMonth,
+        selectedQuarter,
+        selectedYear,
+      }),
     [periodType, selectedMonth, selectedQuarter, selectedYear]
   );
 
   const filteredKpiScores = useMemo(
-    () =>
-      kpiScores?.filter((k) => {
-        if (!k.expand?.task_id || k.expand.task_id.is_deleted) return false;
-        return isInPeriod(k.expand.task_id.deadline);
-      }) || [],
+    () => filterKpiScoresInPeriod(kpiScores, isInPeriod),
     [kpiScores, isInPeriod]
   );
 
   const filteredCompletedTasks = useMemo(
-    () => tasks?.filter((t) => t.status === "completed" && isInPeriod(t.deadline)) || [],
+    () => filterCompletedTasksInPeriod(tasks, isInPeriod),
     [tasks, isInPeriod]
   );
 
-  const myTaskKpi = useMemo(() => {
-    const kpiMap = new Map(filteredKpiScores.map((k) => [k.task_id, k]));
-    const myTasks = tasks?.filter((t) => t.executor_id === user?.id && isInPeriod(t.deadline)) || [];
-    return myTasks.map((t) => {
-      const stored = kpiMap.get(t.id);
-      if (stored) return stored;
-      const computed = calculateKpi(t);
-      return {
-        id: "",
-        task_id: t.id,
-        base_score: computed.base_score!,
-        difficulty_coeff: computed.difficulty_coeff!,
-        max_converted_score: computed.max_converted_score,
-        progress_score: 0,
-        result_rating: 0,
-        final_score: 0,
-        created: "",
-        expand: { task_id: t },
-      } as KpiScore;
-    });
-  }, [tasks, filteredKpiScores, isInPeriod, user]);
+  const myTaskKpi = useMemo(
+    () =>
+      buildTaskKpi(
+        tasks?.filter((t) => t.executor_id === user?.id),
+        filteredKpiScores,
+        isInPeriod
+      ),
+    [tasks, filteredKpiScores, isInPeriod, user]
+  );
 
   const myScores = useMemo(
     () => filteredKpiScores.filter((k) => k.expand?.task_id?.executor_id === user?.id),
@@ -152,28 +126,10 @@ export default function MKpiPage() {
     ? myScores.reduce((s, k) => s + (k.final_score || 0), 0) / myScores.length
     : 0;
 
-  const userKpi = useMemo(() => {
-    return users
-      .map((u) => {
-        const userScores = filteredKpiScores.filter(
-          (k) => k.expand?.task_id?.executor_id === u.id
-        );
-        const userCompleted = filteredCompletedTasks.filter((t) => t.executor_id === u.id);
-        
-        const avgScore =
-          userScores.length > 0
-            ? userScores.reduce((s, k) => s + (k.final_score || 0), 0) / userScores.length
-            : 0;
-        return {
-          user: u,
-          taskCount: userCompleted.length,
-          
-          avgScore,
-        };
-      })
-      .filter((x) => x.taskCount > 0)
-      .sort((a, b) => b.taskCount - a.taskCount);
-  }, [users, filteredKpiScores, filteredCompletedTasks]);
+  const userKpi = useMemo(
+    () => aggregateUserKpi(users, filteredKpiScores, filteredCompletedTasks, { onlyWithTasks: true }),
+    [users, filteredKpiScores, filteredCompletedTasks]
+  );
 
   const renderKpiRow = (k: KpiScore) => {
     const task = k.expand?.task_id;
@@ -193,7 +149,7 @@ export default function MKpiPage() {
           </p>
           {isFinalValid ? (
             <span className={`mt-0.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${getRatingBadgeStyle(k.result_rating)}`}>
-              {RATING_LABELS[Math.round(k.result_rating)] || k.result_rating}
+              {getRatingLabel(k.result_rating)}
             </span>
           ) : (
             <span className="mt-0.5 inline-block text-[10px] text-slate-300">Chưa chấm</span>
@@ -303,7 +259,7 @@ export default function MKpiPage() {
                 </div>
                 <div>
                   <p className="text-xs text-indigo-200">Xếp loại</p>
-                  <p className="text-lg font-bold">{RATING_LABELS[getRating(myAvgScore)]}</p>
+                  <p className="text-lg font-bold">{getRatingLabel(ratingFromAvgScore(myAvgScore))}</p>
                 </div>
               </div>
             </div>
@@ -346,8 +302,8 @@ export default function MKpiPage() {
               {userKpi.length === 0 ? (
                 <div className="py-8 text-center text-sm text-slate-400">Chưa có dữ liệu KPI</div>
               ) : (
-                userKpi.map(({ user: u, taskCount,  avgScore }, idx) => {
-                  const rating = getRating(avgScore);
+                userKpi.map(({ user: u, taskCount, avgScore }, idx) => {
+                  const rating = ratingFromAvgScore(avgScore);
                   return (
                     <div key={u.id} className="flex items-center gap-3 border-b border-slate-50 px-4 py-3 last:border-0">
                       <span className="w-6 shrink-0 text-center text-sm font-bold text-slate-400">
@@ -356,14 +312,14 @@ export default function MKpiPage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-slate-700">{u.name || u.email}</p>
                         <p className="text-[11px] text-slate-400">
-                          {taskCount} NV hoàn thành
+                          {taskCount} nhiệm vụ hoàn thành
                         </p>
                       </div>
                       <div className="shrink-0 text-right">
                         <p className="text-sm font-bold text-emerald-600">{avgScore.toFixed(1)}</p>
                         <span className={`mt-0.5 inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-medium ${getRatingBadgeStyle(rating)}`}>
                           {rating >= 4 && <Zap className="h-3 w-3" />}
-                          {RATING_LABELS[rating]}
+                          {getRatingLabel(rating)}
                         </span>
                       </div>
                     </div>

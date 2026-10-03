@@ -31,7 +31,7 @@ export default function Leaderboard() {
     if (viewMode === "individual") {
       const userScores = new Map<string, { total: number; count: number }>();
       filtered.forEach((ks) => {
-        const taskUserId = (ks as unknown as { expand?: { task_id?: { executor_id?: string } } }).expand?.task_id?.executor_id;
+        const taskUserId = ks.expand?.task_id?.executor_id;
         if (taskUserId && userMap.has(taskUserId)) {
           const entry = userScores.get(taskUserId) || { total: 0, count: 0 };
           entry.total += ks.final_score || 0;
@@ -56,7 +56,7 @@ export default function Leaderboard() {
     } else {
       const deptScores = new Map<string, { total: number; count: number }>();
       filtered.forEach((ks) => {
-        const taskUserId = (ks as unknown as { expand?: { task_id?: { executor_id?: string } } }).expand?.task_id?.executor_id;
+        const taskUserId = ks.expand?.task_id?.executor_id;
         if (taskUserId && userMap.has(taskUserId)) {
           const dept = userMap.get(taskUserId)?.expand?.department_id?.name || "Chưa có phòng ban";
           const entry = deptScores.get(dept) || { total: 0, count: 0 };
@@ -141,7 +141,7 @@ export default function Leaderboard() {
             <tbody>
               {entries.slice(0, 20).map((entry) => (
                 <tr key={entry.id}
-                  className={`border-b border-slate-50 hover:bg-slate-50/50 transition-colors dark:border-slate-800 dark:hover:bg-slate-800/50 ${entry.rank <= 3 ? "bg-amber-50/30 dark:bg-amber-950/20" : ""}`}>
+                  className={`border-b border-slate-50 hover:bg-slate-50/50 transition-colors dark:border-slate-800 dark:hover:bg-slate-800/50 ${entry.rank <= 3 ? "bg-amber-50/30 dark:bg-amber-950/20" : "even:bg-slate-100/60 dark:even:bg-slate-800/40"}`}>
                   <td className="px-2 py-2.5 text-center">{getRankIcon(entry.rank)}</td>
                   <td className="px-2 py-2.5">
                     <div className="flex items-center gap-2">

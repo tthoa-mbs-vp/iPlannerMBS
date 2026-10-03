@@ -50,12 +50,12 @@ describe("useKpiScores", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(mockScores);
+    // No `fields` projection: the KPI page filters these records by period
+    // client-side, so every field of KpiScore has to be present.
     expect(mockGetFullList).toHaveBeenCalledWith(
-      expect.objectContaining({
-        fields: expect.stringContaining("id,task_id,base_score"),
-        expand: "task_id",
-      }),
+      expect.objectContaining({ expand: "task_id" }),
     );
+    expect(mockGetFullList.mock.calls[0][0]).not.toHaveProperty("fields");
   });
 
   it("returns empty array when no scores", async () => {

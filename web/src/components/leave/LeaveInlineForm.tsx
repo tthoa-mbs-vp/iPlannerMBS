@@ -1,20 +1,13 @@
 import { useState } from "react";
 import { X, Check, Loader2, Clock } from "lucide-react";
 import type { LeaveType, LeavePeriod } from "@shared/types";
+import { LEAVE_TYPE_LABELS, PERIOD_LABELS } from "../../utils/constants";
+import { errorMessage } from "../../utils/errors";
 
-const LEAVE_TYPE_LABELS: Record<LeaveType, string> = {
-  annual: "Nghỉ phép năm",
-  sick: "Nghỉ ốm / BHXH",
-  unpaid: "Nghỉ không lương",
-  maternity: "Nghỉ thai sản",
-  special: "Nghỉ việc riêng",
-};
-
-const PERIOD_OPTIONS: { value: LeavePeriod; label: string }[] = [
-  { value: "full", label: "Cả ngày" },
-  { value: "morning", label: "Sáng" },
-  { value: "afternoon", label: "Chiều" },
-];
+const PERIOD_OPTIONS: { value: LeavePeriod; label: string }[] = (Object.keys(PERIOD_LABELS) as LeavePeriod[]).map((value) => ({
+  value,
+  label: PERIOD_LABELS[value],
+}));
 
 interface Props {
   initialValues?: {
@@ -75,7 +68,7 @@ export default function LeaveInlineForm({ initialValues, onSubmit, onCancel, pen
         period,
       });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Có lỗi xảy ra");
+      setError(errorMessage(err));
     }
   };
 
@@ -148,7 +141,7 @@ export default function LeaveInlineForm({ initialValues, onSubmit, onCancel, pen
     <form onSubmit={handleSubmit} className="rounded-xl border border-indigo-300 bg-indigo-50/40 p-3 space-y-2.5 dark:border-indigo-800 dark:bg-indigo-950/40">
       <div className="flex items-center justify-between">
         <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300">{title || "Thêm đơn xin nghỉ phép"}</span>
-        <button type="button" onClick={onCancel} aria-label="Đóng"
+        <button type="button" onClick={onCancel}
           className="rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-300">
           <X className="h-3.5 w-3.5" />
         </button>

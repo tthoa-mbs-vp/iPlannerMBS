@@ -217,7 +217,7 @@ export default function PresenceManager() {
                 </thead>
                 <tbody>
                   {checkLogs.map((log) => (
-                    <tr key={log.user_id} className="border-b border-slate-50 last:border-0 dark:border-slate-800">
+                    <tr key={log.user_id} className="border-b border-slate-50 last:border-0 even:bg-slate-100/60 dark:border-slate-800 dark:even:bg-slate-800/40">
                       <td className="px-2 py-2 font-medium text-slate-700 dark:text-slate-200">{log.name}</td>
                       <td className="px-2 py-2 text-slate-400">{log.department_id ? deptMap[log.department_id] || "—" : "—"}</td>
                       <td className="px-2 py-2">

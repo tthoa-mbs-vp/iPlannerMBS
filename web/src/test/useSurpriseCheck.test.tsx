@@ -28,12 +28,13 @@ vi.mock("../stores/authStore", () => ({
 }));
 
 // Mock useMutationWithToast for mutation hooks
-vi.mock("../hooks/useMutationWithToast", () => ({
-  useMutationWithToast: (fn: (...args: unknown[]) => unknown) => {
-    const { useMutation } = require("@tanstack/react-query");
-    return useMutation({ mutationFn: fn });
-  },
-}));
+vi.mock("../hooks/useMutationWithToast", async () => {
+  const { useMutation } = await import("@tanstack/react-query");
+  return {
+    useMutationWithToast: (fn: (...args: unknown[]) => Promise<unknown>) =>
+      useMutation({ mutationFn: fn }),
+  };
+});
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },

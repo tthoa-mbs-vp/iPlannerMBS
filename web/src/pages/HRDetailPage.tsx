@@ -4,20 +4,21 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { pb, getUserAvatar } from "../api/client";
 import { useEmployeeProfile, useUpsertEmployeeProfile } from "../hooks/useEmployeeProfiles";
 import { useAuthStore } from "../stores/authStore";
-import { useToastStore } from "../stores/toastStore";
 import { usePageTitleStore } from "../stores/pageTitleStore";
+import { useToastStore } from "../stores/toastStore";
 import {
   User as UserIcon, Briefcase, CreditCard, Pencil, Save, Loader2, GraduationCap, DollarSign, Key, UserCog,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { errorMessage } from "../utils/errors";
 import QualificationsTab from "../components/hr/QualificationsTab";
 import SalaryHistoryTab from "../components/hr/SalaryHistoryTab";
+import { validatePassword } from "@shared/validators";
 import WorkHistoryTab from "../components/hr/WorkHistoryTab";
 import { formatDate, toInputDate, contractTypes, contractLabel } from "../utils/format";
 import type { User } from "@shared/types";
 
 type PageTab = "general" | "qualifications" | "work" | "salary";
-
-import type { LucideIcon } from "lucide-react";
 
 const tabs: { key: PageTab; label: string; icon: LucideIcon; color: string }[] = [
   { key: "general", label: "Thông tin chung", icon: UserIcon, color: "from-blue-500 to-indigo-600" },
@@ -71,6 +72,7 @@ function CardSection({ icon: Icon, title, gradient, children, actions }: { icon:
 
 export default function HRDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const addToast = useToastStore((s) => s.addToast);
   const authUser = useAuthStore((s) => s.user);
   const role = authUser?.expand?.role_id;
   const canManage = !!role?.can_manage;
@@ -101,7 +103,6 @@ export default function HRDetailPage() {
       });
     },
     enabled: !!id,
-    staleTime: 60_000,
     retry: 3,
   });
 
@@ -143,7 +144,6 @@ export default function HRDetailPage() {
   }
   const qc = useQueryClient();
   const checkAuth = useAuthStore((s) => s.checkAuth);
-  const addToast = useToastStore((s) => s.addToast);
 
   const handleSaveAccount = async () => {
     if (!id) return;
@@ -156,7 +156,7 @@ export default function HRDetailPage() {
       if (isSelf) await checkAuth();
       qc.invalidateQueries({ queryKey: ["user", id] });
     } catch (err: unknown) {
-      addToast("error", err instanceof Error ? err.message : "Lỗi");
+      addToast("error", errorMessage(err, "Lỗi"));
     }
     setSaving(false);
   };
@@ -164,7 +164,8 @@ export default function HRDetailPage() {
   const handleChangePassword = async () => {
     if (!id) return;
     if (!oldPassword || !newPassword) { addToast("error", "Vui lòng nhập đầy đủ mật khẩu"); return; }
-    if (newPassword.length < 8) { addToast("error", "Mật khẩu mới phải có ít nhất 8 ký tự"); return; }
+    const pwError = validatePassword(newPassword);
+    if (pwError) { addToast("error", pwError); return; }
     setPwSaving(true);
     try {
       await pb.collection("users").update(id, {
@@ -176,7 +177,7 @@ export default function HRDetailPage() {
       setNewPassword("");
       setChangingPw(false);
     } catch (err: unknown) {
-      addToast("error", err instanceof Error ? err.message : "Lỗi khi đổi mật khẩu");
+      addToast("error", errorMessage(err, "Lỗi khi đổi mật khẩu"));
     }
     setPwSaving(false);
   };

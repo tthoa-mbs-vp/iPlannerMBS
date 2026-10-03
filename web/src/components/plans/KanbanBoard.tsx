@@ -3,7 +3,6 @@ import { useUpdateTask } from "../../hooks/useTasks";
 import { useNavigate } from "react-router-dom";
 import type { Task, TaskStatus } from "@shared/types";
 import { TASK_STATUS_LABELS, TASK_STATUS_STYLES, TASK_STATUS_COLORS } from "../../utils/constants";
-import { formatDate } from "../../utils/format";
 
 const COLUMNS: TaskStatus[] = ["not_started", "in_progress", "pending_approval", "completed", "proposed_extension", "proposed_cancellation", "cancelled"];
 
@@ -76,11 +75,9 @@ export default function KanbanBoard({ tasks }: Props) {
                 </div>
                 <div className="mt-1.5 flex items-center gap-2 text-[10px] text-slate-400 dark:text-slate-500">
                   <span>{task.expand?.executor_id?.name || "—"}</span>
-                  <span>·</span>
-                  <span></span>
                 </div>
                 <div className="mt-1 text-[9px] text-slate-300 dark:text-slate-600">
-                  {formatDate(task.deadline)}
+                  {new Date(task.deadline).toLocaleDateString("vi-VN")}
                 </div>
               </div>
             ))}

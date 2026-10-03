@@ -1,14 +1,14 @@
-import type { Task, Plan, TaskStatus, PlanStatus } from "@shared/types";
+import type { Plan, Task, TaskStatus, PlanStatus } from "@shared/types";
 import { PLAN_STATUS_LABELS, TASK_STATUS_LABELS } from "./constants";
 import { exportHtmlToPdf } from "./exportPdf";
 
-export function fmtPlanDate(iso?: string): string {
+function fmtPlanDate(iso?: string): string {
   if (!iso) return "—";
   const d = new Date(iso);
   return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("vi-VN");
 }
 
-export function yesNo(v: unknown): string {
+function yesNo(v: boolean): string {
   return v ? "Có" : "Không";
 }
 
@@ -52,9 +52,9 @@ export async function exportToPdfTasks(tasks: Task[], landscape = false) {
     fmtPlanDate(t.start_date),
     fmtPlanDate(t.deadline),
     TASK_STATUS_LABELS[t.status as TaskStatus] || t.status,
-    yesNo(t.is_recurring),
-    yesNo(t.is_ad_hoc),
-    yesNo(t.is_high_impact),
+    yesNo(!!t.is_recurring),
+    yesNo(!!t.is_ad_hoc),
+    yesNo(!!t.is_high_impact),
     t.rating ?? "",
   ]);
   await exportHtmlToPdf({
@@ -70,7 +70,6 @@ export async function exportToPdfTasks(tasks: Task[], landscape = false) {
       { label: "Ngày bắt đầu", align: "center" },
       { label: "Hạn hoàn thành", align: "center" },
       { label: "Trạng thái", align: "center" },
-      { label: "Trọng số (%)", align: "center" },
       { label: "Lặp lại", align: "center" },
       { label: "Đột xuất", align: "center" },
       { label: "Trọng điểm", align: "center" },

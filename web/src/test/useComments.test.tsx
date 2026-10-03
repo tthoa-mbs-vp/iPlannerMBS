@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
+import type { Comment } from "@shared/types";
 
 const mockGetFullList = vi.fn();
 const mockCreate = vi.fn();
@@ -98,19 +99,23 @@ describe("useComments", () => {
         taskId: "t1",
       });
     });
-    const cache = queryClient.getQueryData<any[]>(["comments", "t1"]);
+    const cache = queryClient.getQueryData<Comment[]>(["comments", "t1"]);
     expect(cache).toBeDefined();
     expect(cache!.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("useCreateComment invalidates all comments queries (broad key)", async () => {
+  it("useCreateComment invalidates the affected task's comments only", async () => {
     mockCreate.mockResolvedValue(mockComments[0]);
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
     const { useCreateComment } = await import("../hooks/useComments");
     const { result } = renderHook(() => useCreateComment(), { wrapper: Wrapper });
-    await result.current.mutateAsync({ data: { task_id: "t1", content: "Hi" }, files: [] });
+    await result.current.mutateAsync({ data: { task_id: "t1", content: "Hi" }, files: [], taskId: "t1" });
+    // Key is scoped per task: commenting on t1 must not refetch t2's thread.
     expect(invalidateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ queryKey: ["comments"] })
+      expect.objectContaining({ queryKey: ["comments", "t1"] })
+    );
+    expect(invalidateSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: ["comments", "t2"] })
     );
     invalidateSpy.mockRestore();
   });

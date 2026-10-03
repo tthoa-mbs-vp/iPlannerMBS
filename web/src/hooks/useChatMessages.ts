@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { pb } from "../api/client";
 import { useToastStore } from "../stores/toastStore";
+import { errorMessage } from "../utils/errors";
 import type { ChatMessage } from "@shared/types";
 
 export type ChannelRef =
@@ -97,8 +98,8 @@ export function useCreateChatMessage() {
         prependMessage(qc, vars.ch, res as unknown as ChatMessage);
       }
     },
-    onError: (error: Error) => {
-      addToast("error", error.message);
+    onError: (error: unknown) => {
+      addToast("error", errorMessage(error));
     },
   });
 }
@@ -112,8 +113,8 @@ export function useDeleteChatMessage() {
       addToast("success", "Xóa tin nhắn thành công");
       removeMessage(qc, vars.ch, vars.id);
     },
-    onError: (error: Error) => {
-      addToast("error", error.message);
+    onError: (error: unknown) => {
+      addToast("error", errorMessage(error));
     },
   });
 }
@@ -122,8 +123,8 @@ export function useChatRealtime(ch: ChannelRef | null) {
   const qc = useQueryClient();
   useEffect(() => {
     if (!ch) return;
-    const handler = async (e: { action: string; record: ChatMessage }) => {
-      const rec: ChatMessage = e.record;
+    const handler = async (e: { record?: ChatMessage; action?: string }) => {
+      const rec = e.record;
       if (!rec || !recordMatchesChannel(rec, ch)) return;
       if (e.action === "create") {
         try {

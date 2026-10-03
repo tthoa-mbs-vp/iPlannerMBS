@@ -30,7 +30,7 @@ const mockUserState = {
 };
 
 vi.mock("../stores/authStore", () => ({
-  useAuthStore: vi.fn((selector: any) => (selector ? selector(mockUserState) : mockUserState)),
+  useAuthStore: vi.fn((selector?: (s: typeof mockUserState) => unknown) => (selector ? selector(mockUserState) : mockUserState)),
 }));
 
 vi.mock("../hooks/usePlans", () => {

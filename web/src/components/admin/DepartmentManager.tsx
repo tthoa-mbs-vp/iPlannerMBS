@@ -3,6 +3,7 @@ import {
   useDepartments,
   useCreateDepartment,
   useUpdateDepartment,
+  type DepartmentInput,
   useDeleteDepartment,
   useUsers,
 } from "../../hooks/useDepartments";
@@ -11,11 +12,12 @@ import ExportButton from "../shared/ExportButton";
 const ImportModal = lazy(() => import("./ImportModal"));
 import {
   exportToExcel,
-  exportToCsv,
-  exportToJson,
+  exportToCSV,
+  exportToJSON,
   DEPT_EXPORT_COLUMNS,
 } from "../../utils/importExport";
 import type { Department } from "@shared/types";
+import { errorMessage } from "../../utils/errors";
 import { btn } from "../../utils/buttonClasses";
 import Spinner from "../shared/Spinner";
 import ManagerHeader from "../shared/ManagerHeader";
@@ -66,11 +68,11 @@ export default function DepartmentManager() {
     }
     setError("");
     try {
-      const data = {
+      const data: DepartmentInput = {
         code: editCode,
         name: editName,
         is_counted: editCounted,
-        leader_id: editLeader || undefined,
+        leader_id: editLeader || null,
       };
       if (editingId === "new") {
         await createDept.mutateAsync(data);
@@ -79,7 +81,7 @@ export default function DepartmentManager() {
       }
       setEditingId(null);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Lỗi");
+      setError(errorMessage(err, "Lỗi"));
     }
   };
 
@@ -128,8 +130,8 @@ export default function DepartmentManager() {
             if (format === "xlsx")
               exportToExcel(data, DEPT_EXPORT_COLUMNS, "phong-ban");
             else if (format === "csv")
-              exportToCsv(data, DEPT_EXPORT_COLUMNS, "phong-ban");
-            else exportToJson(data, "phong-ban");
+              exportToCSV(data, DEPT_EXPORT_COLUMNS, "phong-ban");
+            else exportToJSON(data, DEPT_EXPORT_COLUMNS, "phong-ban");
           }}
         />
         <button onClick={() => setShowImport(true)}
@@ -297,10 +299,10 @@ export default function DepartmentManager() {
                       {d.is_counted ? "Có" : "Không"}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button onClick={() => startEdit(d)} className={btn.edit} aria-label="Chỉnh sửa">
+                      <button onClick={() => startEdit(d)} className={btn.edit}>
                         <Pencil className="h-4 w-4" />
                       </button>
-                      <button onClick={() => handleDelete(d.id)} className={btn.delete} aria-label="Xóa">
+                      <button onClick={() => handleDelete(d.id)} className={btn.delete}>
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </td>

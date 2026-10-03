@@ -3,28 +3,13 @@ import { useAuthStore } from "../stores/authStore";
 import { usePageTitleStore } from "../stores/pageTitleStore";
 import { useLeaveRequests, useLeaveBalance, useCreateLeaveRequest, useUpdateLeaveRequest, useUpdateLeaveStatus, useDeleteLeaveRequest } from "../hooks/useLeaveRequests";
 import { Calendar, Plus, CheckCircle, XCircle, Clock, Pencil, Users, User as UserIcon, Trash2 } from "lucide-react";
-import type { LeaveType, User, LeaveRequest, LeavePeriod, LeaveStatus } from "@shared/types";
-import { LEAVE_STATUS_LABELS, LEAVE_STATUS_STYLES } from "../utils/constants";
-import { formatDate } from "../utils/format";
+import type { User, LeaveRequest, LeaveStatus, LeaveType, LeavePeriod } from "@shared/types";
+import { LEAVE_STATUS_LABELS, LEAVE_STATUS_STYLES, LEAVE_TYPE_LABELS, PERIOD_LABELS } from "../utils/constants";
 import LeaveInlineForm from "../components/leave/LeaveInlineForm";
 import TabBar, { type Tab } from "../components/shared/TabBar";
 import EmptyState from "../components/shared/EmptyState";
 import ErrorState from "../components/shared/ErrorState";
 import { SkeletonTable } from "../components/shared/Skeleton";
-
-const LEAVE_TYPE_LABELS: Record<LeaveType, string> = {
-  annual: "Nghỉ phép năm",
-  sick: "Nghỉ ốm / BHXH",
-  unpaid: "Nghỉ không lương",
-  maternity: "Nghỉ thai sản",
-  special: "Nghỉ việc riêng",
-};
-
-const PERIOD_LABELS: Record<LeavePeriod, string> = {
-  full: "Cả ngày",
-  morning: "Sáng",
-  afternoon: "Chiều",
-};
 
 function formatDays(days: number): string {
   return Number.isInteger(days) ? String(days) : days.toFixed(1);
@@ -118,7 +103,7 @@ export default function LeavePage() {
             </div>
             <Calendar className="h-10 w-10 text-blue-200/50" />
           </div>
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-blue-400/30 pt-4 text-center">
+          <div className="mt-6 grid grid-cols-3 gap-4 border-t border-blue-400/30 pt-4 text-center">
             <div>
               <p className="text-xs text-blue-200">Tổng quỹ phép</p>
               <p className="text-xl font-bold">{formatDays(balance?.total_days ?? 12)} ngày</p>
@@ -143,7 +128,7 @@ export default function LeavePage() {
               </div>
               <div>
                 <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">Đang nghỉ phép hiện tại</h2>
-                <p className="text-xs text-slate-400 dark:text-slate-500">Ngày {formatDate(new Date().toISOString())}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">Ngày {new Date().toLocaleDateString("vi-VN")}</p>
               </div>
             </div>
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
@@ -161,7 +146,7 @@ export default function LeavePage() {
                     <div>
                       <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{r.expand?.user_id?.name || r.expand?.user_id?.email}</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {formatDate(r.start_date)} - {formatDate(r.end_date)}
+                        {new Date(r.start_date).toLocaleDateString("vi-VN")} - {new Date(r.end_date).toLocaleDateString("vi-VN")}
                         {r.period && r.period !== "full" && ` · ${PERIOD_LABELS[r.period]}`}
                       </p>
                     </div>
@@ -244,14 +229,14 @@ export default function LeavePage() {
                       />
                     </tr>
                   ) : (
-                    <tr key={req.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                    <tr key={req.id} className="even:bg-slate-50/70 hover:bg-slate-50/50 dark:even:bg-slate-800/40 dark:hover:bg-slate-800/50">
                       <td className="px-6 py-4 font-medium text-slate-800 dark:text-slate-100">
                         {req.expand?.user_id?.name || req.expand?.user_id?.email || "Cá nhân"}
                       </td>
                       <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{LEAVE_TYPE_LABELS[req.leave_type] || req.leave_type}</td>
                       <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
                         <div>
-                          <div>{formatDate(req.start_date)}{req.period === "full" || !req.period ? ` - ${formatDate(req.end_date)}` : ""}</div>
+                          <div>{new Date(req.start_date).toLocaleDateString("vi-VN")}{req.period === "full" || !req.period ? ` - ${new Date(req.end_date).toLocaleDateString("vi-VN")}` : ""}</div>
                           {req.period && req.period !== "full" && (
                             <span className="mt-0.5 inline-flex items-center gap-1 rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-medium text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
                               {PERIOD_LABELS[req.period]} · {formatDays(req.total_days)} ngày
@@ -269,7 +254,8 @@ export default function LeavePage() {
                       <td className="px-6 py-4">
                         <div className="flex gap-2">
                           {req.status === "pending" && req.user_id === user?.id && (
-                            <button onClick={() => setEditingId(req.id)} aria-label="Chỉnh sửa đơn" className="rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-700">
+                            <button onClick={() => setEditingId(req.id)}
+                              className="rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-700">
                               <Pencil className="h-3 w-3" />
                             </button>
                           )}

@@ -4,8 +4,29 @@ import { Download, Upload, FileSpreadsheet, FileText, Code, Loader2, Database, A
 import { exportCollection, EXPORT_COLLECTIONS, COLLECTION_FIELDS } from "../../services/dataService";
 import { pb } from "../../api/client";
 import { useToastStore } from "../../stores/toastStore";
+import { errorMessage } from "../../utils/errors";
 const ImportModal = lazy(() => import("./ImportModal"));
 import TabBar from "../shared/TabBar";
+
+/** A raw PocketBase record as it comes out of getFullList / JSON backup. */
+type BackupRecord = Record<string, unknown>;
+
+/** Shape returned by the /api/custom/archive-stats hook. */
+interface ArchiveWarning {
+  plan_name: string;
+  reason: string;
+}
+
+interface ArchiveStats {
+  eligible_count: number;
+  eligible_plans_count: number;
+  warnings_count: number;
+  warnings: ArchiveWarning[];
+  archived_tasks_count: number;
+  archived_plans_count: number;
+  archived_comments_count: number;
+  cutoff_date: string;
+}
 
 const FORMATS = [
   { value: "xlsx" as const, label: "Excel (.xlsx)", icon: FileSpreadsheet, color: "text-emerald-600 bg-emerald-50" },
@@ -23,7 +44,7 @@ export default function DataImportExport() {
   const [showImportModal, setShowImportModal] = useState(false);
 
   const [backingUp, setBackingUp] = useState(false);
-  const [backupData, setBackupData] = useState<Record<string, any[]> | null>(null);
+  const [backupData, setBackupData] = useState<Record<string, BackupRecord[]> | null>(null);
   const [restoreFile, setRestoreFile] = useState<File | null>(null);
   const [restoring, setRestoring] = useState(false);
   const [restoreResult, setRestoreResult] = useState<string | null>(null);
@@ -35,11 +56,11 @@ export default function DataImportExport() {
   const [archiveRestoring, setArchiveRestoring] = useState(false);
   const [archiveRestoreResult, setArchiveRestoreResult] = useState<string | null>(null);
 
-  const archiveStatsQuery = useQuery({
+  const archiveStatsQuery = useQuery<ArchiveStats>({
     queryKey: ["archive-stats"],
     queryFn: async () => {
       const res = await pb.send("/api/custom/archive-stats", { method: "GET" });
-      return res;
+      return res as ArchiveStats;
     },
     enabled: tab === "archive",
   });
@@ -86,7 +107,7 @@ export default function DataImportExport() {
       archiveStatsQuery.refetch();
       archivedListsQuery.refetch();
     } catch (err: unknown) {
-      setArchiveRestoreResult(`Lỗi: ${err instanceof Error ? err.message : "Thao tác thất bại"}`);
+      setArchiveRestoreResult(`Lỗi: ${errorMessage(err, "Thao tác thất bại")}`);
     }
     setArchiveRestoring(false);
   };
@@ -125,7 +146,7 @@ export default function DataImportExport() {
         archiveStatsQuery.refetch();
       }
     } catch (err: unknown) {
-      setArchiveResult(`Lỗi: ${err instanceof Error ? err.message : "Thao tác thất bại"}`);
+      setArchiveResult(`Lỗi: ${errorMessage(err, "Thao tác thất bại")}`);
     }
     setArchiving(false);
   };
@@ -149,7 +170,7 @@ export default function DataImportExport() {
           return [name, records] as const;
         }),
       );
-      const data: Record<string, any[]> = {};
+      const data: Record<string, BackupRecord[]> = {};
       for (const [name, records] of results) data[name] = records;
       setBackupData(data);
     } catch (e) { addToast("error", "Sao lưu thất bại"); console.error(e); }
@@ -179,7 +200,7 @@ export default function DataImportExport() {
       for (const [collection, records] of Object.entries(data)) {
         if (!Array.isArray(records)) continue;
         for (const record of records) {
-          const clean: Record<string, any> = { ...record };
+          const clean: BackupRecord = { ...record };
           delete clean.id;
           delete clean.created;
           delete clean.updated;
@@ -193,7 +214,7 @@ export default function DataImportExport() {
       }
       setRestoreResult(`Đã khôi phục ${totalCreated} bản ghi thành công`);
     } catch (err: unknown) {
-      setRestoreResult(`Lỗi: ${err instanceof Error ? err.message : "Không thể khôi phục"}`);
+      setRestoreResult(`Lỗi: ${errorMessage(err, "Không thể khôi phục")}`);
     }
     setRestoring(false);
   };
@@ -381,7 +402,7 @@ export default function DataImportExport() {
                   <span>Cảnh báo bảo toàn Kế hoạch ({archiveStats.warnings.length} Kế hoạch bị tạm giữ lưu trữ):</span>
                 </div>
                 <ul className="mt-2 space-y-1.5 text-xs text-amber-700 max-h-40 overflow-y-auto dark:text-amber-300">
-                  {archiveStats.warnings.map((w: { plan_name: string; reason: string }, idx: number) => (
+                  {archiveStats.warnings.map((w, idx) => (
                     <li key={idx} className="flex items-start gap-1.5">
                       <span className="font-bold">•</span>
                       <span><strong>{w.plan_name}:</strong> {w.reason}</span>

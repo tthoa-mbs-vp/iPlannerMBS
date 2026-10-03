@@ -1,10 +1,15 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-// Health check endpoint for monitoring, load balancers, and deployment readiness.
-// Returns basic server status without exposing sensitive information.
-// GET /api/health — no authentication required.
+// Health check endpoints for monitoring, load balancers, and deployment
+// readiness — no authentication required.
+//
+// NOTE: PocketBase 0.39 already serves GET /api/health itself. Registering that
+// same pattern here makes the router panic on boot ("pattern conflicts with
+// pattern"), so the DB-aware variant lives on its own path instead. Keep
+// /api/health in sync with upstream rather than shadowing it.
 
-routerAdd("GET", "/api/health", function(c) {
+// GET /api/healthcheck — richer status, including a real DB round-trip.
+routerAdd("GET", "/api/healthcheck", function(c) {
   try {
     var now = new Date().toISOString()
 

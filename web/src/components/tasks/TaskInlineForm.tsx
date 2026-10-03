@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X, Check, Loader2 } from "lucide-react";
 import CollaboratorSelect from "../shared/CollaboratorSelect";
+import { errorMessage } from "../../utils/errors";
 import type { TaskCategory } from "@shared/types";
 
 interface UserBrief {
@@ -19,7 +20,7 @@ interface Props {
   initialValues?: {
     name?: string;
     description?: string;
-    category?: string;
+    category?: TaskCategory;
     executor_id?: string;
     supervisor_id?: string;
     collaborator_ids?: string[];
@@ -110,7 +111,9 @@ export default function TaskInlineForm({ initialValues, onSubmit, onCancel, pend
       return;
     }
     setError("");
-    const derivedCategory = isAdHoc ? "sudden" : isHighImpact ? "important" : "normal";
+    // Annotated so the literal union survives — otherwise the ternary widens to
+    // `string` and the create-task payload has to be cast at every call site.
+    const derivedCategory: TaskCategory = isAdHoc ? "sudden" : isHighImpact ? "important" : "normal";
     try {
       await onSubmit({
         name: name.trim(),
@@ -127,7 +130,7 @@ export default function TaskInlineForm({ initialValues, onSubmit, onCancel, pend
         plan_id: selectedPlanId || undefined,
       });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Có lỗi xảy ra");
+      setError(errorMessage(err));
     }
   };
 
@@ -135,7 +138,7 @@ export default function TaskInlineForm({ initialValues, onSubmit, onCancel, pend
     <form onSubmit={handleSubmit} className={`rounded-xl border ${col.border} ${col.bg} p-3 space-y-2`}>
       <div className="flex items-center justify-between">
         <span className={`font-bold ${col.label} ${dim.heading}`}>{title || "Thêm nhiệm vụ mới"}</span>
-        <button type="button" onClick={onCancel} aria-label="Hủy"
+        <button type="button" onClick={onCancel}
           className="rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200">
           <X className="h-3.5 w-3.5" />
         </button>
@@ -189,16 +192,17 @@ export default function TaskInlineForm({ initialValues, onSubmit, onCancel, pend
           className={`rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 ${dim.field} ${col.ring} focus:outline-none`} />
         <input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)}
           className={`rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 ${dim.field} ${col.ring} focus:outline-none`} />
-      </div>      <div className="flex items-center gap-3">
-          <label className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
-            <input type="checkbox" checked={isAdHoc} onChange={(e) => setIsAdHoc(e.target.checked)} className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-800" />
-            Đột xuất
-          </label>
-          <label className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
-            <input type="checkbox" checked={isHighImpact} onChange={(e) => setIsHighImpact(e.target.checked)} className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-800" />
-            Quan trọng
-          </label>
-        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        <label className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+          <input type="checkbox" checked={isAdHoc} onChange={(e) => setIsAdHoc(e.target.checked)} className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-800" />
+          Đột xuất
+        </label>
+        <label className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+          <input type="checkbox" checked={isHighImpact} onChange={(e) => setIsHighImpact(e.target.checked)} className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-800" />
+          Quan trọng
+        </label>
+      </div>
       <CollaboratorSelect
         users={eligibleUsers}
         selected={collaborators}

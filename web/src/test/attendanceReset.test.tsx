@@ -20,11 +20,8 @@ const mockUserState = {
 };
 
 vi.mock("../stores/authStore", () => ({
-  useAuthStore: vi.fn((selector: any) => (selector ? selector(mockUserState) : mockUserState)),
-}));
-
-let mockConfigs: any[] = [];
-let mockLogs: any[] = [];
+  useAuthStore: vi.fn((selector?: (s: typeof mockUserState) => unknown) => (selector ? selector(mockUserState) : mockUserState)),
+}));  let mockConfigs: Record<string, unknown>[] = [];  let mockLogs: Record<string, unknown>[] = [];
 vi.mock("../hooks/useAttendance", () => ({
   useAttendanceLogs: () => ({ data: mockLogs, isLoading: false }),
   useAttendanceConfigs: () => ({ data: mockConfigs }),

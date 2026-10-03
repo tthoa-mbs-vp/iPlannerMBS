@@ -52,7 +52,6 @@ export function buildTaskReportRow(task: Task): TaskReportRow {
     start_date: fmtDate(task.start_date),
     deadline: fmtDate(task.deadline),
     status: TASK_STATUS_LABELS[task.status] || task.status,
-    
     is_high_impact: task.is_high_impact ? "Có" : "Không",
     file_count: 0,
     rating: task.rating ? String(task.rating) : "—",

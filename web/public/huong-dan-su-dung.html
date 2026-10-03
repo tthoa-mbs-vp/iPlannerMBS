@@ -375,7 +375,7 @@
   <p>Chọn tab "Kế hoạch" hoặc "Nhiệm vụ" để xem biểu đồ tròn phân bố theo phòng ban. Dữ liệu được lọc theo phạm vi xem của chức vụ (xem mục <a href="#phan-quyen">Phân quyền</a>).</p>
 
   <h3>Tổng quan KPI</h3>
-  <p>Hiển thị số điểm KPI, điểm trung bình, số lượng xếp loại Xuất sắc và Tốt.</p>
+  <p>Hiển thị số điểm KPI, điểm trung bình, xếp loại của bạn và số lượng nhiệm vụ theo từng xếp loại.</p>
 </section>
 
 <!-- 4. VIỆC CỦA TÔI HÔM NAY -->
@@ -509,8 +509,8 @@
     <strong>Quan trọng:</strong> Thời điểm <strong>hoàn thành (completed_at)</strong> do <strong>máy chủ tự ghi</strong> đúng lúc nhiệm vụ chuyển sang trạng thái Hoàn thành — mọi dữ liệu backdate do người dùng gửi lên đều bị bỏ qua (áp dụng cho mọi vai trò, kể cả quản trị). Khi nhiệm vụ rời khỏi trạng thái Hoàn thành, mốc này bị xóa.
   </div>
 
-  <h3>7.3. Đánh giá sao (Rating)</h3>
-  <p>Khi phê duyệt nhiệm vụ, hệ thống hiển thị modal đánh giá với các tiêu chí (2&ndash;5 sao):</p>
+  <h3>7.3. Đánh giá kết quả (Rating)</h3>
+  <p>Khi phê duyệt nhiệm vụ, hệ thống hiển thị modal đánh giá với các tiêu chí (chấm điểm <strong>1&ndash;10</strong>, mặc định 6/10):</p>
   <ul>
     <li><strong>Chất lượng:</strong> Mức độ đáp ứng yêu cầu</li>
     <li><strong>Tiến độ:</strong> Đúng hạn hay trễ</li>
@@ -519,7 +519,7 @@
   </ul>
 
   <h3>7.4. Điểm KPI</h3>
-  <p>Khi nhiệm vụ được hoàn thành, hệ thống tự động tính điểm KPI bao gồm: điểm cơ bản, hệ số khó, điểm tiến độ, xếp loại (1&ndash;5), điểm cuối. Chi tiết công thức xem mục <a href="#kpi">KPI</a>.</p>
+  <p>Khi nhiệm vụ được hoàn thành, hệ thống tự động tính điểm KPI bao gồm: điểm cơ bản, hệ số khó, điểm tiến độ, mức kết quả (xếp loại <strong>1&ndash;10</strong>), điểm cuối. Chi tiết công thức xem mục <a href="#kpi">KPI</a>.</p>
 
   <h3>7.5. Đề xuất (Proposal)</h3>
   <p>Người thực hiện có thể gửi đề xuất:</p>
@@ -689,24 +689,29 @@
     <li><strong>Thẻ thống kê:</strong> Số nhiệm vụ hoàn thành, tổng nhiệm vụ, số điểm KPI, số người dùng</li>
     <li><strong>Tính KPI:</strong> Nhấn nút "Tính KPI (N)" để tự động tính điểm cho các nhiệm vụ đã hoàn thành nhưng chưa có điểm (quản lý)</li>
     <li><strong>Biểu đồ cột:</strong> Điểm KPI trung bình theo người dùng</li>
-    <li><strong>Biểu đồ tròn:</strong> Phân bố xếp loại (Xuất sắc / Tốt / Khá / Trung bình / Cần cải thiện)</li>
+    <li><strong>Biểu đồ tròn:</strong> Phân bố xếp loại theo thang 1&ndash;10 (Rất kém / Kém / Dưới kỳ vọng / Chưa đạt / Trung bình / Khá / Tốt / Rất tốt / Xuất sắc / Vượt trội)</li>
     <li><strong>Bảng KPI người dùng:</strong> Số NV hoàn thành, tổng trọng số, điểm TB, xếp loại</li>
     <li><strong>Bảng chi tiết KPI:</strong> Điểm từng nhiệm vụ: điểm cơ bản, hệ số khó, điểm tối đa, mức tiến độ, mức kết quả, điểm thực tế</li>
     <li><strong>Xuất Excel:</strong> Tải bảng KPI dạng .xlsx</li>
     <li><strong>Tab "Của tôi":</strong> Chỉ xem điểm KPI của riêng bạn</li>
   </ul>
 
-  <h3>Thang xếp loại</h3>
-  <p>Xếp loại dựa trên <strong>điểm trung bình final_score</strong> của người dùng (thang điểm thực tế ~ 10&ndash;14.4, không phải thang 100):</p>
+  <h3>Thang xếp loại 1&ndash;10</h3>
+  <p>Hệ thống dùng <strong>thang 10 điểm</strong> xuyên suốt: người giám sát chấm mức kết quả từ 1 đến 10, và điểm trung bình (<code>final_score</code>) của người dùng được quy về cùng thang này:</p>
   <table>
-    <tr><th>Điểm TB (final_score)</th><th>Sao</th><th>Xếp loại</th></tr>
-    <tr><td>&ge; 10</td><td>5</td><td><span class="tag tag-green">Xuất sắc</span></td></tr>
-    <tr><td>7 &ndash; &lt;10</td><td>4</td><td><span class="tag tag-blue">Tốt</span></td></tr>
-    <tr><td>5 &ndash; &lt;7</td><td>3</td><td><span class="tag tag-amber">Khá</span></td></tr>
-    <tr><td>3 &ndash; &lt;5</td><td>2</td><td><span class="tag tag-rose">Trung bình</span></td></tr>
-    <tr><td>&lt; 3</td><td>1</td><td>Cần cải thiện</td></tr>
+    <tr><th>Điểm TB (final_score)</th><th>Điểm</th><th>Xếp loại</th></tr>
+    <tr><td>&ge; 9.5</td><td>10</td><td><span class="tag tag-green">Vượt trội</span></td></tr>
+    <tr><td>8.5 &ndash; &lt;9.5</td><td>9</td><td><span class="tag tag-green">Xuất sắc</span></td></tr>
+    <tr><td>7.5 &ndash; &lt;8.5</td><td>8</td><td><span class="tag tag-blue">Rất tốt</span></td></tr>
+    <tr><td>6.5 &ndash; &lt;7.5</td><td>7</td><td><span class="tag tag-blue">Tốt</span></td></tr>
+    <tr><td>5.5 &ndash; &lt;6.5</td><td>6</td><td><span class="tag tag-amber">Khá</span></td></tr>
+    <tr><td>4.5 &ndash; &lt;5.5</td><td>5</td><td><span class="tag tag-amber">Trung bình</span></td></tr>
+    <tr><td>3.5 &ndash; &lt;4.5</td><td>4</td><td><span class="tag tag-rose">Chưa đạt</span></td></tr>
+    <tr><td>2.5 &ndash; &lt;3.5</td><td>3</td><td><span class="tag tag-rose">Dưới kỳ vọng</span></td></tr>
+    <tr><td>1.5 &ndash; &lt;2.5</td><td>2</td><td><span class="tag tag-rose">Kém</span></td></tr>
+    <tr><td>&lt; 1.5</td><td>1</td><td>Rất kém</td></tr>
   </table>
-  <p>Công thức chi tiết: xem mục <strong>Điểm KPI</strong> trong báo cáo kỹ thuật / <code>helpers.js</code> (<code>_computeKpi</code>).</p>
+  <p>Công thức chi tiết: xem mục <strong>Điểm KPI</strong> trong báo cáo kỹ thuật, hoặc file nguồn dùng chung <code>backend/pb_hooks/_kpi-formula.cjs</code> (hàm <code>computeKpi</code>).</p>
 </section>
 
 <!-- 15. THÔNG BÁO -->

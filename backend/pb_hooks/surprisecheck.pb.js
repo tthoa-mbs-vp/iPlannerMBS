@@ -3,8 +3,6 @@
 // Admin starts a campaign → all logged-in users receive a check → user responds
 // with password or biometric (simulated) → system records working status.
 
-require("./helpers.js"); // shared helpers — available via module.exports
-
 // POST /api/surprise-check/start
 // Body: { name?, notes?, target_user_ids? }
 // Creates a presence_campaign with status=active, creates check logs for all users.

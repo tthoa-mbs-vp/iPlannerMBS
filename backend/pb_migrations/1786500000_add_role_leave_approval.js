@@ -3,25 +3,29 @@ migrate((app) => {
   // add approval permission + approval scope fields to roles
   const roles = app.findCollectionByNameOrId("pbc_2105053228")
 
+  if (!roles.fields.getByName("can_approve_leave")) {
   roles.fields.add(new Field({
-    "hidden": false,
-    "id": "bool_appr_leave",
-    "name": "can_approve_leave",
-    "required": false,
-    "system": false,
-    "type": "bool"
-  }))
+      "hidden": false,
+      "id": "bool_appr_leave",
+      "name": "can_approve_leave",
+      "required": false,
+      "system": false,
+      "type": "bool"
+    }))
+}
 
+  if (!roles.fields.getByName("approval_scope")) {
   roles.fields.add(new Field({
-    "hidden": false,
-    "id": "select_appr_scope",
-    "maxSelect": 1,
-    "name": "approval_scope",
-    "required": false,
-    "system": false,
-    "type": "select",
-    "values": ["all", "department"]
-  }))
+      "hidden": false,
+      "id": "select_appr_scope",
+      "maxSelect": 1,
+      "name": "approval_scope",
+      "required": false,
+      "system": false,
+      "type": "select",
+      "values": ["all", "department"]
+    }))
+}
 
   app.save(roles)
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X, Check, Loader2 } from "lucide-react";
 import type { Department, ProfessionalGroup } from "@shared/types";
+import { errorMessage } from "../../utils/errors";
 import CheckCombobox from "../shared/CheckCombobox";
 
 interface UserBrief {
@@ -97,7 +98,7 @@ export default function PlanInlineForm({ initialValues, onSubmit, onCancel, pend
         is_high_impact: highImpact,
       });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Có lỗi xảy ra");
+      setError(errorMessage(err));
     }
   };
 
@@ -108,7 +109,7 @@ export default function PlanInlineForm({ initialValues, onSubmit, onCancel, pend
           {title || (showId ? "Sửa kế hoạch" : "Thêm kế hoạch mới")}
         </span>
         {showId && <span className="text-[10px] text-slate-400 dark:text-slate-500">ID: {showId}</span>}
-        <button type="button" onClick={onCancel} aria-label="Hủy"
+        <button type="button" onClick={onCancel}
           className="rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-300">
           <X className="h-3.5 w-3.5" />
         </button>

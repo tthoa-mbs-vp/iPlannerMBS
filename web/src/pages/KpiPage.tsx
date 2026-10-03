@@ -6,18 +6,32 @@ import { useUsers } from "../hooks/useDepartments";
 import { useAuthStore } from "../stores/authStore";
 import { usePageTitleStore } from "../stores/pageTitleStore";
 import { Award, CheckCircle, Clock, TrendingUp, RefreshCw, BarChart3, Star, Zap, FileDown, Trophy, User as UserIcon } from "lucide-react";
-import KpiTaskTable from "../components/kpi/KpiTaskTable";
-import RatingDistCard from "../components/kpi/RatingDistCard";
 import { exportToExcel } from "../utils/importExport";
 import { exportHtmlToPdf } from "../utils/exportPdf";
-import { getRatingBadgeStyle } from "../utils/constants";
+import {
+  getRatingBadgeStyle,
+  getRatingLabel,
+  ratingFromAvgScore,
+  RATING_COLORS,
+  RATING_LABELS,
+  RATING_SCALE,
+} from "../utils/constants";
+import { errorMessage } from "../utils/errors";
+import {
+  aggregateUserKpi,
+  buildTaskKpi,
+  createPeriodMatcher,
+  filterCompletedTasksInPeriod,
+  filterKpiScoresInPeriod,
+} from "../utils/kpiSelectors";
 import PdfExportMenu from "../components/shared/PdfExportMenu";
 import type { ColumnDef } from "../utils/importExport";
 import Leaderboard from "../components/kpi/Leaderboard";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale/vi";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend, LineChart, Line,
 } from "recharts";
 import ErrorState from "../components/shared/ErrorState";
 import TabBar from "../components/shared/TabBar";
@@ -25,16 +39,6 @@ import EmptyState from "../components/shared/EmptyState";
 import Pagination from "../components/shared/Pagination";
 import { calculateKpi } from "../utils/kpi";
 import type { KpiScore } from "@shared/types";
-
-const RATING_LABELS: Record<number, string> = {
-  5: "Xuất sắc",
-  4: "Tốt",
-  3: "Khá",
-  2: "Trung bình",
-  1: "Cần cải thiện",
-};
-
-const RATING_COLORS = ["#ef4444", "#f59e0b", "#3b82f6", "#8b5cf6", "#10b981"];
 
 const KPI_EXPORT_COLUMNS: ColumnDef[] = [
   { key: "task_name", label: "Nhiệm vụ" },
@@ -47,8 +51,12 @@ const KPI_EXPORT_COLUMNS: ColumnDef[] = [
   { key: "final_score", label: "Điểm thực tế" },
 ];
 
-function getRating(avgScore: number): number {
-  return avgScore >= 10 ? 5 : avgScore >= 7 ? 4 : avgScore >= 5 ? 3 : avgScore >= 3 ? 2 : 1;
+function getScheduleLabel(progress: number): string {
+  if (progress >= 100) return "Đúng hạn";
+  if (progress >= 80) return "Trễ 1-3 ngày";
+  if (progress >= 60) return "Trễ 4-5 ngày";
+  if (progress > 0) return "Trễ >5 ngày";
+  return "Chưa hoàn thành";
 }
 
 function getMonthOptions() {
@@ -97,7 +105,78 @@ const VIEW_TABS = [
   { key: "mine", label: "Của tôi", icon: UserIcon, gradient: "from-violet-500 to-purple-600" },
 ];
 
+function KpiTaskTable({ items, title }: { items: KpiScore[]; title: string }) {
+  return (
+    <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
+      <h3 className="mb-4 font-semibold text-slate-800 dark:text-slate-100">{title}</h3>
+      <table className="w-full">
+        <thead>
+          <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60">
+            <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Nhiệm vụ</th>
+            <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Cơ bản</th>
+            <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Khó</th>
+            <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Tối đa</th>
+            <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Tiến độ</th>
+            <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Kết quả</th>
+            <th className="px-4 py-3 text-center text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Thực tế</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((k) => {
+            const task = k.expand?.task_id;
+            const maxScore = k.max_converted_score ?? Math.round(k.base_score * k.difficulty_coeff * 10) / 10;
+            const isFinalValid = k.id !== "";
+            return (
+            <tr key={task?.id || k.task_id} className="even:bg-slate-100 dark:even:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
+              <td className="px-4 py-3 text-sm text-slate-800 dark:text-slate-100">{task?.name || k.task_id}</td>
+              <td className="px-4 py-3 text-center text-sm text-slate-600 dark:text-slate-400">{k.base_score}</td>
+              <td className="px-4 py-3 text-center text-sm text-slate-600 dark:text-slate-400">{(k.difficulty_coeff * 100).toFixed(0)}%</td>
+              <td className="px-4 py-3 text-center text-sm font-semibold text-slate-700 dark:text-slate-200">{maxScore.toFixed(1)}</td>
+              <td className="px-4 py-3 text-center text-sm text-slate-600 dark:text-slate-400" title={getScheduleLabel(k.progress_score)}>{isFinalValid ? k.progress_score : "—"}</td>
+              <td className="px-4 py-3 text-center">
+                {isFinalValid ? (
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${getRatingBadgeStyle(k.result_rating)}`}>
+                  {getRatingLabel(k.result_rating)}
+                </span>
+                ) : "—"}
+              </td>
+              <td className="px-4 py-3 text-center text-sm font-bold text-indigo-600 dark:text-indigo-300">{isFinalValid ? k.final_score : "—"}</td>
+            </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
+function RatingDistCard({ data }: { data: { name: string; value: number; color: string }[] }) {
+  return (
+    <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
+      <h3 className="mb-4 flex items-center gap-2 font-semibold text-slate-800 dark:text-slate-100">
+        <Star className="h-4 w-4 text-amber-500 dark:text-amber-400" />
+        Phân bố xếp loại KPI
+      </h3>
+      {data.length > 0 ? (
+        <ResponsiveContainer width="100%" height={280}>
+          <PieChart>
+            <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label>
+              {data.map((entry, idx) => (
+                <Cell key={idx} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="flex h-[280px] items-center justify-center text-sm text-slate-400 dark:text-slate-500">
+          Chưa có dữ liệu
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function KpiPage() {
   const user = useAuthStore((s) => s.user);
@@ -120,74 +199,37 @@ export default function KpiPage() {
   })());
   const [selectedYear, setSelectedYear] = usePersistedState("kpi_selectedYear", format(new Date(), "yyyy"));
 
-  const isInPeriod = useCallback((dateStr: string) => {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return true;
-    if (periodType === "all") return true;
-    if (periodType === "month") return format(d, "yyyy-MM") === selectedMonth;
-    if (periodType === "quarter") {
-      const [year, qStr] = selectedQuarter.split("-Q");
-      return String(d.getFullYear()) === year && Math.floor(d.getMonth() / 3) + 1 === Number(qStr);
-    }
-    return String(d.getFullYear()) === selectedYear;
-  }, [periodType, selectedMonth, selectedQuarter, selectedYear]);
-
-  const completedTasks = useMemo(
-    () => tasks?.filter((t) => t.status === "completed") || [],
-    [tasks],
+  const isInPeriod = useMemo(
+    () =>
+      createPeriodMatcher({
+        periodType,
+        selectedMonth,
+        selectedQuarter,
+        selectedYear,
+      }),
+    [periodType, selectedMonth, selectedQuarter, selectedYear],
   );
 
   const filteredCompletedTasks = useMemo(
-    () => completedTasks.filter((t) => isInPeriod(t.deadline)),
-    [completedTasks, isInPeriod],
-  );
-
-  const filteredKpiScores = useMemo(
-    () => kpiScores?.filter((k) => {
-      if (!k.expand?.task_id || k.expand.task_id.is_deleted) return false;
-      const d = k.expand.task_id.deadline;
-      return d ? isInPeriod(d) : true;
-    }) || [],
+    () => filterCompletedTasksInPeriod(tasks, isInPeriod),
+    [tasks, isInPeriod],
+  );  const filteredKpiScores = useMemo(
+    () => filterKpiScoresInPeriod(kpiScores, isInPeriod),
     [kpiScores, isInPeriod],
   );
 
   const scoredTaskIds = new Set(filteredKpiScores.map((k) => k.task_id));
   const unscoredTasks = filteredCompletedTasks.filter((t) => !scoredTaskIds.has(t.id));
 
-  const allTaskKpi = useMemo(() => {
-    const kpiMap = new Map(filteredKpiScores.map((k) => [k.task_id, k]));
-    const allTasks = tasks?.filter((t) => isInPeriod(t.deadline)) || [];
-    return allTasks.map((t) => {
-      const stored = kpiMap.get(t.id);
-      if (stored) return stored;
-      const computed = calculateKpi(t);
-      return {
-        id: "",
-        task_id: t.id,
-        base_score: computed.base_score!,
-        difficulty_coeff: computed.difficulty_coeff!,
-        max_converted_score: computed.max_converted_score,
-        progress_score: 0,
-        result_rating: 0,
-        final_score: 0,
-        created: "",
-        expand: { task_id: t },
-      } as KpiScore;
-    });
-  }, [tasks, filteredKpiScores, isInPeriod]);
+  const allTaskKpi = useMemo(
+    () => buildTaskKpi(tasks, filteredKpiScores, isInPeriod),
+    [tasks, filteredKpiScores, isInPeriod],
+  );
 
-  const userKpi = useMemo(() => {
-    return users?.map((u) => {
-      const userScores = filteredKpiScores.filter(
-        (k) => k.expand?.task_id?.executor_id === u.id,
-      ) || [];
-      const userCompleted = filteredCompletedTasks.filter((t) => t.executor_id === u.id);
-      const avgScore = userScores.length > 0
-        ? userScores.reduce((s, k) => s + (k.final_score || 0), 0) / userScores.length
-        : 0;
-      return { user: u, taskCount: userCompleted.length, avgScore };
-    }).sort((a, b) => b.taskCount - a.taskCount) || [];
-  }, [users, filteredKpiScores, filteredCompletedTasks]);
+  const userKpi = useMemo(
+    () => aggregateUserKpi(users, filteredKpiScores, filteredCompletedTasks),
+    [users, filteredKpiScores, filteredCompletedTasks],
+  );
 
   const userKpiTotalPages = Math.max(1, Math.ceil(userKpi.length / userKpiPageSize));
   const paginatedUserKpi = useMemo(() =>
@@ -211,7 +253,7 @@ export default function KpiPage() {
   );
 
   const ratingDist = useMemo(
-    () => [1, 2, 3, 4, 5].map((r) => ({
+    () => RATING_SCALE.map((r) => ({
       name: RATING_LABELS[r],
       value: filteredKpiScores.filter((k) => Math.round(k.result_rating || 0) === r).length || 0,
       color: RATING_COLORS[r - 1],
@@ -283,7 +325,7 @@ export default function KpiPage() {
   );
 
   const myRatingDist = useMemo(
-    () => [1, 2, 3, 4, 5].map((r) => ({
+    () => RATING_SCALE.map((r) => ({
       name: RATING_LABELS[r],
       value: myKpiScores.filter((k) => Math.round(k.result_rating || 0) === r).length || 0,
       color: RATING_COLORS[r - 1],
@@ -299,7 +341,7 @@ export default function KpiPage() {
       const { created, failed } = await calcKpi.mutateAsync();
       setRecalcStatus(`Đã tính KPI cho ${created} nhiệm vụ${failed ? ` (${failed} thất bại)` : ""}.`);
     } catch (err: unknown) {
-      setRecalcStatus(err instanceof Error ? err.message : "Không thể tính lại KPI.");
+      setRecalcStatus(errorMessage(err, "Không thể tính lại KPI."));
     }
     setTimeout(() => setRecalcStatus(""), 3000);
   }, [canManage, unscoredTasks.length, calcKpi, setRecalcStatus]);
@@ -323,7 +365,7 @@ export default function KpiPage() {
     exportToExcel(buildExportRows(allTaskKpi), KPI_EXPORT_COLUMNS, "bao-cao-kpi", {
       title: "BÁO CÁO ĐIỂM KPI",
       highlightHeader: true,
-      groupBy: (row) => row.executor || "Chưa phân công",
+      groupBy: (row) => String(row.executor || "Chưa phân công"),
     });
   };
 
@@ -331,7 +373,7 @@ export default function KpiPage() {
     exportToExcel(buildExportRows(myTaskKpi), KPI_EXPORT_COLUMNS, "bao-cao-kpi-cua-toi", {
       title: "BÁO CÁO KPI CỦA TÔI",
       highlightHeader: true,
-      groupBy: (row) => row.executor || "Chưa phân công",
+      groupBy: (row) => String(row.executor || "Chưa phân công"),
     });
   };
 
@@ -395,11 +437,11 @@ export default function KpiPage() {
   }, [unscoredTasks.length, calcKpi.isPending, canManage, handleRecalculateAll]);
 
   if (kpiError || tasksError || usersError) {
-    const msg = (kpiError || tasksError || usersError) as Error | null;
+    const msg = errorMessage(kpiError || tasksError || usersError, "Vui lòng thử lại");
     return (
       <ErrorState
         message="Không thể tải dữ liệu"
-        subMessage={msg?.message || "Vui lòng thử lại"}
+        subMessage={msg}
         onRetry={() => { refetchKpi(); refetchTasks(); refetchUsers(); }}
       />
     );
@@ -566,7 +608,6 @@ export default function KpiPage() {
           <EmptyState icon={Award} message="Chưa có dữ liệu KPI. Hoàn thành nhiệm vụ để tính điểm." className="py-12" />
         ) : (
           <>
-          <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60">
@@ -578,7 +619,7 @@ export default function KpiPage() {
             </thead>
             <tbody>
               {paginatedUserKpi.map(({ user, taskCount, avgScore }) => {
-                const rating = getRating(avgScore);
+                const rating = ratingFromAvgScore(avgScore);
                 return (
                   <tr key={user.id} className="even:bg-slate-100 dark:even:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
                     <td className="px-4 py-3 text-sm font-medium text-slate-800 dark:text-slate-100">{user.name || user.email}</td>
@@ -587,7 +628,7 @@ export default function KpiPage() {
                     <td className="px-4 py-3 text-center">
                       <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${getRatingBadgeStyle(rating)}`}>
                         {rating >= 4 && <Zap className="h-3 w-3" />}
-                        {RATING_LABELS[rating]}
+                        {getRatingLabel(rating)}
                       </span>
                     </td>
                   </tr>
@@ -595,7 +636,6 @@ export default function KpiPage() {
               })}
             </tbody>
           </table>
-          </div>
           <Pagination
             page={userKpiPage}
             totalPages={userKpiTotalPages}
@@ -684,7 +724,7 @@ export default function KpiPage() {
               </div>
               <div>
                 <p className="text-xs text-indigo-200">Xếp loại</p>
-                <p className="text-xl font-bold">{RATING_LABELS[getRating(myAvgScore)]}</p>
+                <p className="text-xl font-bold">{getRatingLabel(ratingFromAvgScore(myAvgScore))}</p>
               </div>
             </div>
           </div>

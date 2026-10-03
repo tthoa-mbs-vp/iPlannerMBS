@@ -8,8 +8,11 @@ import { useTrashedPlans, useRestorePlan, usePermanentDeletePlan, useBulkPermane
 import { useTrashedTasks, useRestoreTask, usePermanentDeleteTask, useBulkPermanentDeleteTasks } from "../hooks/useTasks";
 import TabBar from "../components/shared/TabBar";
 import Spinner from "../components/shared/Spinner";
-import { formatDate } from "../utils/format";
 import EmptyState from "../components/shared/EmptyState";
+import type { Plan, Task } from "@shared/types";
+
+/** Trash holds plans or tasks, depending on the active tab. */
+type TrashItem = Plan | Task;
 
 export default function TrashPage() {
   const [tab, setTab] = usePersistedState<"plans" | "tasks">("trash_tab", "plans");
@@ -38,8 +41,8 @@ export default function TrashPage() {
 }
 
 function TrashList({ type }: { type: "plans" | "tasks" }) {
-  const { data: plans, isLoading: plansLoading, error: plansError } = useTrashedPlans();
-  const { data: tasks, isLoading: tasksLoading, error: tasksError } = useTrashedTasks();
+  const { data: plans, isLoading: plansLoading } = useTrashedPlans();
+  const { data: tasks, isLoading: tasksLoading } = useTrashedTasks();
   const restorePlan = useRestorePlan();
   const restoreTask = useRestoreTask();
   const permDeletePlan = usePermanentDeletePlan();
@@ -50,7 +53,6 @@ function TrashList({ type }: { type: "plans" | "tasks" }) {
   const [confirmBulk, setConfirmBulk] = useState(false);
 
   const isLoading = type === "plans" ? plansLoading : tasksLoading;
-  const error = type === "plans" ? plansError : tasksError;
   const items = type === "plans" ? plans : tasks;
   const restore = type === "plans"
     ? (id: string) => restorePlan.mutateAsync(id)
@@ -67,16 +69,6 @@ function TrashList({ type }: { type: "plans" | "tasks" }) {
 
   if (isLoading) return <Spinner color="border-red-500" />;
 
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-red-500">
-        <AlertTriangle className="mb-3 h-10 w-10" />
-        <p className="text-sm font-medium">Không thể tải thùng rác</p>
-        <p className="mt-1 text-xs text-red-400">{(error as Error | null)?.message || "Vui lòng thử lại"}</p>
-      </div>
-    );
-  }
-
   if (!items || items.length === 0) return <EmptyState icon={Trash2} message="Thùng rác trống" size="lg" />;
 
   return (
@@ -85,7 +77,7 @@ function TrashList({ type }: { type: "plans" | "tasks" }) {
         {confirmBulk ? (
           <div className="flex items-center gap-2">
             <span className="text-xs text-red-600 font-medium dark:text-red-400">Xóa vĩnh viễn tất cả ({items.length})?</span>
-            <button onClick={async () => { await bulkDelete(items.map((i: { id: string }) => i.id)); setConfirmBulk(false); }} disabled={isBulkDeleting}
+            <button onClick={async () => { await bulkDelete(items.map((i: TrashItem) => i.id)); setConfirmBulk(false); }} disabled={isBulkDeleting}
               className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors">
               {isBulkDeleting ? "..." : "Xác nhận"}
             </button>
@@ -102,16 +94,16 @@ function TrashList({ type }: { type: "plans" | "tasks" }) {
           </button>
         )}
       </div>
-      {items.map((item: { id: string; name: string; email?: string; updated: string }) => (
+      {items.map((item: TrashItem) => (
         <div key={item.id}
           className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 dark:bg-red-950/50">
             <Trash2 className="h-5 w-5 text-red-400" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-slate-800 truncate dark:text-slate-100" title={item.name || item.email || item.id}>{item.name || item.email || item.id}</p>
+            <p className="text-sm font-medium text-slate-800 truncate dark:text-slate-100" title={item.name || item.id}>{item.name || item.id}</p>
             <p className="text-xs text-slate-400 dark:text-slate-500">
-              {type === "plans" ? "Kế hoạch" : "Nhiệm vụ"} · Đã xóa {formatDate(item.updated)}
+              {type === "plans" ? "Kế hoạch" : "Nhiệm vụ"} · Đã xóa {new Date(item.updated).toLocaleDateString("vi-VN")}
             </p>
           </div>
           <div className="flex gap-2">

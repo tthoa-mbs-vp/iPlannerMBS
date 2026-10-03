@@ -3,19 +3,21 @@ migrate((app) => {
   const collection = app.findCollectionByNameOrId("pbc_2602490748")
 
   // update field
+  if (!collection.fields.getByName("collaborator_ids")) {
   collection.fields.addAt(8, new Field({
-    "cascadeDelete": false,
-    "collectionId": "_pb_users_auth_",
-    "hidden": false,
-    "id": "relation4281338252",
-    "maxSelect": 10,
-    "minSelect": 0,
-    "name": "collaborator_ids",
-    "presentable": false,
-    "required": false,
-    "system": false,
-    "type": "relation"
-  }))
+      "cascadeDelete": false,
+      "collectionId": "_pb_users_auth_",
+      "hidden": false,
+      "id": "relation4281338252",
+      "maxSelect": 10,
+      "minSelect": 0,
+      "name": "collaborator_ids",
+      "presentable": false,
+      "required": false,
+      "system": false,
+      "type": "relation"
+    }))
+}
 
   return app.save(collection)
 }, (app) => {

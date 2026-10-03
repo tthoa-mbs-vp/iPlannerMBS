@@ -1,43 +1,41 @@
 import { describe, it, expect } from "vitest";
 import { decodeRef, getNotificationTypeLabel, getNotificationLink } from "../hooks/useNotifications";
+import type { Notification } from "@shared/types";
+
+// Các case chỉ cần reference_id + type, không dựng nguyên record.
+const note = (fields: Partial<Notification>) => fields as Notification;
 
 describe("decodeRef", () => {
   it("decodes JSON reference_id with taskId", () => {
-    const ref = { reference_id: JSON.stringify({ taskId: "t1", taskName: "Test Task" }) };
-    const result = decodeRef(ref as any);
+    const result = decodeRef(note({ reference_id: JSON.stringify({ taskId: "t1", taskName: "Test Task" }) }));
     expect(result.taskId).toBe("t1");
     expect(result.taskName).toBe("Test Task");
   });
 
   it("decodes JSON reference_id with announcementId", () => {
-    const ref = { reference_id: JSON.stringify({ announcementId: "a1", title: "Announcement" }) };
-    const result = decodeRef(ref as any);
+    const result = decodeRef(note({ reference_id: JSON.stringify({ announcementId: "a1", title: "Announcement" }) }));
     expect(result.announcementId).toBe("a1");
     expect(result.title).toBe("Announcement");
   });
 
   it("decodes legacy dash-format reference_id", () => {
-    const ref = { reference_id: "task-id-hello-world", type: "mention" };
-    const result = decodeRef(ref as any);
+    const result = decodeRef(note({ reference_id: "task-id-hello-world", type: "mention" }));
     expect(result.taskId).toBe("task");
     expect(result.taskName).toBe("id-hello-world");
   });
 
   it("falls back to message from type label", () => {
-    const ref = { reference_id: JSON.stringify({ taskId: "t1" }), type: "mention" };
-    const result = decodeRef(ref as any);
+    const result = decodeRef(note({ reference_id: JSON.stringify({ taskId: "t1" }), type: "mention" }));
     expect(result.message).toBe("Đề cập");
   });
 
   it("returns raw reference_id as message for empty ref", () => {
-    const ref = { reference_id: "", type: "task_update" };
-    const result = decodeRef(ref as any);
+    const result = decodeRef(note({ reference_id: "", type: "task_update" }));
     expect(result.message).toBe("");
   });
 
   it("handles JSON reference with custom message", () => {
-    const ref = { reference_id: JSON.stringify({ taskId: "t1", message: "Custom msg" }) };
-    const result = decodeRef(ref as any);
+    const result = decodeRef(note({ reference_id: JSON.stringify({ taskId: "t1", message: "Custom msg" }) }));
     expect(result.message).toBe("Custom msg");
   });
 });
@@ -63,23 +61,20 @@ describe("getNotificationTypeLabel", () => {
 
 describe("getNotificationLink", () => {
   it("returns announcement link when announcementId is present", () => {
-    const n = {
+    const n = note({
       reference_id: JSON.stringify({ announcementId: "a1", taskId: "t1" }),
       type: "announcement",
-    } as any;
+    });
     expect(getNotificationLink(n)).toBe("/announcements/a1");
   });
 
   it("returns task link when taskId is present", () => {
-    const n = {
-      reference_id: JSON.stringify({ taskId: "t1" }),
-      type: "mention",
-    } as any;
+    const n = note({ reference_id: JSON.stringify({ taskId: "t1" }), type: "mention" });
     expect(getNotificationLink(n)).toBe("/tasks/t1");
   });
 
   it("returns # when no reference", () => {
-    const n = { reference_id: "", type: "task_update" } as any;
+    const n = note({ reference_id: "", type: "task_update" });
     expect(getNotificationLink(n)).toBe("#");
   });
 });

@@ -90,7 +90,6 @@ export interface User {
   id: string;
   email: string;
   name?: string;
-  username?: string;
   avatar?: string;
   department_id?: string;
   role_id?: string;
@@ -168,6 +167,7 @@ export interface Task {
   is_high_impact?: boolean;
   coordinating_dept_id?: string;
   completed_at?: string;
+  /** Xếp loại kết quả, thang 1–10 (số nguyên). */
   rating?: number;
   rated_by_id?: string;
   rated_at?: string;
@@ -308,6 +308,7 @@ export interface AttendanceLog {
   method: AttendanceMethod;
   location_gps?: string;
   device_info?: string;
+  ip_address?: string;
   status: AttendanceStatus;
   notes?: string;
   created: string;

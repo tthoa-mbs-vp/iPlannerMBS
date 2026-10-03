@@ -1,4 +1,5 @@
 import { X, Download } from "lucide-react";
+import { useEffect } from "react";
 
 interface Props {
   url: string;
@@ -8,19 +9,35 @@ interface Props {
 }
 
 export default function FilePreviewModal({ url, filename, isImage, onClose }: Props) {
+  // This preview is a full-screen takeover, so it must be dismissable the same
+  // way as the shared Modal — Escape included, otherwise keyboard users are stuck.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Xem trước ${filename}`}
+      onClick={onClose}
+    >
       <div className="relative max-h-[90vh] max-w-[90vw] overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-700">
           <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200" title={filename}>{filename}</p>
           <div className="flex items-center gap-1">
             <a href={url} target="_blank" rel="noopener noreferrer" download={filename}
               className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200" title="Tải xuống" aria-label="Tải xuống">
-              <Download className="h-4 w-4" />
+              <Download className="h-4 w-4" aria-hidden="true" />
             </a>
-            <button onClick={onClose}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200" title="Đóng" aria-label="Đóng">
-              <X className="h-4 w-4" />
+            <button onClick={onClose} aria-label="Đóng"
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200" title="Đóng">
+              <X className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
         </div>

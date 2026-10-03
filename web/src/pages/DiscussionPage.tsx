@@ -19,6 +19,7 @@ import {
   MessageCircle,
   ChevronRight,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import TabBar from "../components/shared/TabBar";
 import Spinner from "../components/shared/Spinner";
 import ErrorState from "../components/shared/ErrorState";
@@ -27,7 +28,6 @@ import CommentSection from "../components/tasks/CommentSection";
 import ChannelChat from "../components/chat/ChannelChat";
 import type { ChannelRef } from "../hooks/useChatMessages";
 import { formatTime } from "../components/chat/chatShared";
-import type { LucideIcon } from "lucide-react";
 
 interface ChannelItem {
   key: string;

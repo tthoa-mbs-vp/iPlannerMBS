@@ -3,6 +3,11 @@ import { pb } from "../api/client";
 import { useMutationWithToast } from "../hooks/useMutationWithToast";
 import type { ProfessionalGroup } from "@shared/types";
 
+/** See DepartmentInput: relation fields take an explicit null to clear. */
+export type ProfessionalGroupInput = Omit<Partial<ProfessionalGroup>, "department_id"> & {
+  department_id?: string | null;
+};
+
 export function useProfessionalGroups() {
   return useQuery({
     queryKey: ["professional_groups"],
@@ -21,7 +26,7 @@ export function useProfessionalGroups() {
 
 export function useCreateProfessionalGroup() {
   return useMutationWithToast(
-    (data: Partial<ProfessionalGroup>) => pb.collection("professional_groups").create(data),
+    (data: ProfessionalGroupInput) => pb.collection("professional_groups").create(data),
     {
       successMessage: "Tạo tổ chuyên môn thành công",
       invalidateKeys: [["professional_groups"]],
@@ -31,7 +36,7 @@ export function useCreateProfessionalGroup() {
 
 export function useUpdateProfessionalGroup() {
   return useMutationWithToast(
-    ({ id, data }: { id: string; data: Partial<ProfessionalGroup> }) =>
+    ({ id, data }: { id: string; data: ProfessionalGroupInput }) =>
       pb.collection("professional_groups").update(id, data),
     {
       successMessage: "Cập nhật tổ chuyên môn thành công",

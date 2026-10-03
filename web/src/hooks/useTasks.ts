@@ -2,7 +2,19 @@ import { useQuery } from "@tanstack/react-query";
 import { pb } from "../api/client";
 import { useMutationWithToast } from "../hooks/useMutationWithToast";
 import { addSoftDeleteFilter } from "../utils/filters";
-import type { Task } from "@shared/types";
+import type { Task, TaskCategory } from "@shared/types";
+
+/**
+ * Writable shape of a task.
+ *
+ * `category` is narrowed to the literal union here (the read model already says
+ * `TaskCategory`, but form code was producing a widened `string`), and
+ * `supervisor_id` stays optional so a draft without a supervisor can be saved.
+ */
+export type TaskInput = Omit<Partial<Task>, "category" | "supervisor_id"> & {
+  category: TaskCategory;
+  supervisor_id?: string;
+};
 
 const COLLECTION = "tasks";
 
@@ -65,7 +77,7 @@ export function useTrashedTasks() {
 
 export function useCreateTask() {
   return useMutationWithToast(
-    (data: Partial<Task>) => pb.collection(COLLECTION).create(data),
+    (data: TaskInput) => pb.collection(COLLECTION).create(data),
     {
       successMessage: "Tạo nhiệm vụ thành công",
       invalidateKeys: [["tasks"]],

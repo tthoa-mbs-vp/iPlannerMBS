@@ -1,13 +1,5 @@
-import { getRatingBadgeStyle } from "../../utils/constants";
+import { getRatingBadgeStyle, getRatingLabel } from "../../utils/constants";
 import type { KpiScore } from "@shared/types";
-
-const RATING_LABELS: Record<number, string> = {
-  5: "Xuất sắc",
-  4: "Tốt",
-  3: "Khá",
-  2: "Trung bình",
-  1: "Cần cải thiện",
-};
 
 function getScheduleLabel(progress: number): string {
   if (progress >= 100) return "Đúng hạn";
@@ -48,7 +40,7 @@ export default function KpiTaskTable({ items, title }: { items: KpiScore[]; titl
               <td className="px-4 py-3 text-center">
                 {isFinalValid ? (
                 <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${getRatingBadgeStyle(k.result_rating)}`}>
-                  {RATING_LABELS[Math.round(k.result_rating)] || k.result_rating}
+                  {getRatingLabel(k.result_rating)}
                 </span>
                 ) : "—"}
               </td>

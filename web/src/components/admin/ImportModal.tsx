@@ -3,6 +3,7 @@ import { Upload, Download, FileText, Code, CheckCircle, AlertTriangle, Loader2, 
 import Modal from "../shared/Modal";
 import { EXPORT_COLLECTIONS, COLLECTION_PASTE_HINTS, importFromFile, importFromPasteData, downloadTemplate } from "../../services/dataService";
 import type { ImportResult } from "../../services/dataService";
+import { errorMessage } from "../../utils/errors";
 
 interface Props {
   onClose: () => void;
@@ -29,7 +30,7 @@ export default function ImportModal({ onClose, collection: presetCollection }: P
         : await importFromFile(file!, collection);
       setResult(res);
     } catch (err: unknown) {
-      setResult({ collection, total: 0, success: 0, errors: [{ row: 0, message: err instanceof Error ? err.message : "Lỗi" }] });
+      setResult({ collection, total: 0, success: 0, errors: [{ row: 0, message: errorMessage(err, "Lỗi") }] });
     }
     setImporting(false);
   };

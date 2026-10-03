@@ -1,5 +1,9 @@
 # Báo cáo phân tích Gap — iPlanner vs Tài liệu tham chiếu
 
+> ⚠️ **Tài liệu lỗi thời** — nhiều khẳng định ở đây đã được sửa trong code (thiếu eslint.config, thiếu typecheck, adminService chạy client-side, hardcode IP/SSID…). Xem [`review-2026-08.md`](./review-2026-08.md) §6 để biết trạng thái hiện tại. Giữ lại làm tham chiếu lịch sử.
+>
+> **Vị trí:** tài liệu nội bộ trong `docs/` — KHÔNG đặt trong `web/public/` để tránh phát hành công khai.
+
 ## 1. Dashboard (Trang chủ)
 
 | Chức năng trong tài liệu gốc | Trạng thái | Ghi chú |

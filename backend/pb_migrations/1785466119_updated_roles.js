@@ -3,33 +3,37 @@ migrate((app) => {
   const collection = app.findCollectionByNameOrId("pbc_2105053228")
 
   // add field
+  if (!collection.fields.getByName("can_approve_leave")) {
   collection.fields.addAt(15, new Field({
-    "help": "",
-    "hidden": false,
-    "id": "bool_appr_leave",
-    "name": "can_approve_leave",
-    "presentable": false,
-    "required": false,
-    "system": false,
-    "type": "bool"
-  }))
+      "help": "",
+      "hidden": false,
+      "id": "bool_appr_leave",
+      "name": "can_approve_leave",
+      "presentable": false,
+      "required": false,
+      "system": false,
+      "type": "bool"
+    }))
+}
 
   // add field
+  if (!collection.fields.getByName("approval_scope")) {
   collection.fields.addAt(16, new Field({
-    "help": "",
-    "hidden": false,
-    "id": "select_appr_scope",
-    "maxSelect": 1,
-    "name": "approval_scope",
-    "presentable": false,
-    "required": false,
-    "system": false,
-    "type": "select",
-    "values": [
-      "all",
-      "department"
-    ]
-  }))
+      "help": "",
+      "hidden": false,
+      "id": "select_appr_scope",
+      "maxSelect": 1,
+      "name": "approval_scope",
+      "presentable": false,
+      "required": false,
+      "system": false,
+      "type": "select",
+      "values": [
+        "all",
+        "department"
+      ]
+    }))
+}
 
   return app.save(collection)
 }, (app) => {
