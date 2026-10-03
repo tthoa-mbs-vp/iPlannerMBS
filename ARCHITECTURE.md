@@ -486,6 +486,18 @@ CI/CD: .github/workflows/ci.yml
   chạy `node web/scripts/gen-created-migrations.mjs` (idempotent) → thêm migration `updated_*`
   cho các deployment hiện hữu.
 
+**Schema khai báo là single-source** — `web/scripts/schema-defs.mjs` là nơi duy nhất định nghĩa
+26 collection + các field patch sau khi có relation. `bootstrap-schema.mjs` chỉ còn logic áp
+dụng lên PocketBase. Script `create-collections.mjs` (bản khai báo trùng, đã lệch rules/id so
+với bootstrap) **đã bị xoá**.
+
+`web/scripts/pb-schema.json` là **snapshot của một instance cụ thể** — nó giữ collection id
+thật (`pbc_<random>`) mà `sync-schema.mjs` cần để `pb.collections.import()` khớp đúng thay vì
+tạo collection trùng, nên không sinh tự động từ `schema-defs.mjs`. Thay vào đó,
+`src/test/schemaDefs.test.ts` khẳng định hai nơi không lệch nhau về **tên collection và tập field
+nghiệp vụ** (bỏ qua field hệ thống `id`/`created`/`updated`), nên quên cập nhật một trong hai
+sẽ bị chặn ở CI.
+
 **KPI formula là single-source**: `backend/pb_hooks/_kpi-formula.cjs` (hàm thuần, không phụ thuộc
 PB/React). Backend nạp qua `require(__hooks + "/_kpi-formula.cjs")` (helpers.js `_computeKpi`), web
 nạp qua `web/src/utils/kpi.ts` (`calculateKpi`) — Vite bundle `.cjs` qua interop, kiểu khai báo tại

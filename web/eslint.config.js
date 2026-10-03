@@ -51,7 +51,7 @@ export default [
   },
   {
     // Test đọc file từ disk nên cần global của Node (__dirname, readFileSync).
-    files: ["src/test/pbHooksHelpers.test.ts", "src/test/a11y.test.tsx"],
+    files: ["src/test/pbHooksHelpers.test.ts", "src/test/a11y.test.tsx", "src/test/schemaDefs.test.ts"],
     languageOptions: { globals: { ...globals.node } },
   },
   {
