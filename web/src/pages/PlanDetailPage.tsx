@@ -12,6 +12,7 @@ import { planInUserGroups, taskInUserGroups, userGroupIds } from "../utils/group
 import { exportAttachmentsZip, exportTaskReportPdf, collectTaskAttachments, safeFilename } from "../utils/exportTaskReport";
 import CommentSection from "../components/tasks/CommentSection";
 import InteractiveGanttChart from "../components/plans/InteractiveGanttChart";
+import TaskWorkflowFlow from "../components/plans/TaskWorkflowFlow";
 import PlanInlineForm from "../components/plans/PlanInlineForm";
 import TaskInlineForm from "../components/tasks/TaskInlineForm";
 import CheckCombobox from "../components/shared/CheckCombobox";
@@ -627,6 +628,13 @@ export default function PlanDetailPage() {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Flowchart luồng giao việc — dùng `visibleTasks` (đã lọc theo quyền
+              xem) chứ không dùng `filteredTasks`, để bộ lọc tìm kiếm/trạng thái
+              của bảng không làm sơ đồ nhảy số liệu. */}
+          <div className="shrink-0">
+            <TaskWorkflowFlow tasks={visibleTasks || []} />
           </div>
         </>
       ) : (
