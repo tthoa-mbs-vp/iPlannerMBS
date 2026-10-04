@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
+import AppBoundary from "./AppBoundary";
 import SurpriseCheckModal from "../surprise/SurpriseCheckModal";
 
 const LS_KEY = "sidebar_open";
@@ -57,7 +58,9 @@ export default function AppLayout() {
           }}
         />
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6">
-          <Outlet />
+          <AppBoundary>
+            <Outlet />
+          </AppBoundary>
         </main>
       </div>
       <SurpriseCheckModal />

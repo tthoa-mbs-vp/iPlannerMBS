@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { defaultAppIdFor, appById } from "../config/apps";
 import { useAuthStore } from "../stores/authStore";
 import { APP_NAME, APP_VERSION } from "../config/app";
 import { isMobileDevice } from "../utils/device";
@@ -12,10 +13,17 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login, isAuthenticated } = useAuthStore();
+  const { login, isAuthenticated, user } = useAuthStore();
   const navigate = useNavigate();
 
-  const homePath = isMobileDevice() ? "/m" : "/dashboard";
+  // Mỗi người đi thẳng vào app của nghiệp vụ mình: quản trị vào app Quản trị, nhân sự
+  // vào app Nhân sự, còn lại vào app Kế hoạch. Đây là “cổng vào chung” — một lần đăng
+  // nhập, nhưng mở đúng ứng dụng ngay từ đầu.
+  const role = user?.expand?.role_id;
+  const landing = appById(defaultAppIdFor(role));
+  const homePath = isMobileDevice()
+    ? landing?.homeMobile ?? "/m"
+    : landing?.home ?? "/dashboard";
 
   useEffect(() => {
     if (isAuthenticated) {

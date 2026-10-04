@@ -209,17 +209,50 @@ Khóa `listRule` ⇒ `@mention`, bộ chọn executor/supervisor, và mọi màn
 
 ---
 
-## 4. CÒN LẠI — tách frontend thành khối (chưa làm, cần quyết định kiến trúc)
+## 4. ĐÃ LÀM — hệ thống 3 app sau một cổng vào chung
 
-Nhắc lại vì nó là câu hỏi gốc, và nó **độc lập** với S1/S2/S3 ở trên (làm khối này không giúp ích gì cho bảo mật — xem §0).
+Yêu cầu gốc không phải “tách file cho gọn” mà là: **một cổng vào chung, mỗi người tùy nghiệp vụ sẽ đến app tương ứng; các app giao diện giống nhau nhưng khác tên và menu chỉ thể hiện đúng nghiệp vụ app đó.**
 
-| | Cách làm | Đánh giá |
-|---|---|---|
-| **(a)** | Giữ 1 SPA, thêm cờ module + route/sidebar gating theo quyền role | **Khuyến nghị bắt đầu từ đây.** Gần như đúng thứ đã làm cho nhánh `plan-only`, chỉ khác là bật/tắt lúc chạy thay vì cắt file. `Sidebar.tsx` đã có sẵn cờ `hrOnly` / `adminOnly` để mở rộng. |
-| **(b)** | 1 Vite build, 2 entry: `index.html` (đầy đủ) + `portal.html` (chỉ Kế hoạch/Nhiệm vụ), backend điều khiển ai thấy entry nào | Tách khối thật sự, vẫn 1 backend / 1 repo / 1 pipeline. Chọn nếu muốn "user thường không tải được code HR" một cách sạch. |
-| **(c)** | 2 app/repo riêng, cùng trỏ 1 backend | Nhiều pipeline, type lệch dễ xảy ra. Không khuyến nghị. |
+Đã chọn phương án **(a)** — một SPA, một sổ app. Nhắc lại: làm vậy **không** tăng bảo mật (xem §0), nó là vấn đề trải nghiệm và tổ chức.
 
-Bối cảnh đã có: nhánh `plan-only` (đã push) là bản cắt triệt để chỉ còn Kế hoạch/Nhiệm vụ; nhánh `main` là bản đầy đủ. Nếu chọn (a) hoặc (b), hai nhánh đó sẽ còn giá trị làm tham chiếu.
+### Ba app
+
+| App | Ai vào được | Trang chủ | Menu |
+|---|---|---|---|
+| **Kế hoạch** | ai cũng (kể cả NV) | `/dashboard` | Tổng quan · Quản lý Công việc · Trao đổi |
+| **Nhân sự** | `can_view_salary` hoặc `can_manage` | `/hr` | Quản lý Nhân sự |
+| **Quản trị** | `can_manage` | `/admin` | Quản trị hệ thống |
+
+Mọi app đều có mục “Hướng dẫn” chung — đó là phần **giao diện dùng chung**.
+
+### Cách hiện thực
+
+| File | Vai trò |
+|---|---|
+| `web/src/config/apps.ts` | **Sổ app** — nguồn sự thật duy nhất: tên, tagline, menu, điều kiện `canAccess`, tiền tố route. Cùng logic thuần: `defaultAppIdFor`, `appsForRole`, `resolveAppId`, `appOwnsPath`. |
+| `web/src/hooks/useActiveApp.ts` | App đang mở, dùng **store dùng chung** (`useSyncExternalStore`). |
+| `web/src/components/layout/AppBoundary.tsx` | URL thuộc app khác thì đưa về trang chủ app đang mở. |
+| `Sidebar.tsx` | Hiện tên app, ô chuyển app, menu theo app. |
+| `LoginPage.tsx` | Đăng nhập xong thì mở thẳng app của nghiệp vụ. |
+
+### Bẫy đã vấp — đáng đọc để tránh lặp lại
+
+**Không được để mỗi component tự `useState(readStored)`.** Bản đầu tiên làm vậy: `Sidebar` đổi app thì `AppBoundary` (đã mount từ trước) vẫn giữ giá trị cũ và ép URL về app cũ — chuyển app trông như **không có tác dụng**. Vì vậy trạng thái phải nằm ở module và mọi nơi subscribe chung. Lỗi này chỉ lộ ra khi chạy E2E, unit test không bắt được.
+
+### Ranh giới: AppBoundary KHÔNG phải lớp bảo mật
+
+Gõ tay URL hoặc đổi `localStorage` không vượt được collection rules của PocketBase hay `guards.pb.js`/`scope.pb.js`. Lớp này chỉ giữ UI không bị lệch — mở app Nhân sự thì không nên thấy khung của app Kế hoạch. Dữ liệu vẫn được chặn ở tầng API như §1.
+
+### Đã kiểm chứng
+
+`web/src/test/apps.test.ts` (15 test, hàm thuần) · `tsc -b` 0 · `vitest` 519/519 · lint 0 error · build 0 · **Playwright 13/13** (11 test cũ + 2 test `/hr` mới).
+
+### Hạn chế đã biết
+
+- **Layout mobile `/m/*` chưa đổi** — vẫn 6 tab như cũ, không giới hạn theo app.
+- **`/profile` vẫn trỏ tới `/hr/:id`** (`ProfileRedirect.tsx`). Với nhân viên thường ở app Kế hoạch, URL này không thuộc app nên `AppBoundary` đưa về `/dashboard` — hành vi chấp nhận được nhưng chưa chuẩn hoá.
+- **Đăng nhập luôn mở app mặc định theo role**, không nhớ app người dùng chọn lần trước (dù `useActiveApp` có ưu tiên lựa chọn đã lưu). Chọn để landing luôn có thể đoán trước.
+- **Header vẫn hiện `APP_NAME` ("iPlanner")** khi trang không có tiêu đề — tên tổ chức, khác tên app trên sidebar.
 
 ---
 
@@ -228,12 +261,11 @@ Bối cảnh đã có: nhánh `plan-only` (đã push) là bản cắt triệt đ
 | # | Hạng mục | Trạng thái | Khuyến nghị | Công sức |
 |---|---|---|---|---|
 | S1 | `roles` | ✅ **Xong, đã push** | — | — |
+| S4 | Hệ thống 3 app sau cổng vào chung | ✅ **Xong** (xem §4) | — | — |
 | S2 | `attendance_configs` (`allowed_ips`) | ⏸ Chờ quyết | **A1** | ~1 endpoint + 4 hook |
 | S3 | `users` (`disabled`, `email`) | ⏸ Chờ quyết | **B3** (chấp nhận) | 0 nếu B3 · lớn nếu B1 |
-| S4 | Tách frontend thành khối | ⏸ Chờ quyết | **(a)** trước | nhỏ |
 
-### Câu hỏi cần bạn trả lời trước khi làm tiếp
+### Câu hỏi còn cần bạn trả lời trước khi làm tiếp
 
 1. **S2:** nhân viên có cần thấy tên văn phòng / tên WiFi trên màn hình chấm công không? (quyết định A1 hay A2)
 2. **S3:** có thực sự cần giấu cờ `disabled` và email của đồng nghiệp không? (quyết định B1 hay B3)
-3. **S4:** bạn muốn người dùng thường *nhìn thấy* ít mục menu hơn (→ a), hay muốn *tải về* ít code hơn (→ b)?
