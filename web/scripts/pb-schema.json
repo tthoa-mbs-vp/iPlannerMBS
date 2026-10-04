@@ -3120,8 +3120,8 @@
   },
   {
     "id": "pbc_2105053228",
-    "listRule": "@request.auth.id != \"\"",
-    "viewRule": "@request.auth.id != \"\"",
+    "listRule": "@request.auth.role_id.can_manage = true || @request.auth.collectionName = \"_superusers\"",
+    "viewRule": "@request.auth.role_id.id = id || @request.auth.role_id.can_manage = true || @request.auth.collectionName = \"_superusers\"",
     "createRule": "@request.auth.role_id.can_manage = true",
     "updateRule": "@request.auth.role_id.can_manage = true",
     "deleteRule": "@request.auth.role_id.can_manage = true",

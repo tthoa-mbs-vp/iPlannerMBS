@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { pb } from "../api/client";
 import { useMutationWithToast } from "../hooks/useMutationWithToast";
-import type { Department, Role, User } from "@shared/types";
+import type { Department, Role, RoleDirectoryItem, User } from "@shared/types";
 
 /**
  * Writable shape of a department.
@@ -67,6 +67,32 @@ export function useRoles() {
     queryFn: () => {
       if (!pb.authStore.isValid) throw new Error("Not authenticated");
       return pb.collection("roles").getFullList<Role>({ sort: "code" });
+    },
+    staleTime: 120_000,
+  });
+}
+
+/**
+ * Non-privileged view of the roles table: id / code / name / level ONLY.
+ *
+ * Since S1 the `roles` collection can only be listed by can_manage holders, because it
+ * holds every permission bit of the org (can_view_salary, can_manage, view_scope…). HR
+ * officers hold can_view_salary without can_manage and are still allowed into /hr, where
+ * the "lọc theo chức vụ" dropdown needs the role list. This endpoint serves exactly that
+ * slice and deliberately omits every permission flag, so the filter keeps working without
+ * re-opening the leak.
+ *
+ * Use `useRoles()` for the admin-only RoleManager screen, which needs the full records.
+ */
+export function useRoleDirectory() {
+  return useQuery({
+    queryKey: ["role-directory"],
+    queryFn: async () => {
+      if (!pb.authStore.isValid) throw new Error("Not authenticated");
+      const res = await pb.send<{ items: RoleDirectoryItem[] }>("/api/custom/role-directory", {
+        method: "GET",
+      });
+      return res.items;
     },
     staleTime: 120_000,
   });

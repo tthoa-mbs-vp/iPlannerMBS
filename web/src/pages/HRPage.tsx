@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "../stores/authStore";
 import { usePageTitleStore } from "../stores/pageTitleStore";
-import { useAdminUsersPaginated, useDepartments, useRoles } from "../hooks/useDepartments";
+import { useAdminUsersPaginated, useDepartments, useRoleDirectory } from "../hooks/useDepartments";
 import { useProfessionalGroups } from "../hooks/useProfessionalGroups";
 import { useEmployeeProfiles } from "../hooks/useEmployeeProfiles";
 import { useDebounce } from "../hooks/useDebounce";
@@ -33,7 +33,10 @@ export default function HRPage() {
   const canAccessHr = isAdmin || canViewSalary;
 
   const { data: departments } = useDepartments();
-  const { data: roles } = useRoles();
+  // The job-title filter only needs id/name, so it reads the non-privileged directory
+  // endpoint instead of the `roles` table — an HR officer (can_view_salary without
+  // can_manage) can no longer list `roles` since S1, and must not need to.
+  const { data: roles } = useRoleDirectory();
   const { data: groups } = useProfessionalGroups();
 
   const [selectedDeptId, setSelectedDeptId] = useState("");

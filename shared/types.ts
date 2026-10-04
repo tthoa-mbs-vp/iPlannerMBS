@@ -113,6 +113,20 @@ export interface Role {
   updated: string;
 }
 
+/**
+ * Non-privileged projection of `roles` served by /api/custom/role-directory.
+ *
+ * Carries NO permission bit on purpose — since S1 the `roles` table itself is can_manage
+ * only, and this narrower shape is what lets HR officers (can_view_salary without
+ * can_manage) still filter by job title without learning what each role may do.
+ */
+export interface RoleDirectoryItem {
+  id: string;
+  code: string;
+  name: string;
+  level: RoleLevel;
+}
+
 export interface User {
   id: string;
   email: string;

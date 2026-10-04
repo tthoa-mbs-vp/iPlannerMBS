@@ -88,3 +88,4 @@ jobs:
           node backend/test/harden_integration.test.js
           node backend/test/scope_integration.test.js
           node backend/test/audit_integration.test.js
+          node backend/test/roles_rule.test.js

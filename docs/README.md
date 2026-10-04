@@ -27,6 +27,7 @@ Phân biệt rõ hai loại:
 ### Rà soát & phân tích
 - [`review-2026-08.md`](./review-2026-08.md) — **rà soát toàn diện** (backend + frontend + deploy). Đây là tài liệu chính, thay thế hai file bên dưới.
 - [`frontend-review-2026-08.md`](./frontend-review-2026-08.md) — rà soát chi tiết frontend: schema ↔ types ↔ select-lists ↔ constants, bundle, React Query.
+- [`security-hardening-2026-10.md`](./security-hardening-2026-10.md) — siết phân quyền đọc: `roles` đã khóa (S1); `attendance_configs`, `users` và việc tách frontend còn lại đang chờ quyết định.
 
 ### Lưu trữ (đã lỗi thời, giữ làm tham chiếu lịch sử)
 - [`gap-analysis.md`](./gap-analysis.md) — ⚠️ nhiều phát hiện đã được sửa. Xem `review-2026-08.md` §6.

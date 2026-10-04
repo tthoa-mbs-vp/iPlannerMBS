@@ -38,7 +38,7 @@
 | **professional_groups** | base | 7 | create · update · delete | Đọc mọi user; ghi can_manage |
 | **proposals** | base | 10 | create · update · delete | createRule owner-bound (requester_id) |
 | **qualifications** | base | 8 | create · update · delete | Như salary_records (HR-view), ghi can_manage. |
-| **roles** | base | 19 | create · update · delete | Chứa cờ quyền (can_*) + view_scope + approval_scope — nguồn quyết định rule/guard/scope |
+| **roles** | base | 19 | create · update · delete | Chứa cờ quyền (can_*) + view_scope + approval_scope — nguồn quyết định rule/guard/scope. **LIST chỉ `can_manage`**, VIEW cho phép thêm chính role của người gọi (S1): bảng quyền là dữ liệu nhạy cảm, không để user thường dò ra role nào xem lương, nhưng vẫn phải đọc được role của chính mình để UI dựng quyền qua `users.expand.role_id` |
 | **salary_records** | base | 6 | create · update · delete | `hr.pb.js` enforce view_scope theo can_view_salary (department/all). |
 | **system_logs** | base | 7 | ✗create · ✗update · ✗delete | Audit server-side: create/update/delete đều null — chỉ server `$app.save()` ghi (chống giả mạo log) |
 | **tasks** | base | 26 | create · update · delete | Guard `guards.pb.js` (update): executor chỉ được đổi status (in_progress/pending_approval); supervisor chỉ đổi status/rating/rated_*/completed_at/description/name; cấm tự rate (A10); **completed_at do server stamp = now() khi chuyển sang completed (M8)**, không sửa được khi đã completed, xóa khi rời completed |
@@ -700,11 +700,21 @@
 
 | Thao tác | Rule |
 |---|---|
-| **LIST** | `@request.auth.id != ""` |
-| **VIEW** | `@request.auth.id != ""` |
+| **LIST** | `@request.auth.role_id.can_manage = true \|\| @request.auth.collectionName = "_superusers"` |
+| **VIEW** | `@request.auth.role_id.id = id \|\| @request.auth.role_id.can_manage = true \|\| @request.auth.collectionName = "_superusers"` |
 | **CREATE** | `@request.auth.role_id.can_manage = true` |
 | **UPDATE** | `@request.auth.role_id.can_manage = true` |
 | **DELETE** | `@request.auth.role_id.can_manage = true` |
+
+> **S1 — vì sao LIST/VIEW đóng.** Collection này là bảng tra cứu phân quyền: mỗi record chứa toàn bộ bit quyền của tổ chức (`can_view_salary`, `can_manage`, `view_scope`, `approval_scope`). Rule mở `@request.auth.id != ""` khiến **mọi** tài khoản đã đăng nhập liệt kê được bảng này — tức là biết chính xác role nào được xem lương. Chỉ màn hình quản trị mới cần đọc, nên siết về `can_manage`.
+>
+> **Không ảnh hưởng phân quyền client-side.** Toàn bộ cờ quyền ở web đến từ một lệnh duy nhất:
+> `pb.collection("users").getOne(ownId, { expand: "department_id,role_id,group_ids" })`
+> rồi đọc `user.expand.role_id.can_view_salary` / `.can_manage` (Sidebar, HRPage, HRDetailPage, LeavePage, AdminPage, DataPage, LogsPage, TrashPage, DiscussionPage, DashboardPage, mobile/*). Role tới được qua **expand** trên chính record `users` của người gọi, không phải qua truy vấn trực tiếp `roles`.
+>
+> **Đã kiểm chứng bằng thực nghiệm rằng PocketBase CÓ áp `viewRule` của collection liên quan cho bản ghi được expand** — nên siết `viewRule` thành `can_manage` đã làm mất toàn bộ cờ quyền của nhân viên (`expand.role_id` rỗng), trong khi unit test phía web vẫn xanh. Vì vậy `viewRule` phải giữ nhánh `@request.auth.role_id.id = id`: mỗi người đọc được đúng **một** role là của chính mình (không nhạy cảm hơn thứ UI vốn phải biết), vẫn không đọc/list được role của người khác.
+>
+> Bảo chứng bằng test thật (PocketBase 0.39.10, fresh boot): `backend/test/roles_rule.test.js` — R1/R2 khẳng định expand vẫn trả đủ cờ cho nhân viên lẫn nhân sự; R3–R6 khẳng định nhân viên và HR bị chặn, admin/superuser vẫn đọc được.
 
 ### Fields
 
